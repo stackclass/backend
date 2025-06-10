@@ -54,7 +54,7 @@ pub async fn info_refs(
 
     let mut body = String::new();
     body.push_str(protocol);
-    body.push_str(str::from_utf8(&refs).unwrap());
+    body.push_str(&String::from_utf8(refs).unwrap());
 
     let content_type = format!("application/x-git-{}-advertisement", srv);
 
