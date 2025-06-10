@@ -19,10 +19,22 @@ use axum::{
     Router,
 };
 
-use crate::{context::Context, handlers::workflow};
+use crate::{
+    context::Context,
+    handlers::{git, workflow},
+};
 
 pub fn build() -> Router<Arc<Context>> {
     Router::new()
+        // git-http-backend
+        .route("/git/{repo}/HEAD", get(git::head))
+        .route("/git/{repo}/info/refs", get(git::info_refs))
+        .route("/git/{repo}/git-upload-pack", post(git::upload_pack))
+        .route("/git/{repo}/git-receive-pack", post(git::receive_pack))
+        .route("/git/{repo}/objects/info/packs", get(git::info_packs))
+        .route("/git/{repo}/objects/pack/{file}", get(git::pack_file))
+        .route("/git/{repo}/objects/info/{file}", get(git::text_file))
+        .route("/git/{repo}/objects/{two}/{thirtyeight}", get(git::loose_object))
         // workflows
         .route("/v1/workflows", post(workflow::create))
         .route("/v1/workflows/{id}", delete(workflow::delete))

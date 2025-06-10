@@ -24,11 +24,17 @@
 // For development convenience, these can also be read from a `.env` file in the working
 // directory where the application is started.
 //
-// See `.env.sample` in the repository root for details.
+// See `.env.example` in the repository root for details.
+
+use std::path::PathBuf;
 
 #[derive(Clone, clap::Parser)]
 pub struct Config {
     /// The Server port.
     #[clap(long, env = "PORT", default_value = "8080")]
     pub port: u16,
+
+    /// The path to git repositories.
+    #[clap(long, env = "ROOT")]
+    pub root: PathBuf,
 }

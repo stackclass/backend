@@ -27,6 +27,9 @@ pub enum ApiError {
     #[error("Not Found")]
     NotFound,
 
+    #[error("Bad Request")]
+    BadRequest(String),
+
     #[error("Not Found Workflow: {0}")]
     NotFoundWorkflow(String),
 
@@ -38,18 +41,38 @@ pub enum ApiError {
 
     #[error("Bad Workflow Request: {0}")]
     BadWorkflowRequest(String),
+
+    #[error("Invalid path")]
+    InvalidPath,
+
+    #[error("Axum error: {0}")]
+    AxumError(String),
+
+    #[error("Git command failed: {0}")]
+    GitCommandFailed(String),
+}
+
+impl From<axum::http::Error> for ApiError {
+    fn from(err: axum::http::Error) -> Self {
+        ApiError::AxumError(err.to_string())
+    }
 }
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> axum::response::Response {
-        let (status, message) = match self {
-            Self::InternalServerError => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
-            Self::NotFound => (StatusCode::NOT_FOUND, self.to_string()),
-            Self::NotFoundWorkflow(e) => (StatusCode::NOT_FOUND, e.to_string()),
-            Self::FailedToCreateWorkflow(e) => (StatusCode::BAD_REQUEST, e.to_string()),
-            Self::FailedToDeleteWorkflow(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-            Self::BadWorkflowRequest(e) => (StatusCode::BAD_REQUEST, e.to_string()),
+        let status = match self {
+            Self::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::NotFound => StatusCode::NOT_FOUND,
+            Self::BadRequest(_) => StatusCode::BAD_REQUEST,
+            Self::NotFoundWorkflow(_) => StatusCode::NOT_FOUND,
+            Self::FailedToCreateWorkflow(_) => StatusCode::BAD_REQUEST,
+            Self::FailedToDeleteWorkflow(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::BadWorkflowRequest(_) => StatusCode::BAD_REQUEST,
+            Self::InvalidPath => StatusCode::BAD_REQUEST,
+            Self::AxumError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::GitCommandFailed(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
+        let message = self.to_string();
 
         error!("{} - {}", status, message);
         (status, Json(json!({ "message": message }))).into_response()
