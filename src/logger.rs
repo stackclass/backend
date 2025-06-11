@@ -12,14 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod app;
-pub mod config;
-pub mod context;
-pub mod errors;
-pub mod handlers;
-pub mod logger;
-pub mod requests;
-pub mod responses;
-pub mod routes;
-pub mod services;
-pub mod swagger;
+use tracing::metadata::LevelFilter;
+use tracing_subscriber::EnvFilter;
+
+pub fn setup() {
+    let filter =
+        EnvFilter::builder().with_default_directive(LevelFilter::DEBUG.into()).from_env_lossy();
+    tracing_subscriber::fmt().with_env_filter(filter).init();
+}
