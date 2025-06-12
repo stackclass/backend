@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use serde::{Deserialize, Serialize};
-use std::hash::Hash;
+use std::{hash::Hash, str::FromStr};
 
 /// A self-contained coding task with specific objectives and validation.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -34,16 +34,25 @@ pub struct Stage {
     pub description: String,
 
     /// A markdown description for this stage.
+    #[serde(skip)]
     pub instruction: String,
 
     /// The solution to this stage, if available.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip)]
     pub solution: Option<Solution>,
 }
 
 impl Hash for Stage {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.slug.hash(state);
+    }
+}
+
+impl FromStr for Stage {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        serde_yml::from_str(s).map_err(|e| e.to_string())
     }
 }
 
@@ -78,5 +87,33 @@ impl Solution {
     /// Adds a code patch for a specific file to the solution
     pub fn add_patch(&mut self, path: String, content: String) {
         self.patches.push((path, content));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_stage_from_str() {
+        let yaml = r#"
+            slug: test-stage
+            name: Test Stage
+            difficulty: Easy
+            description: A test stage
+        "#;
+
+        let stage = Stage::from_str(yaml).unwrap();
+        assert_eq!(stage.slug, "test-stage");
+        assert_eq!(stage.name, "Test Stage");
+        assert_eq!(stage.difficulty, Difficulty::Easy);
+        assert_eq!(stage.description, "A test stage");
+    }
+
+    #[test]
+    fn test_stage_from_str_invalid() {
+        let invalid_yaml = "invalid: yaml: content";
+        let result = Stage::from_str(invalid_yaml);
+        assert!(result.is_err());
     }
 }

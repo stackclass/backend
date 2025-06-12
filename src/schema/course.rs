@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::str::FromStr;
+
 use indexmap::IndexSet;
 use serde::{Deserialize, Serialize};
 
-use crate::schema::{Extension, Stage};
+use crate::schema::{Extensions, Stage};
 
 /// Schema for the course.yml file.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -39,11 +41,20 @@ pub struct Course {
     pub summary: String,
 
     /// Sequential stages of the course.
+    #[serde(skip)]
     pub stages: IndexSet<Stage>,
 
     /// Sets of additional stages.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub extensions: Option<IndexSet<Extension>>,
+    #[serde(skip)]
+    pub extensions: Option<Extensions>,
+}
+
+impl FromStr for Course {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        serde_yml::from_str(s).map_err(|e| e.to_string())
+    }
 }
 
 /// The release status of the course.
@@ -52,4 +63,37 @@ pub enum Status {
     Alpha,
     Beta,
     Live,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_course_from_str() {
+        let yaml = r#"
+            slug: rust-course
+            name: Rust Programming
+            short_name: Rust
+            release_status: Beta
+            description: A comprehensive course on Rust programming language.
+            summary: Learn Rust programming
+        "#;
+
+        let course = Course::from_str(yaml).unwrap();
+
+        assert_eq!(course.slug, "rust-course");
+        assert_eq!(course.name, "Rust Programming");
+        assert_eq!(course.short_name, "Rust");
+        assert!(matches!(course.release_status, Status::Beta));
+        assert_eq!(course.description, "A comprehensive course on Rust programming language.");
+        assert_eq!(course.summary, "Learn Rust programming");
+    }
+
+    #[test]
+    fn test_course_from_str_error() {
+        let invalid_yaml = "invalid: yaml: content";
+        let result = Course::from_str(invalid_yaml);
+        assert!(result.is_err());
+    }
 }

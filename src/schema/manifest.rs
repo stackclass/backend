@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::str::FromStr;
+
 use serde::{Deserialize, Serialize};
 
 /// Schema for the codecraft.yml file.
@@ -28,4 +30,40 @@ pub struct Manifest {
 
     /// The main source file that users can edit for this project.
     pub user_editable_file: String,
+}
+
+impl FromStr for Manifest {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        serde_yml::from_str(s).map_err(|e| e.to_string())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_manifest_from_str() {
+        let yaml = r#"
+            debug: true
+            language_pack: "rust-1.70.0"
+            required_executable: "cargo"
+            user_editable_file: "src/main.rs"
+        "#;
+
+        let manifest = Manifest::from_str(yaml).unwrap();
+        assert!(manifest.debug);
+        assert_eq!(manifest.language_pack, "rust-1.70.0");
+        assert_eq!(manifest.required_executable, "cargo");
+        assert_eq!(manifest.user_editable_file, "src/main.rs");
+    }
+
+    #[test]
+    fn test_manifest_from_str_error() {
+        let invalid_yaml = "invalid: yaml: content";
+        let result = Manifest::from_str(invalid_yaml);
+        assert!(result.is_err());
+    }
 }
