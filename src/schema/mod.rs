@@ -12,15 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod app;
-pub mod config;
-pub mod context;
-pub mod errors;
-pub mod handlers;
-pub mod logger;
-pub mod requests;
-pub mod responses;
-pub mod routes;
-pub mod schema;
-pub mod services;
-pub mod swagger;
+mod course;
+mod extension;
+mod manifest;
+mod stage;
+
+// Re-exports
+pub use course::*;
+pub use extension::*;
+pub use stage::*;
