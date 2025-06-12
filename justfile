@@ -32,8 +32,13 @@ check:
     just clippy
     just test
 
+# Generate OpenAPI documentation
+openapi:
+    cargo run --bin openapi-generator > openapi.json
+
 # Run all commend in the local environment
 all:
     just clean
     just check
     just build
+    just openapi

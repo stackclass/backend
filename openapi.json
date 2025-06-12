@@ -1,0 +1,213 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "codecraft-server",
+    "description": "CodeCraft Backend Server",
+    "license": {
+      "name": ""
+    },
+    "version": "0.2.0"
+  },
+  "paths": {
+    "/v1/workflows": {
+      "post": {
+        "tags": [
+          "Workflows"
+        ],
+        "summary": "Create a workflow.",
+        "operationId": "create",
+        "requestBody": {
+          "description": "Create workflow request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "repo"
+                ],
+                "properties": {
+                  "branch": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Git branch, eg. master or main"
+                  },
+                  "repo": {
+                    "type": "string",
+                    "description": "Source code repository"
+                  },
+                  "rev": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "A commit hash like rev = \"4c59b707\", or a named reference exposed by\nthe remote repository such as rev = \"refs/pull/493/head\". What references\nare available varies by where the repo is hosted."
+                  },
+                  "tag": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Git tag, eg. v1.0"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Workflow created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/workflows/{id}": {
+      "post": {
+        "tags": [
+          "Workflows"
+        ],
+        "summary": "Get a workflow.",
+        "operationId": "get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The id of workflow",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Workflow started successfully"
+          },
+          "404": {
+            "description": "Workflow not found"
+          },
+          "500": {
+            "description": "Failed to start workflow"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Workflows"
+        ],
+        "summary": "Delete a workflow.",
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The id of workflow",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Workflow deleted successfully"
+          },
+          "404": {
+            "description": "Workflow not found"
+          },
+          "500": {
+            "description": "Failed to delete workflow"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateWorkflowRequest": {
+        "type": "object",
+        "required": [
+          "repo"
+        ],
+        "properties": {
+          "branch": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Git branch, eg. master or main"
+          },
+          "repo": {
+            "type": "string",
+            "description": "Source code repository"
+          },
+          "rev": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A commit hash like rev = \"4c59b707\", or a named reference exposed by\nthe remote repository such as rev = \"refs/pull/493/head\". What references\nare available varies by where the repo is hosted."
+          },
+          "tag": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Git tag, eg. v1.0"
+          }
+        }
+      },
+      "WorkflowResponse": {
+        "type": "object",
+        "required": [
+          "repo"
+        ],
+        "properties": {
+          "branch": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Git branch, eg. master or main"
+          },
+          "repo": {
+            "type": "string",
+            "description": "Source code repository"
+          },
+          "rev": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A commit hash like rev = \"4c59b707\", or a named reference exposed by\nthe remote repository such as rev = \"refs/pull/493/head\". What references\nare available varies by where the repo is hosted."
+          },
+          "tag": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Git tag, eg. v1.0"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Workflows",
+      "description": "The Workflow Service Handlers"
+    }
+  ]
+}

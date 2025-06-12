@@ -12,30 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use codecraft::swagger::ApiDoc;
 use utoipa::OpenApi;
-use utoipa_swagger_ui::SwaggerUi;
 
-use crate::{handlers, requests, responses};
+fn main() {
+    let openapi = ApiDoc::openapi();
+    let json = serde_json::to_string_pretty(&openapi).unwrap();
 
-#[derive(OpenApi)]
-#[openapi(
-    paths(
-        handlers::workflow::get,
-        handlers::workflow::create,
-        handlers::workflow::delete,
-    ),
-    components(
-        schemas(
-            requests::workflow::CreateWorkflowRequest,
-            responses::workflow::WorkflowResponse,
-        )
-    ),
-    tags(
-        (name = "Workflows", description = "The Workflow Service Handlers"),
-    ),
-)]
-pub struct ApiDoc;
-
-pub fn build() -> SwaggerUi {
-    SwaggerUi::new("/swagger").url("/openapi.json", ApiDoc::openapi())
+    // Print the OpenAPI document to stdout
+    println!("{}", json);
 }
