@@ -122,16 +122,7 @@ impl CourseParser {
 
             if patch_path.is_file() {
                 let content = fs::read_to_string(patch_path)?;
-                let file_name = patch_path
-                    .strip_prefix(&patches_dir)
-                    .map_err(|_| {
-                        ParseError::Structure("Failed to strip patch directory prefix".into())
-                    })?
-                    .to_str()
-                    .ok_or_else(|| ParseError::Structure("Invalid patch file path".into()))?
-                    .trim_end_matches(".diff")
-                    .to_string();
-
+                let file_name = extract_file_name(patch_path, &patches_dir)?;
                 solution.add_patch(file_name, content);
             }
         }
@@ -170,4 +161,19 @@ impl CourseParser {
 
         Ok(Some(extensions))
     }
+}
+
+/// Extract normalized patch file name from path
+fn extract_file_name(path: &Path, parent: &Path) -> Result<String, ParseError> {
+    let stripped_path = path
+        .strip_prefix(parent)
+        .map_err(|_| ParseError::Structure("Failed to strip patch directory prefix".into()))?;
+    let path_str = stripped_path
+        .to_str()
+        .ok_or_else(|| ParseError::Structure("Invalid patch file path".into()))?;
+
+    let trimmed = path_str.trim_end_matches(".diff");
+    let replaced = trimmed.to_string().replace('\\', "/");
+
+    Ok(replaced)
 }
