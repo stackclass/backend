@@ -33,10 +33,10 @@ pub struct Manifest {
 }
 
 impl FromStr for Manifest {
-    type Err = String;
+    type Err = serde_yml::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        serde_yml::from_str(s).map_err(|e| e.to_string())
+        serde_yml::from_str(s)
     }
 }
 

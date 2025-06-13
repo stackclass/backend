@@ -49,16 +49,17 @@ impl Hash for Stage {
 }
 
 impl FromStr for Stage {
-    type Err = String;
+    type Err = serde_yml::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        serde_yml::from_str(s).map_err(|e| e.to_string())
+        serde_yml::from_str(s)
     }
 }
 
 /// A difficulty rating,
 /// from the perspective of a proficient programmer.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
 pub enum Difficulty {
     VeryEasy, // <5m
     Easy,     // 5-10m
@@ -99,7 +100,7 @@ mod tests {
         let yaml = r#"
             slug: test-stage
             name: Test Stage
-            difficulty: Easy
+            difficulty: easy
             description: A test stage
         "#;
 

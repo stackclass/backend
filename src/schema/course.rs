@@ -14,10 +14,11 @@
 
 use std::str::FromStr;
 
-use indexmap::IndexSet;
+use indexmap::IndexMap;
+
 use serde::{Deserialize, Serialize};
 
-use crate::schema::{Extensions, Stage};
+use crate::schema::{ExtensionMap, Stage};
 
 /// Schema for the course.yml file.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -42,23 +43,24 @@ pub struct Course {
 
     /// Sequential stages of the course.
     #[serde(skip)]
-    pub stages: IndexSet<Stage>,
+    pub stages: IndexMap<String, Stage>,
 
     /// Sets of additional stages.
     #[serde(skip)]
-    pub extensions: Option<Extensions>,
+    pub extensions: Option<ExtensionMap>,
 }
 
 impl FromStr for Course {
-    type Err = String;
+    type Err = serde_yml::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        serde_yml::from_str(s).map_err(|e| e.to_string())
+        serde_yml::from_str(s)
     }
 }
 
 /// The release status of the course.
 #[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Status {
     Alpha,
     Beta,
@@ -75,7 +77,7 @@ mod tests {
             slug: rust-course
             name: Rust Programming
             short_name: Rust
-            release_status: Beta
+            release_status: beta
             description: A comprehensive course on Rust programming language.
             summary: Learn Rust programming
         "#;

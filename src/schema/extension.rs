@@ -12,28 +12,45 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{hash::Hash, str::FromStr};
-
-use indexmap::IndexSet;
+use indexmap::{set::Iter, IndexMap, IndexSet};
 use serde::{Deserialize, Serialize};
+use std::{hash::Hash, str::FromStr};
 
 use crate::schema::Stage;
 
+pub type ExtensionMap = IndexMap<String, Extension>;
+
+impl From<ExtensionSet> for ExtensionMap {
+    fn from(val: ExtensionSet) -> Self {
+        val.0.into_iter().map(|ext| (ext.slug.clone(), ext)).collect()
+    }
+}
+
 /// Schema for the extensions.yml file.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Extensions(IndexSet<Extension>);
+pub struct ExtensionSet(pub(crate) IndexSet<Extension>);
 
-impl Extensions {
-    pub fn iter(&self) -> indexmap::set::Iter<Extension> {
+impl ExtensionSet {
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub fn iter(&self) -> Iter<Extension> {
         self.0.iter()
     }
 }
 
-impl FromStr for Extensions {
-    type Err = String;
+impl Default for ExtensionSet {
+    fn default() -> Self {
+        Self(IndexSet::new())
+    }
+}
+
+impl FromStr for ExtensionSet {
+    type Err = serde_yml::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        serde_yml::from_str(s).map_err(|e| e.to_string())
+        serde_yml::from_str(s)
     }
 }
 
@@ -51,7 +68,7 @@ pub struct Extension {
 
     /// Sequential stages of the extension.
     #[serde(skip)]
-    pub stages: IndexSet<Stage>,
+    pub stages: IndexMap<String, Stage>,
 }
 
 impl Hash for Extension {
@@ -75,24 +92,22 @@ mod tests {
               description: Test description 2
         "#;
 
-        let extensions = Extensions::from_str(yaml).unwrap();
+        let extensions = ExtensionSet::from_str(yaml).unwrap();
+        let extensions: ExtensionMap = extensions.into();
 
-        let mut iter = extensions.iter();
+        let test1 = extensions.get("test1").unwrap();
+        assert_eq!(test1.slug, "test1");
+        assert_eq!(test1.name, "Test Extension 1");
 
-        let first = iter.next().unwrap();
-        assert_eq!(first.slug, "test1");
-        assert_eq!(first.name, "Test Extension 1");
-
-        let second = iter.next().unwrap();
-        assert_eq!(second.slug, "test2");
-        assert_eq!(second.name, "Test Extension 2");
-        assert!(iter.next().is_none());
+        let test2 = extensions.get("test2").unwrap();
+        assert_eq!(test2.slug, "test2");
+        assert_eq!(test2.name, "Test Extension 2");
     }
 
     #[test]
     fn test_extensions_from_str_invalid() {
         let invalid_yaml = "invalid: yaml";
-        let result = Extensions::from_str(invalid_yaml);
+        let result = ExtensionSet::from_str(invalid_yaml);
         assert!(result.is_err());
     }
 }

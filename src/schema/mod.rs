@@ -15,9 +15,11 @@
 mod course;
 mod extension;
 mod manifest;
+mod parser;
 mod stage;
 
 // Re-exports
 pub use course::*;
 pub use extension::*;
+pub use parser::*;
 pub use stage::*;
