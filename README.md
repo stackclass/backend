@@ -51,6 +51,14 @@ To build this project, you will need to install the following pre-requisites:
 [Rust](https://www.rust-lang.org/tools/install) and
 [Just](https://github.com/casey/just).
 
+Clone the Repository
+
+```bash
+git clone --recurse-submodules https://github.com/wangeguo/codecraft-server.git
+```
+
+*(If you’ve already cloned the repository without submodules, run `git submodule update --init --recursive` to initialize them.)*
+
 After cloning the repository, you can simply run `just` in the package directory
 to list all available commands. For your first local build, please run `just
 install` command to install the dependencies for this project.

@@ -1,0 +1,3 @@
+[submodule "samples/build-your-own-interpreter"]
+	path = samples/build-your-own-interpreter
+	url = https://github.com/wangeguo/build-your-own-interpreter.git
