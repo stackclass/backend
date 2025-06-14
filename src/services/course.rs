@@ -12,7 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod course;
-pub mod git;
-pub mod storage;
-pub mod workflow;
+use std::sync::Arc;
+
+use tracing::debug;
+
+use crate::{context::Context, errors::Result, schema, services::storage::StorageService};
+
+pub struct CourseService;
+
+impl CourseService {
+    pub async fn sync(ctx: Arc<Context>, url: &str) -> Result<bool> {
+        let service = StorageService::new(&ctx.config.cache_dir, &ctx.config.github_token)?;
+        let dir = service.fetch(url).await?;
+
+        let course = schema::parse(&dir)?;
+
+        debug!("parsed course: {:?}", course);
+
+        Ok(true)
+    }
+}

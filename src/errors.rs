@@ -12,10 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use axum::{http::StatusCode, response::IntoResponse, Json};
+use axum::{
+    http::{self, StatusCode},
+    response::IntoResponse,
+    Json,
+};
 use serde_json::json;
 use thiserror::Error;
 use tracing::error;
+
+use crate::{schema, services::storage::StorageError};
 
 pub type Result<T, E = ApiError> = std::result::Result<T, E>;
 
@@ -45,32 +51,34 @@ pub enum ApiError {
     #[error("Invalid path")]
     InvalidPath,
 
-    #[error("Axum error: {0}")]
-    AxumError(String),
+    #[error("HTTP error: {0}")]
+    HTTPError(#[from] http::Error),
 
     #[error("Git command failed: {0}")]
     GitCommandFailed(String),
-}
 
-impl From<axum::http::Error> for ApiError {
-    fn from(err: axum::http::Error) -> Self {
-        ApiError::AxumError(err.to_string())
-    }
+    #[error("Storage service error: {0}")]
+    StorageError(#[from] StorageError),
+
+    #[error("Schema parse error: {0}")]
+    SchemaParserError(#[from] schema::ParseError),
 }
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> axum::response::Response {
         let status = match self {
-            Self::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::NotFound => StatusCode::NOT_FOUND,
-            Self::BadRequest(_) => StatusCode::BAD_REQUEST,
-            Self::NotFoundWorkflow(_) => StatusCode::NOT_FOUND,
-            Self::FailedToCreateWorkflow(_) => StatusCode::BAD_REQUEST,
-            Self::FailedToDeleteWorkflow(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::BadWorkflowRequest(_) => StatusCode::BAD_REQUEST,
-            Self::InvalidPath => StatusCode::BAD_REQUEST,
-            Self::AxumError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::GitCommandFailed(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::NotFound => StatusCode::NOT_FOUND,
+            ApiError::BadRequest(_) => StatusCode::BAD_REQUEST,
+            ApiError::NotFoundWorkflow(_) => StatusCode::NOT_FOUND,
+            ApiError::FailedToCreateWorkflow(_) => StatusCode::BAD_REQUEST,
+            ApiError::FailedToDeleteWorkflow(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::BadWorkflowRequest(_) => StatusCode::BAD_REQUEST,
+            ApiError::InvalidPath => StatusCode::BAD_REQUEST,
+            ApiError::HTTPError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::GitCommandFailed(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::StorageError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::SchemaParserError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
         let message = self.to_string();
 

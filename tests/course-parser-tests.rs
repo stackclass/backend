@@ -14,14 +14,13 @@
 
 use std::path::PathBuf;
 
-use codecraft::schema::{CourseParser, Difficulty, Status};
+use codecraft::schema::{self, Difficulty, Status};
 
 #[test]
 fn test_parse_course() {
     // read course from sample dir.
-    let parser = CourseParser;
     let path = PathBuf::from("samples/build-your-own-interpreter");
-    let course = parser.parse(&path).unwrap();
+    let course = schema::parse(&path).unwrap();
 
     // test course
     assert_eq!(course.slug, "interpreter");
