@@ -37,11 +37,9 @@ pub struct CourseParser;
 
 impl CourseParser {
     /// Parse entire course including stages and extensions
-    pub fn parse<P: AsRef<Path>>(&self, path: P) -> Result<Course, ParseError> {
-        let path = path.as_ref();
-
+    pub fn parse(&self, path: &Path) -> Result<Course, ParseError> {
         let mut course = self.parse_course(path)?;
-        course.stages = self.parse_stages(path.join("stages"))?;
+        course.stages = self.parse_stages(&path.join("stages"))?;
         course.extensions = self.parse_extensions(path)?;
 
         Ok(course)
@@ -54,11 +52,8 @@ impl CourseParser {
     }
 
     /// Parse all stages from stages directory
-    fn parse_stages<P: AsRef<Path>>(
-        &self,
-        stages_dir: P,
-    ) -> Result<IndexMap<String, Stage>, ParseError> {
-        if !stages_dir.as_ref().exists() {
+    fn parse_stages(&self, stages_dir: &Path) -> Result<IndexMap<String, Stage>, ParseError> {
+        if !stages_dir.exists() {
             return Err(ParseError::Structure("stages directory not found".into()));
         }
 
@@ -83,27 +78,23 @@ impl CourseParser {
     }
 
     /// Parse single stage including instruction and solution
-    fn parse_stage<P: AsRef<Path>>(&self, stage_dir: P) -> Result<Stage, ParseError> {
-        let path = stage_dir.as_ref();
-
-        let meta_content = fs::read_to_string(path.join("stage.yml"))?;
+    fn parse_stage(&self, stage_dir: &Path) -> Result<Stage, ParseError> {
+        let meta_content = fs::read_to_string(stage_dir.join("stage.yml"))?;
         let mut stage = Stage::from_str(&meta_content)?;
 
-        stage.instruction = fs::read_to_string(path.join("instruction.md"))?;
-        stage.solution = self.parse_solution(path.join("solution"))?;
+        stage.instruction = fs::read_to_string(stage_dir.join("instruction.md"))?;
+        stage.solution = self.parse_solution(&stage_dir.join("solution"))?;
 
         Ok(stage)
     }
 
     /// Parse solution including explanation and patches
-    fn parse_solution<P: AsRef<Path>>(&self, sln_dir: P) -> Result<Option<Solution>, ParseError> {
-        let path = sln_dir.as_ref();
-
-        if !path.exists() {
+    fn parse_solution(&self, sln_dir: &Path) -> Result<Option<Solution>, ParseError> {
+        if !sln_dir.exists() {
             return Ok(None);
         }
 
-        let explanation_path = path.join("explanation.md");
+        let explanation_path = sln_dir.join("explanation.md");
         if !explanation_path.exists() {
             return Ok(None);
         }
@@ -112,7 +103,7 @@ impl CourseParser {
         let mut solution = Solution::new(explanation);
 
         // Process patch files if patches directory exists
-        let patches_dir = path.join("patches");
+        let patches_dir = sln_dir.join("patches");
         if !patches_dir.exists() {
             return Ok(Some(solution));
         }
@@ -131,12 +122,7 @@ impl CourseParser {
     }
 
     /// Parse extensions including their stages
-    fn parse_extensions<P: AsRef<Path>>(
-        &self,
-        path: P,
-    ) -> Result<Option<ExtensionMap>, ParseError> {
-        let path = path.as_ref();
-
+    fn parse_extensions(&self, path: &Path) -> Result<Option<ExtensionMap>, ParseError> {
         let extensions_path = path.join("extensions.yml");
         if !extensions_path.exists() {
             return Ok(None);
@@ -155,7 +141,7 @@ impl CourseParser {
         for (slug, extension) in extensions.iter_mut() {
             let stages_dir = extensions_dir.join(slug);
             if stages_dir.exists() {
-                extension.stages = self.parse_stages(stages_dir)?;
+                extension.stages = self.parse_stages(&stages_dir)?;
             }
         }
 
