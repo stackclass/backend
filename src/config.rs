@@ -35,6 +35,6 @@ pub struct Config {
     pub port: u16,
 
     /// The path to git repositories.
-    #[clap(long, env = "ROOT")]
-    pub root: PathBuf,
+    #[clap(long, env = "REPO_DIR")]
+    pub repo_dir: PathBuf,
 }

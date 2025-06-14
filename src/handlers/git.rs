@@ -38,7 +38,7 @@ pub async fn info_refs(
 ) -> Result<impl IntoResponse> {
     debug!("git::info_refs({}) #{:?}", repo, params);
 
-    let service = GitService::new(&ctx.config.root);
+    let service = GitService::new(&ctx.config.repo_dir);
 
     if !service.exists(&repo).await {
         return Err(ApiError::NotFound);
@@ -71,7 +71,7 @@ pub async fn upload_pack(
 ) -> Result<impl IntoResponse> {
     debug!("git::upload_pack({}) #{:?}", repo, body);
 
-    let service = GitService::new(&ctx.config.root);
+    let service = GitService::new(&ctx.config.repo_dir);
 
     if !service.exists(&repo).await {
         return Err(ApiError::NotFound);
@@ -92,7 +92,7 @@ pub async fn receive_pack(
 ) -> Result<impl IntoResponse> {
     debug!("git::receive_pack({}) #{:?}", repo, body);
 
-    let service = GitService::new(&ctx.config.root);
+    let service = GitService::new(&ctx.config.repo_dir);
 
     if !service.exists(&repo).await {
         return Err(ApiError::NotFound);
@@ -120,7 +120,7 @@ pub async fn text_file(
 ) -> Result<impl IntoResponse> {
     debug!("git::text_file({}, {})", repo, file);
 
-    let service = GitService::new(&ctx.config.root);
+    let service = GitService::new(&ctx.config.repo_dir);
     let content = service.get_text_file(&repo, &file).await?;
 
     Ok(Response::builder()
@@ -135,7 +135,7 @@ pub async fn info_packs(
 ) -> Result<impl IntoResponse> {
     debug!("git::info_packs({})", repo);
 
-    let service = GitService::new(&ctx.config.root);
+    let service = GitService::new(&ctx.config.repo_dir);
     let content = service.get_info_packs(&repo).await?;
 
     Ok(Response::builder()
@@ -150,7 +150,7 @@ pub async fn loose_object(
 ) -> Result<impl IntoResponse> {
     debug!("git::loose_object({}, {}, {})", repo, two, thirtyeight);
 
-    let service = GitService::new(&ctx.config.root);
+    let service = GitService::new(&ctx.config.repo_dir);
     let path = format!("objects/{}/{}", two, thirtyeight);
 
     let content = service.get_loose_object(&repo, &path).await?;
@@ -169,7 +169,7 @@ pub async fn pack_file(
 
     let (_, _, ext) = parse_pack_filename(&file)?;
 
-    let service = GitService::new(&ctx.config.root);
+    let service = GitService::new(&ctx.config.repo_dir);
     let path = format!("objects/pack/{}", file);
     let content = service.get_pack_file(&repo, &path).await?;
 
