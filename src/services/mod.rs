@@ -13,4 +13,5 @@
 // limitations under the License.
 
 pub mod git;
+pub mod storage;
 pub mod workflow;
