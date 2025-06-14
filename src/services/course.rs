@@ -26,8 +26,8 @@ impl CourseService {
     pub async fn sync(ctx: Arc<Context>, url: &str) -> Result<bool> {
         let Config { cache_dir, github_token, .. } = &ctx.config;
 
-        let service = StorageService::new(cache_dir, github_token)?;
-        let dir = service.fetch(url).await?;
+        let storage = StorageService::new(cache_dir, github_token)?;
+        let dir = storage.fetch(url).await?;
 
         let course = schema::parse(&cache_dir.join(dir))?;
         debug!("parsed course: {:?}", course);
