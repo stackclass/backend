@@ -37,4 +37,12 @@ pub struct Config {
     /// The path to git repositories.
     #[clap(long, env = "REPO_DIR")]
     pub repo_dir: PathBuf,
+
+    /// Base directory for storing cached repositories.
+    #[clap(long, env = "CACHE_DIR")]
+    pub cache_dir: PathBuf,
+
+    /// A personal token to use for authentication.
+    #[clap(long, env = "GITHUB_TOKEN")]
+    pub github_token: Option<String>,
 }

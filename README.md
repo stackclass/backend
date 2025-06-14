@@ -37,11 +37,14 @@ Cargo's global binary directory (`~/.cargo/bin/` by default).
 ## Usage
 
 ```text
-Usage: codecraft-server --port <PORT>
+Usage: codecraft-server [OPTIONS] --repo-dir <REPO_DIR> --cache-dir <CACHE_DIR>
 
 Options:
-      --port <PORT>  The Server port [env: PORT=]
-  -h, --help         Print help
+      --port <PORT>                  The Server port [env: PORT] [default: 8080]
+      --repo-dir <REPO_DIR>          The path to git repositories [env: REPO_DIR]
+      --cache-dir <CACHE_DIR>        Base directory for storing cached repositories [env: CACHE_DIR]
+      --github-token <GITHUB_TOKEN>  A personal token to use for authentication [env: GITHUB_TOKEN]
+  -h, --help                         Print help
 ```
 
 ## Development
