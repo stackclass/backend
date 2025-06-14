@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use anyhow::{anyhow, Context, Result};
 use axum::body::{to_bytes, Body};
 use flate2::read::GzDecoder;
 use ghrepo::GHRepo;
@@ -27,8 +26,41 @@ use std::{
     sync::Arc,
 };
 use tar::Archive;
+use thiserror::Error;
 use tokio::fs;
 use tracing::{info, warn};
+
+type Result<T, E = StorageError> = std::result::Result<T, E>;
+
+#[derive(Error, Debug)]
+pub enum StorageError {
+    #[error("Failed to create GitHub client")]
+    GitHubClientCreation(#[source] octocrab::Error),
+
+    #[error("Invalid repository URL")]
+    InvalidRepoUrl(#[source] ghrepo::ParseError),
+
+    #[error("Failed to fetch repository info")]
+    FetchRepoInfo(#[source] octocrab::Error),
+
+    #[error("Invalid reference type")]
+    InvalidReferenceType,
+
+    #[error("No default branch found")]
+    NoDefaultBranch,
+
+    #[error("Failed to download tarball")]
+    DownloadTarball(#[source] octocrab::Error),
+
+    #[error("Failed to read tarball")]
+    ReadTarball(#[source] axum::Error),
+
+    #[error("Failed to create directory")]
+    CreateDir(#[source] std::io::Error),
+
+    #[error("Failed to unpack tarball")]
+    UnpackTarball(#[source] std::io::Error),
+}
 
 // Service for downloading and caching GitHub repositories
 pub struct StorageService {
@@ -38,9 +70,14 @@ pub struct StorageService {
 
 impl StorageService {
     // Creates new StorageService with optional GitHub token
-    pub fn new(cache_dir: &Path, github_token: Option<&str>) -> Result<Self> {
+    pub fn new(cache_dir: &Path, github_token: &Option<String>) -> Result<Self> {
         let octocrab = match github_token {
-            Some(token) => Arc::new(Octocrab::builder().personal_token(token.to_string()).build()?),
+            Some(token) => Arc::new(
+                Octocrab::builder()
+                    .personal_token(token.as_str())
+                    .build()
+                    .map_err(StorageError::GitHubClientCreation)?,
+            ),
             None => octocrab::instance(),
         };
 
@@ -50,20 +87,23 @@ impl StorageService {
     /// Download and store GitHub repository,
     /// and return the path of the cached directory.
     pub async fn fetch(&self, url: &str) -> Result<PathBuf> {
-        let repo = GHRepo::from_url(url)?;
+        let repo = GHRepo::from_url(url).map_err(StorageError::InvalidRepoUrl)?;
         let api = self.octocrab.repos(repo.owner(), repo.name());
 
-        let repository = api.get().await.context("Failed to fetch repo info")?;
+        let repository = api.get().await.map_err(StorageError::FetchRepoInfo)?;
 
         let reference = match repository.default_branch {
             Some(branch) => {
-                let reference = api.get_ref(&Reference::Branch(branch.to_string())).await?;
+                let reference = api
+                    .get_ref(&Reference::Branch(branch.to_string()))
+                    .await
+                    .map_err(StorageError::FetchRepoInfo)?;
                 match reference.object {
                     Object::Commit { sha, .. } => sha,
-                    _ => return Err(anyhow!("Invalid reference type")),
+                    _ => return Err(StorageError::InvalidReferenceType),
                 }
             }
-            None => return Err(anyhow!("No default branch found")),
+            None => return Err(StorageError::NoDefaultBranch),
         };
 
         // Create project directory to store the repository,
@@ -90,17 +130,18 @@ impl StorageService {
             .repos(owner, repo)
             .download_tarball(Commitish::from(reference.to_string()))
             .await
-            .context("Failed to download tarball")?;
+            .map_err(StorageError::DownloadTarball)?;
 
-        let body = Body::from(tarball.collect().await?.to_bytes());
-        let bytes = to_bytes(body, usize::MAX).await.context("Failed to read tarball")?;
+        let collected = tarball.collect().await.map_err(StorageError::DownloadTarball)?;
+        let body = Body::from(collected.to_bytes());
+        let bytes = to_bytes(body, usize::MAX).await.map_err(StorageError::ReadTarball)?;
 
         // Create directory if it doesn't exist
-        fs::create_dir_all(&dir).await?;
+        fs::create_dir_all(&dir).await.map_err(StorageError::CreateDir)?;
 
         let tar = GzDecoder::new(&bytes[..]);
         let mut archive = Archive::new(tar);
-        archive.unpack(dir).context("Failed to unpack tarball")?;
+        archive.unpack(dir).map_err(StorageError::UnpackTarball)?;
 
         Ok(())
     }
