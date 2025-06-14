@@ -24,16 +24,23 @@ use crate::schema::{Course, ExtensionMap, ExtensionSet, Solution, Stage};
 pub enum ParseError {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
+
     #[error("YAML parse error: {0}")]
     Yaml(#[from] serde_yml::Error),
+
     #[error("Invalid course structure: {0}")]
     Structure(String),
+
     #[error("Validation failed: {0}")]
     Validation(String),
 }
 
 /// Parse entire course including stages and extensions
 pub fn parse(path: &Path) -> Result<Course, ParseError> {
+    if !path.exists() {
+        return Err(ParseError::Structure("Course directory not found".into()));
+    }
+
     let mut course = parse_course(path)?;
     course.stages = parse_stages(&path.join("stages"))?;
     course.extensions = parse_extensions(path)?;

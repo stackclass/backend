@@ -16,17 +16,20 @@ use std::sync::Arc;
 
 use tracing::debug;
 
-use crate::{context::Context, errors::Result, schema, services::storage::StorageService};
+use crate::{
+    config::Config, context::Context, errors::Result, schema, services::storage::StorageService,
+};
 
 pub struct CourseService;
 
 impl CourseService {
     pub async fn sync(ctx: Arc<Context>, url: &str) -> Result<bool> {
-        let service = StorageService::new(&ctx.config.cache_dir, &ctx.config.github_token)?;
+        let Config { cache_dir, github_token, .. } = &ctx.config;
+
+        let service = StorageService::new(cache_dir, github_token)?;
         let dir = service.fetch(url).await?;
 
-        let course = schema::parse(&dir)?;
-
+        let course = schema::parse(&cache_dir.join(dir))?;
         debug!("parsed course: {:?}", course);
 
         Ok(true)
