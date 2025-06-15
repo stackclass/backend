@@ -12,23 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::config::Config;
+use crate::{config::Config, database::Database, errors::Result};
 
 /// The core type through which handler functions can access common API state.
-///
-/// This can be accessed by adding a parameter `Extension<Context>` to a handler
-///  function's  parameters.
-///
-/// It may not be a bad idea if you need your API to be more modular (turn routes
-/// on and off, and disable any unused extension objects) but it's really up to a
-/// judgement call.
-#[derive(Clone)]
 pub struct Context {
     pub config: Config,
+    pub database: Database,
 }
 
 impl Context {
-    pub async fn new(config: Config) -> anyhow::Result<Context> {
-        Ok(Context { config })
+    pub async fn new(config: Config) -> Result<Context> {
+        let database = Database::new(&config.database_url).await?;
+        Ok(Context { config, database })
     }
 }

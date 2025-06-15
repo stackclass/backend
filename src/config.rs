@@ -45,4 +45,8 @@ pub struct Config {
     /// A personal token to use for authentication.
     #[clap(long, env)]
     pub github_token: Option<String>,
+
+    /// Database connection URL.
+    #[clap(long, env)]
+    pub database_url: String,
 }

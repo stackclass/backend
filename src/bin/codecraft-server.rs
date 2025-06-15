@@ -16,6 +16,7 @@ use std::sync::Arc;
 
 use clap::Parser;
 use codecraft::{app, config::Config, context::Context, logger};
+use tracing::info;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -29,6 +30,10 @@ async fn main() -> anyhow::Result<()> {
     // This will exit with a help message if something is wrong.
     // Then, initialize the shared context.
     let ctx = Arc::new(Context::new(Config::parse()).await?);
+
+    // Runs database migrations from migrations folder
+    ctx.database.migrate().await?;
+    info!("Database migrations completed!");
 
     // Running the application in a loop.
     app::run(ctx.clone()).await;

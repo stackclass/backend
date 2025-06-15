@@ -62,6 +62,12 @@ pub enum ApiError {
 
     #[error("Schema parse error: {0}")]
     SchemaParserError(#[from] schema::ParseError),
+
+    #[error("Database error: {0}")]
+    DatabaseError(#[from] sqlx::Error),
+
+    #[error("Migrate error: {0}")]
+    MigrateError(#[from] sqlx::migrate::MigrateError),
 }
 
 impl IntoResponse for ApiError {
@@ -79,6 +85,8 @@ impl IntoResponse for ApiError {
             ApiError::GitCommandFailed(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::StorageError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::SchemaParserError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::MigrateError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
         let message = self.to_string();
 
