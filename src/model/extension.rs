@@ -12,17 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod app;
-pub mod config;
-pub mod context;
-pub mod database;
-pub mod errors;
-pub mod handler;
-pub mod logger;
-pub mod model;
-pub mod request;
-pub mod response;
-pub mod routes;
-pub mod schema;
-pub mod service;
-pub mod swagger;
+use chrono::{DateTime, Utc};
+use sqlx::FromRow;
+use uuid::Uuid;
+
+/// Database model representing a course extension
+#[derive(Debug, FromRow)]
+pub struct ExtensionModel {
+    /// Unique internal identifier
+    pub id: Uuid,
+
+    /// Reference to parent course
+    pub course_id: Uuid,
+
+    /// Unique identifier within course
+    pub slug: String,
+
+    /// Extension name
+    pub name: String,
+
+    /// Extension description
+    pub description: String,
+
+    /// Creation timestamp
+    pub created_at: DateTime<Utc>,
+
+    /// Last update timestamp
+    pub updated_at: DateTime<Utc>,
+}
