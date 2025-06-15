@@ -23,8 +23,8 @@ use axum::{
 use uuid::Uuid;
 
 use crate::{
-    context::Context, errors::Result, requests::workflow::CreateWorkflowRequest,
-    responses::workflow::WorkflowResponse, services::workflow::WorkflowService,
+    context::Context, errors::Result, request::workflow::CreateWorkflowRequest,
+    response::workflow::WorkflowResponse, service::workflow::WorkflowService,
 };
 
 // The Workflow Service Handlers.

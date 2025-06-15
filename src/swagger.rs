@@ -15,19 +15,19 @@
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::{handlers, requests, responses};
+use crate::{handler, request, response};
 
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        handlers::workflow::get,
-        handlers::workflow::create,
-        handlers::workflow::delete,
+        handler::workflow::get,
+        handler::workflow::create,
+        handler::workflow::delete,
     ),
     components(
         schemas(
-            requests::workflow::CreateWorkflowRequest,
-            responses::workflow::WorkflowResponse,
+            request::workflow::CreateWorkflowRequest,
+            response::workflow::WorkflowResponse,
         )
     ),
     tags(

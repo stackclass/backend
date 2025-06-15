@@ -15,7 +15,7 @@
 use crate::{
     context::Context,
     errors::{ApiError, Result},
-    services::git::GitService,
+    service::git::GitService,
 };
 use axum::{
     body::Bytes,

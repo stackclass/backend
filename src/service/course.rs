@@ -14,28 +14,24 @@
 
 use std::sync::Arc;
 
-use uuid::Uuid;
+use tracing::debug;
 
 use crate::{
-    context::Context, errors::Result, requests::workflow::CreateWorkflowRequest,
-    responses::workflow::WorkflowResponse,
+    config::Config, context::Context, errors::Result, schema, service::storage::StorageService,
 };
 
-pub struct WorkflowService;
+pub struct CourseService;
 
-impl WorkflowService {
-    pub async fn create(
-        _ctx: Arc<Context>,
-        _req: &CreateWorkflowRequest,
-    ) -> Result<WorkflowResponse> {
-        todo!()
-    }
+impl CourseService {
+    pub async fn sync(ctx: Arc<Context>, url: &str) -> Result<bool> {
+        let Config { cache_dir, github_token, .. } = &ctx.config;
 
-    pub async fn delete(_ctx: Arc<Context>, _id: Uuid) -> Result<u16> {
-        todo!()
-    }
+        let storage = StorageService::new(cache_dir, github_token)?;
+        let dir = storage.fetch(url).await?;
 
-    pub async fn get(_ctx: Arc<Context>, _id: Uuid) -> Result<u16> {
-        todo!()
+        let course = schema::parse(&cache_dir.join(dir))?;
+        debug!("parsed course: {:?}", course);
+
+        Ok(true)
     }
 }

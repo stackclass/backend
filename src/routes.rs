@@ -21,7 +21,7 @@ use axum::{
 
 use crate::{
     context::Context,
-    handlers::{git, workflow},
+    handler::{git, workflow},
 };
 
 pub fn build() -> Router<Arc<Context>> {
