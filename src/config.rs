@@ -31,18 +31,18 @@ use std::path::PathBuf;
 #[derive(Clone, clap::Parser)]
 pub struct Config {
     /// The Server port.
-    #[clap(long, env = "PORT", default_value = "8080")]
+    #[clap(long, env, default_value = "8080")]
     pub port: u16,
 
     /// The path to git repositories.
-    #[clap(long, env = "REPO_DIR")]
+    #[clap(long, env)]
     pub repo_dir: PathBuf,
 
     /// Base directory for storing cached repositories.
-    #[clap(long, env = "CACHE_DIR")]
+    #[clap(long, env)]
     pub cache_dir: PathBuf,
 
     /// A personal token to use for authentication.
-    #[clap(long, env = "GITHUB_TOKEN")]
+    #[clap(long, env)]
     pub github_token: Option<String>,
 }
