@@ -49,7 +49,7 @@ FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 CREATE TABLE stages (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
-    extension_id UUID REFERENCES extensions(id) ON DELETE SET NULL,
+    extension_id UUID REFERENCES extensions(id) ON DELETE CASCADE,
     slug TEXT NOT NULL,
     name TEXT NOT NULL,
     difficulty TEXT NOT NULL CHECK (difficulty IN ('very_easy', 'easy', 'medium', 'hard')),
@@ -86,5 +86,4 @@ CREATE INDEX idx_extensions_slug ON extensions(slug);
 CREATE INDEX idx_solutions_stage ON solutions(stage_id);
 CREATE INDEX idx_stages_course ON stages(course_id);
 CREATE INDEX idx_stages_extension ON stages(extension_id);
-CREATE INDEX idx_stages_extension_slug ON stages(extension_id, slug) WHERE extension_id IS NOT NULL;
 CREATE INDEX idx_stages_slug ON stages(slug);
