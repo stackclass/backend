@@ -16,6 +16,8 @@ use chrono::{DateTime, Utc};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+use crate::schema::Course;
+
 /// Database model representing a course entity
 #[derive(Debug, FromRow)]
 pub struct CourseModel {
@@ -45,4 +47,20 @@ pub struct CourseModel {
 
     /// Last update timestamp
     pub updated_at: DateTime<Utc>,
+}
+
+impl From<Course> for CourseModel {
+    fn from(course: Course) -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            slug: course.slug,
+            name: course.name,
+            short_name: course.short_name,
+            release_status: course.release_status.to_string(),
+            description: course.description,
+            summary: course.summary,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        }
+    }
 }

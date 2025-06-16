@@ -17,6 +17,8 @@ use serde_json::Value;
 use sqlx::FromRow;
 use uuid::Uuid;
 
+use crate::schema::Solution;
+
 /// Represents a solution for a specific stage
 #[derive(Debug, FromRow)]
 pub struct SolutionModel {
@@ -37,4 +39,18 @@ pub struct SolutionModel {
 
     /// Last update timestamp
     pub updated_at: DateTime<Utc>,
+}
+
+impl From<Solution> for SolutionModel {
+    fn from(sol: Solution) -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            // Will be replaced by actual stage_id
+            stage_id: Uuid::new_v4(),
+            explanation: sol.explanation,
+            patches: Some(serde_json::to_value(sol.patches).unwrap()),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        }
+    }
 }

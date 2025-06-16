@@ -16,6 +16,8 @@ use chrono::{DateTime, Utc};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+use crate::schema::Stage;
+
 /// Represents a learning stage within a course or extension
 #[derive(Debug, FromRow)]
 pub struct StageModel {
@@ -49,4 +51,22 @@ pub struct StageModel {
 
     /// Last update timestamp
     pub updated_at: DateTime<Utc>,
+}
+
+impl From<Stage> for StageModel {
+    fn from(stage: Stage) -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            // Will be replaced by actual course_id
+            course_id: Uuid::new_v4(),
+            extension_id: None,
+            slug: stage.slug,
+            name: stage.name,
+            difficulty: stage.difficulty.to_string(),
+            description: stage.description,
+            instruction: stage.instruction,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        }
+    }
 }

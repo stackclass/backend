@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use serde::{Deserialize, Serialize};
-use std::{hash::Hash, str::FromStr};
+use std::{fmt, hash::Hash, str::FromStr};
 
 /// A self-contained coding task with specific objectives and validation.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -65,6 +65,17 @@ pub enum Difficulty {
     Easy,     // 5-10m
     Medium,   // 30m-1h
     Hard,     // >1h
+}
+
+impl fmt::Display for Difficulty {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Difficulty::VeryEasy => write!(f, "very_easy"),
+            Difficulty::Easy => write!(f, "easy"),
+            Difficulty::Medium => write!(f, "medium"),
+            Difficulty::Hard => write!(f, "hard"),
+        }
+    }
 }
 
 /// Represents a solution to a coding problem or task.

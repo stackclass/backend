@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::str::FromStr;
+use std::{fmt, str::FromStr};
 
 use indexmap::IndexMap;
 
@@ -65,6 +65,16 @@ pub enum Status {
     Alpha,
     Beta,
     Live,
+}
+
+impl fmt::Display for Status {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Status::Alpha => write!(f, "alpha"),
+            Status::Beta => write!(f, "beta"),
+            Status::Live => write!(f, "live"),
+        }
+    }
 }
 
 #[cfg(test)]
