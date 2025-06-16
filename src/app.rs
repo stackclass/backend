@@ -14,6 +14,8 @@
 
 use std::{net::SocketAddr, sync::Arc};
 
+use tracing::info;
+
 use crate::{context::Context, routes, swagger};
 
 pub async fn run(ctx: Arc<Context>) {
@@ -24,6 +26,8 @@ pub async fn run(ctx: Arc<Context>) {
 
     // run our app with hyper, and serve it over HTTP
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
+    info!("Server running on {}", addr);
+
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
 
     // Run this server for ... forever!

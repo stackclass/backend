@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use tracing::metadata::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
 pub fn setup() {
-    let filter =
-        EnvFilter::builder().with_default_directive(LevelFilter::DEBUG.into()).from_env_lossy();
+    let filter = EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| EnvFilter::new("debug"))
+        .add_directive("rustls=info".parse().unwrap())
+        .add_directive("sqlx=info".parse().unwrap());
+
     tracing_subscriber::fmt().with_env_filter(filter).init();
 }
