@@ -65,6 +65,15 @@ impl CourseRepository {
         Ok(row)
     }
 
+    /// Find all courses
+    pub(crate) async fn find(database: &Database) -> Result<Vec<CourseModel>> {
+        let rows = sqlx::query_as::<_, CourseModel>(r#"SELECT * FROM courses"#)
+            .fetch_all(database.pool())
+            .await?;
+
+        Ok(rows)
+    }
+
     /// Update a course in the database.
     pub async fn update(db: &Database, course: &CourseModel) -> Result<CourseModel> {
         let row = sqlx::query_as::<_, CourseModel>(

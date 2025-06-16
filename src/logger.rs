@@ -16,9 +16,8 @@ use tracing_subscriber::EnvFilter;
 
 pub fn setup() {
     let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("debug"))
-        .add_directive("rustls=info".parse().unwrap())
-        .add_directive("sqlx=info".parse().unwrap());
+        .unwrap_or_else(|_| EnvFilter::new("info"))
+        .add_directive("codecraft_server=debug".parse().unwrap());
 
     tracing_subscriber::fmt().with_env_filter(filter).init();
 }

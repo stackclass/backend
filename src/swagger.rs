@@ -20,7 +20,7 @@ use crate::{handler, request, response};
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        handler::course::list,
+        handler::course::find,
         handler::course::create,
         handler::course::get,
         handler::course::delete,

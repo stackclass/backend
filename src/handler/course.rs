@@ -16,26 +16,29 @@ use std::sync::Arc;
 
 use axum::{
     extract::{Path, State},
+    http::StatusCode,
+    response::IntoResponse,
     Json,
 };
 
 use crate::{
     context::Context, errors::Result, request::CreateCourseRequest, response::CourseResponse,
+    service::course::CourseService,
 };
 
 // The Course Service Handlers.
 
-/// Get the courses list.
+/// Find all courses.
 #[utoipa::path(
-    operation_id = "get-courses-list",
+    operation_id = "find-all-courses",
     get, path = "/v1/courses",
     responses(
         (status = 200, description = "Courses retrieved successfully"),
     ),
     tag = "Course"
 )]
-pub async fn list(State(_ctx): State<Arc<Context>>) -> Result<Json<Vec<CourseResponse>>> {
-    todo!()
+pub async fn find(State(ctx): State<Arc<Context>>) -> Result<impl IntoResponse> {
+    Ok((StatusCode::OK, Json(CourseService::find(ctx).await?)))
 }
 
 /// Create a course.
@@ -53,10 +56,10 @@ pub async fn list(State(_ctx): State<Arc<Context>>) -> Result<Json<Vec<CourseRes
     tag = "Course"
 )]
 pub async fn create(
-    State(_ctx): State<Arc<Context>>,
-    Json(_req): Json<CreateCourseRequest>,
-) -> Result<Json<CourseResponse>> {
-    todo!()
+    State(ctx): State<Arc<Context>>,
+    Json(req): Json<CreateCourseRequest>,
+) -> Result<impl IntoResponse> {
+    Ok((StatusCode::CREATED, Json(CourseService::create(ctx, &req.repository).await?)))
 }
 
 /// Get a course.
@@ -74,10 +77,10 @@ pub async fn create(
     tag = "Course"
 )]
 pub async fn get(
-    State(_ctx): State<Arc<Context>>,
-    Path(_slug): Path<String>,
-) -> Result<Json<CourseResponse>> {
-    todo!()
+    State(ctx): State<Arc<Context>>,
+    Path(slug): Path<String>,
+) -> Result<impl IntoResponse> {
+    Ok((StatusCode::OK, Json(CourseService::get(ctx, &slug).await?)))
 }
 
 /// Delete a course.
@@ -94,6 +97,11 @@ pub async fn get(
     ),
     tag = "Course"
 )]
-pub async fn delete(State(_ctx): State<Arc<Context>>, Path(_slug): Path<String>) -> Result<()> {
-    todo!()
+pub async fn delete(
+    State(ctx): State<Arc<Context>>,
+    Path(slug): Path<String>,
+) -> Result<impl IntoResponse> {
+    CourseService::delete(ctx, &slug).await?;
+
+    Ok(StatusCode::NO_CONTENT)
 }

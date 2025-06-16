@@ -16,6 +16,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+use crate::model::CourseModel;
+
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct CourseResponse {
     /// Unique human-readable identifier
@@ -41,4 +43,19 @@ pub struct CourseResponse {
 
     /// Last update timestamp
     pub updated_at: DateTime<Utc>,
+}
+
+impl From<CourseModel> for CourseResponse {
+    fn from(model: CourseModel) -> Self {
+        Self {
+            slug: model.slug,
+            name: model.name,
+            short_name: model.short_name,
+            release_status: model.release_status,
+            description: model.description,
+            summary: model.summary,
+            created_at: model.created_at,
+            updated_at: model.updated_at,
+        }
+    }
 }

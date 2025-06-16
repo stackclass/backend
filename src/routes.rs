@@ -26,7 +26,7 @@ use crate::{
 
 pub fn build() -> Router<Arc<Context>> {
     Router::new()
-        .route("/v1/courses", get(course::list))
+        .route("/v1/courses", get(course::find))
         .route("/v1/courses", post(course::create))
         .route("/v1/courses/{slug}", get(course::get))
         .route("/v1/courses/{slug}", delete(course::delete))

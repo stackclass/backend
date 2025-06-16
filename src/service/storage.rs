@@ -28,7 +28,7 @@ use std::{
 use tar::Archive;
 use thiserror::Error;
 use tokio::fs;
-use tracing::{info, warn};
+use tracing::info;
 
 type Result<T, E = StorageError> = std::result::Result<T, E>;
 
@@ -121,7 +121,7 @@ impl StorageService {
         let dir = self.cache_dir.join(dir);
 
         if dir.exists() {
-            warn!("Repository {} (commit {}) already cached", repo, reference);
+            info!("Repository {} (commit {}) already cached", repo, reference);
             return Ok(());
         }
 

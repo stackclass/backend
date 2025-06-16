@@ -14,8 +14,8 @@
         "tags": [
           "Course"
         ],
-        "summary": "Get the courses list.",
-        "operationId": "get-courses-list",
+        "summary": "Find all courses.",
+        "operationId": "find-all-courses",
         "responses": {
           "200": {
             "description": "Courses retrieved successfully"
