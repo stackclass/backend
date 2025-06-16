@@ -13,8 +13,6 @@
 // limitations under the License.
 
 mod course;
-pub mod workflow;
 
 // Re-exports
 pub use course::*;
-pub use workflow::*;

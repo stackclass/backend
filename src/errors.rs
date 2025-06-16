@@ -36,21 +36,6 @@ pub enum ApiError {
     #[error("Bad Request")]
     BadRequest(String),
 
-    #[error("Not Found Workflow: {0}")]
-    NotFoundWorkflow(String),
-
-    #[error("Failed to create workflow: {0}")]
-    FailedToCreateWorkflow(String),
-
-    #[error("Failed to delete workflow: {0}")]
-    FailedToDeleteWorkflow(String),
-
-    #[error("Bad Workflow Request: {0}")]
-    BadWorkflowRequest(String),
-
-    #[error("Invalid path")]
-    InvalidPath,
-
     #[error("HTTP error: {0}")]
     HTTPError(#[from] http::Error),
 
@@ -76,11 +61,6 @@ impl IntoResponse for ApiError {
             ApiError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::NotFound => StatusCode::NOT_FOUND,
             ApiError::BadRequest(_) => StatusCode::BAD_REQUEST,
-            ApiError::NotFoundWorkflow(_) => StatusCode::NOT_FOUND,
-            ApiError::FailedToCreateWorkflow(_) => StatusCode::BAD_REQUEST,
-            ApiError::FailedToDeleteWorkflow(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            ApiError::BadWorkflowRequest(_) => StatusCode::BAD_REQUEST,
-            ApiError::InvalidPath => StatusCode::BAD_REQUEST,
             ApiError::HTTPError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::GitCommandFailed(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::StorageError(_) => StatusCode::INTERNAL_SERVER_ERROR,

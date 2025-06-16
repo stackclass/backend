@@ -14,4 +14,3 @@
 
 pub mod course;
 pub mod git;
-pub mod workflow;

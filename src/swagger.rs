@@ -24,23 +24,15 @@ use crate::{handler, request, response};
         handler::course::create,
         handler::course::get,
         handler::course::delete,
-
-        handler::workflow::get,
-        handler::workflow::create,
-        handler::workflow::delete,
     ),
     components(
         schemas(
             request::CreateCourseRequest,
             response::CourseResponse,
-
-            request::workflow::CreateWorkflowRequest,
-            response::workflow::WorkflowResponse,
         )
     ),
     tags(
         (name = "Course", description = "The Course Service Handlers"),
-        (name = "Workflows", description = "The Workflow Service Handlers"),
     ),
 )]
 pub struct ApiDoc;

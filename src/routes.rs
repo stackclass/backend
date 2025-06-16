@@ -21,7 +21,7 @@ use axum::{
 
 use crate::{
     context::Context,
-    handler::{course, git, workflow},
+    handler::{course, git},
 };
 
 pub fn build() -> Router<Arc<Context>> {
@@ -39,8 +39,4 @@ pub fn build() -> Router<Arc<Context>> {
         .route("/git/{repo}/objects/pack/{file}", get(git::pack_file))
         .route("/git/{repo}/objects/info/{file}", get(git::text_file))
         .route("/git/{repo}/objects/{two}/{thirtyeight}", get(git::loose_object))
-        // workflows
-        .route("/v1/workflows", post(workflow::create))
-        .route("/v1/workflows/{id}", delete(workflow::delete))
-        .route("/v1/workflows/{id}", get(workflow::get))
 }

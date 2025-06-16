@@ -15,4 +15,3 @@
 pub mod course;
 pub mod git;
 pub mod storage;
-pub mod workflow;
