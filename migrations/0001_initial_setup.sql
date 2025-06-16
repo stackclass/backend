@@ -58,7 +58,7 @@ CREATE TABLE stages (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE (course_id, slug),
-    UNIQUE (extension_id, slug) WHERE extension_id IS NOT NULL
+    CONSTRAINT unique_extension_slug UNIQUE (extension_id, slug)
 );
 
 CREATE TRIGGER update_stages_timestamp
@@ -83,7 +83,8 @@ FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 CREATE INDEX idx_courses_slug ON courses(slug);
 CREATE INDEX idx_extensions_course ON extensions(course_id);
 CREATE INDEX idx_extensions_slug ON extensions(slug);
+CREATE INDEX idx_solutions_stage ON solutions(stage_id);
 CREATE INDEX idx_stages_course ON stages(course_id);
 CREATE INDEX idx_stages_extension ON stages(extension_id);
+CREATE INDEX idx_stages_extension_slug ON stages(extension_id, slug) WHERE extension_id IS NOT NULL;
 CREATE INDEX idx_stages_slug ON stages(slug);
-CREATE INDEX idx_solutions_stage ON solutions(stage_id);
