@@ -9,6 +9,126 @@
     "version": "0.6.0"
   },
   "paths": {
+    "/v1/courses": {
+      "get": {
+        "tags": [
+          "Course"
+        ],
+        "summary": "Get the courses list.",
+        "operationId": "get-courses-list",
+        "responses": {
+          "200": {
+            "description": "Courses retrieved successfully"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Course"
+        ],
+        "summary": "Create a course.",
+        "operationId": "create-course",
+        "requestBody": {
+          "description": "Create course request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "repository"
+                ],
+                "properties": {
+                  "repository": {
+                    "type": "string",
+                    "description": "The git repository URL of the course"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Course created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/courses/{slug}": {
+      "get": {
+        "tags": [
+          "Course"
+        ],
+        "summary": "Get a course.",
+        "operationId": "get-course-detail",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "The slug of course",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Course retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Course not found"
+          },
+          "500": {
+            "description": "Failed to get course"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Course"
+        ],
+        "summary": "Delete a course.",
+        "operationId": "delete-course",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "The slug of course",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Course deleted successfully"
+          },
+          "404": {
+            "description": "Course not found"
+          },
+          "500": {
+            "description": "Failed to delete course"
+          }
+        }
+      }
+    },
     "/v1/workflows": {
       "post": {
         "tags": [
@@ -136,6 +256,65 @@
   },
   "components": {
     "schemas": {
+      "CourseResponse": {
+        "type": "object",
+        "required": [
+          "slug",
+          "name",
+          "short_name",
+          "release_status",
+          "description",
+          "summary",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed description"
+          },
+          "name": {
+            "type": "string"
+          },
+          "release_status": {
+            "type": "string",
+            "description": "Release status (alpha/beta/live)"
+          },
+          "short_name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Unique human-readable identifier"
+          },
+          "summary": {
+            "type": "string",
+            "description": "Brief summary"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        }
+      },
+      "CreateCourseRequest": {
+        "type": "object",
+        "required": [
+          "repository"
+        ],
+        "properties": {
+          "repository": {
+            "type": "string",
+            "description": "The git repository URL of the course"
+          }
+        }
+      },
       "CreateWorkflowRequest": {
         "type": "object",
         "required": [
@@ -205,6 +384,10 @@
     }
   },
   "tags": [
+    {
+      "name": "Course",
+      "description": "The Course Service Handlers"
+    },
     {
       "name": "Workflows",
       "description": "The Workflow Service Handlers"

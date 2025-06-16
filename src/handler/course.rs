@@ -1,0 +1,99 @@
+// Copyright (c) wangeguo. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+use std::sync::Arc;
+
+use axum::{
+    extract::{Path, State},
+    Json,
+};
+
+use crate::{
+    context::Context, errors::Result, request::CreateCourseRequest, response::CourseResponse,
+};
+
+// The Course Service Handlers.
+
+/// Get the courses list.
+#[utoipa::path(
+    operation_id = "get-courses-list",
+    get, path = "/v1/courses",
+    responses(
+        (status = 200, description = "Courses retrieved successfully"),
+    ),
+    tag = "Course"
+)]
+pub async fn list(State(_ctx): State<Arc<Context>>) -> Result<Json<Vec<CourseResponse>>> {
+    todo!()
+}
+
+/// Create a course.
+#[utoipa::path(
+    operation_id = "create-course",
+    post, path = "/v1/courses",
+    request_body(
+        content = inline(CreateCourseRequest),
+        description = "Create course request",
+        content_type = "application/json"
+    ),
+    responses(
+        (status = 201, description = "Course created successfully", body = CourseResponse)
+    ),
+    tag = "Course"
+)]
+pub async fn create(
+    State(_ctx): State<Arc<Context>>,
+    Json(_req): Json<CreateCourseRequest>,
+) -> Result<Json<CourseResponse>> {
+    todo!()
+}
+
+/// Get a course.
+#[utoipa::path(
+    operation_id = "get-course-detail",
+    get, path = "/v1/courses/{slug}",
+    params(
+        ("slug" = String, description = "The slug of course"),
+    ),
+    responses(
+        (status = 200, description = "Course retrieved successfully", body = CourseResponse),
+        (status = 404, description = "Course not found"),
+        (status = 500, description = "Failed to get course")
+    ),
+    tag = "Course"
+)]
+pub async fn get(
+    State(_ctx): State<Arc<Context>>,
+    Path(_slug): Path<String>,
+) -> Result<Json<CourseResponse>> {
+    todo!()
+}
+
+/// Delete a course.
+#[utoipa::path(
+     operation_id = "delete-course",
+    delete, path = "/v1/courses/{slug}",
+    params(
+        ("slug" = String, description = "The slug of course"),
+    ),
+    responses(
+        (status = 204, description = "Course deleted successfully"),
+        (status = 404, description = "Course not found"),
+        (status = 500, description = "Failed to delete course")
+    ),
+    tag = "Course"
+)]
+pub async fn delete(State(_ctx): State<Arc<Context>>, Path(_slug): Path<String>) -> Result<()> {
+    todo!()
+}
