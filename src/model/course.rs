@@ -42,11 +42,22 @@ pub struct CourseModel {
     /// Brief summary
     pub summary: String,
 
+    /// The git repository URL of the course
+    pub repository: String,
+
     /// Creation timestamp
     pub created_at: DateTime<Utc>,
 
     /// Last update timestamp
     pub updated_at: DateTime<Utc>,
+}
+
+impl CourseModel {
+    /// Sets the repository field
+    pub fn with_repository(mut self, repository: &str) -> CourseModel {
+        self.repository = repository.to_string();
+        self
+    }
 }
 
 impl From<&Course> for CourseModel {
@@ -59,6 +70,7 @@ impl From<&Course> for CourseModel {
             release_status: course.release_status.to_string(),
             description: course.description.clone(),
             summary: course.summary.clone(),
+            repository: String::new(),
             created_at: Utc::now(),
             updated_at: Utc::now(),
         }

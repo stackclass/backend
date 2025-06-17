@@ -15,7 +15,7 @@
 use std::sync::Arc;
 
 use axum::{
-    routing::{delete, get, post},
+    routing::{delete, get, patch, post},
     Router,
 };
 
@@ -30,6 +30,7 @@ pub fn build() -> Router<Arc<Context>> {
         .route("/v1/courses", post(course::create))
         .route("/v1/courses/{slug}", get(course::get))
         .route("/v1/courses/{slug}", delete(course::delete))
+        .route("/v1/courses/{slug}", patch(course::update))
         // git-http-backend
         .route("/git/{repo}/HEAD", get(git::head))
         .route("/git/{repo}/info/refs", get(git::info_refs))

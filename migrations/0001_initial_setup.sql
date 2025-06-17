@@ -21,6 +21,7 @@ CREATE TABLE courses (
     release_status TEXT NOT NULL CHECK (release_status IN ('alpha', 'beta', 'live')),
     description TEXT NOT NULL,
     summary TEXT NOT NULL,
+    repository TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::sync::Arc;
-
 use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
     Json,
 };
+use std::sync::Arc;
 
 use crate::{
     context::Context, errors::Result, request::CreateCourseRequest, response::CourseResponse,
@@ -102,6 +101,27 @@ pub async fn delete(
     Path(slug): Path<String>,
 ) -> Result<impl IntoResponse> {
     CourseService::delete(ctx, &slug).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
 
+/// Update course from git repository
+#[utoipa::path(
+    operation_id = "update-course",
+    patch, path = "/v1/courses/{slug}",
+    params(
+        ("slug" = String, description = "The slug of course"),
+    ),
+    responses(
+        (status = 204, description = "Course retrieved successfully"),
+        (status = 404, description = "Course not found"),
+        (status = 500, description = "Failed to get course")
+    ),
+    tag = "Course"
+)]
+pub async fn update(
+    State(ctx): State<Arc<Context>>,
+    Path(slug): Path<String>,
+) -> Result<impl IntoResponse> {
+    CourseService::update(ctx, &slug).await?;
     Ok(StatusCode::NO_CONTENT)
 }

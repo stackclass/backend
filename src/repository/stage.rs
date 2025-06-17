@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use sqlx::Error;
+use tracing::debug;
 use uuid::Uuid;
 
 use crate::{
@@ -27,6 +28,8 @@ pub struct StageRepository;
 impl StageRepository {
     /// Create a new stage in the database.
     pub async fn create(tx: &mut Transaction<'_>, stage: &StageModel) -> Result<StageModel> {
+        debug!("Creating stage with slug: {}", stage.slug);
+
         let row = sqlx::query_as::<_, StageModel>(
             r#"
             INSERT INTO stages (
@@ -118,6 +121,8 @@ impl StageRepository {
 
     /// Update a stage in the database.
     pub async fn update(tx: &mut Transaction<'_>, stage: &StageModel) -> Result<StageModel> {
+        debug!("Updating stage with slug: {}", stage.slug);
+
         let row = sqlx::query_as::<_, StageModel>(
             r#"
             UPDATE stages
@@ -151,6 +156,7 @@ impl StageRepository {
 
     /// Delete a stage by its slug.
     pub async fn delete(tx: &mut Transaction<'_>, slug: &str) -> Result<()> {
+        debug!("Deleting stage with slug: {}", slug);
         sqlx::query(r#"DELETE FROM stages WHERE slug = $1"#).bind(slug).execute(&mut **tx).await?;
 
         Ok(())

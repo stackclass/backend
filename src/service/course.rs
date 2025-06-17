@@ -24,7 +24,7 @@ use crate::{
     model::{CourseModel, ExtensionModel, SolutionModel, StageModel},
     repository::{CourseRepository, ExtensionRepository, SolutionRepository, StageRepository},
     response::CourseResponse,
-    schema::{self, Extension, Stage},
+    schema::{self, Course, Stage},
     service::storage::StorageService,
 };
 
@@ -39,11 +39,11 @@ impl CourseService {
     }
 
     /// Create new course from git repository URL
-    pub async fn create(ctx: Arc<Context>, url: &str) -> Result<CourseResponse> {
+    pub async fn create(ctx: Arc<Context>, repository: &str) -> Result<CourseResponse> {
         let Config { cache_dir, github_token, .. } = &ctx.config;
 
         let storage = StorageService::new(cache_dir, github_token)?;
-        let dir = storage.fetch(url).await?;
+        let dir = storage.fetch(repository).await?;
 
         let course = schema::parse(&cache_dir.join(dir))?;
         debug!("Parsed course: {:?}", course.name);
@@ -53,15 +53,18 @@ impl CourseService {
             return Ok(course);
         }
 
-        Self::create_course(ctx, course).await
+        let model = Self::create_course(ctx, course, repository).await?;
+        info!("Successfully created course: {:?}", model.name);
+
+        Ok(model.into())
     }
 
     /// Create course with all related entities in transaction
-    async fn create_course(ctx: Arc<Context>, course: schema::Course) -> Result<CourseResponse> {
+    async fn create_course(ctx: Arc<Context>, course: Course, url: &str) -> Result<CourseModel> {
         let mut tx = ctx.database.pool().begin().await?;
 
         // Persist the course
-        let course_model = CourseModel::from(&course);
+        let course_model = CourseModel::from(&course).with_repository(url);
         let course_model = CourseRepository::create(&mut tx, &course_model).await?;
 
         // Persist stages and their solutions
@@ -84,7 +87,7 @@ impl CourseService {
         // Commits this transaction
         tx.commit().await?;
 
-        Ok(course_model.into())
+        Ok(course_model)
     }
 
     /// Create stage and optionally its solution
@@ -115,33 +118,34 @@ impl CourseService {
     }
 
     /// Update course from git repository URL
-    pub async fn update(ctx: Arc<Context>, url: &str) -> Result<bool> {
+    pub async fn update(ctx: Arc<Context>, slug: &str) -> Result<bool> {
+        let Ok(model) = CourseRepository::get_by_slug(&ctx.database, slug).await else {
+            error!("Course not found: {:?}", slug);
+            return Err(ApiError::NotFound);
+        };
+
         let Config { cache_dir, github_token, .. } = &ctx.config;
 
         let storage = StorageService::new(cache_dir, github_token)?;
-        let dir = storage.fetch(url).await?;
+        let dir = storage.fetch(&model.repository).await?;
 
         let course = schema::parse(&cache_dir.join(dir))?;
         debug!("Parsed course: {:?}", course.name);
 
-        let result = CourseRepository::get_by_slug(&ctx.database, &course.slug).await;
-        if let Err(err) = result {
-            error!("Course not found: {:?}", course.slug);
-            return Err(ApiError::DatabaseError(err));
-        }
-
         Self::update_course(ctx, course).await?;
+        info!("Successfully updated course: {:?}", model.name);
+
         Ok(true)
     }
 
     /// Update course and related entities with cleanup
-    async fn update_course(ctx: Arc<Context>, course: schema::Course) -> Result<CourseResponse> {
+    async fn update_course(ctx: Arc<Context>, course: Course) -> Result<()> {
         let mut tx = ctx.database.pool().begin().await?;
 
         // Fetch existing stages and extensions
-        let course_slug = &course.slug;
-        let existing_stages = StageRepository::find_by_course(&ctx.database, course_slug).await?;
-        let existing_exts = ExtensionRepository::find_by_course(&ctx.database, course_slug).await?;
+        let slug = &course.slug;
+        let existing_stages = StageRepository::find_by_course(&ctx.database, slug).await?;
+        let existing_exts = ExtensionRepository::find_by_course(&ctx.database, slug).await?;
 
         // Update the course
         let course_model = CourseModel::from(&course);
@@ -151,36 +155,46 @@ impl CourseService {
         let mut current_stage_slugs = HashSet::new();
         let mut current_extension_slugs = HashSet::new();
 
-        for (stage_slug, stage) in &course.stages {
+        // Update and track base stages
+        for stage in course.stages.values() {
             Self::update_stage(&mut tx, stage, course_model.id, None).await?;
-            current_stage_slugs.insert(stage_slug.clone());
+            current_stage_slugs.insert(stage.slug.clone());
         }
 
-        // Upsert extensions and their stages
+        // Update and track extension stages
         if let Some(extensions) = &course.extensions {
-            for (ext_slug, ext) in extensions {
-                let current_ext_stage_slugs =
-                    Self::update_extension(&mut tx, ext, course_model.id).await?;
-                current_extension_slugs.insert(ext_slug.clone());
+            for ext in extensions.values() {
+                let ext_model = ExtensionModel::from(ext.clone()).with_course(course_model.id);
+                let ext_model = ExtensionRepository::upsert(&mut tx, &ext_model).await?;
 
-                // Cleanup orphaned extension stages
-                let existing_ext_stages =
-                    StageRepository::find_by_extension(&ctx.database, &ext.slug).await?;
-                for existing_stage in existing_ext_stages {
-                    if !current_ext_stage_slugs.contains(&existing_stage.slug) {
-                        StageRepository::delete(&mut tx, &existing_stage.slug).await?;
-                    }
+                // Upsert extension stages and their solutions
+                for stage in ext.stages.values() {
+                    Self::update_stage(&mut tx, stage, course_model.id, Some(ext_model.id)).await?;
+                    current_stage_slugs.insert(stage.slug.clone());
                 }
+
+                current_extension_slugs.insert(ext.slug.clone());
             }
         }
 
-        // Cleanup orphaned stages and extensions
+        // Cleanup orphaned stages (both base and extension stages)
+        debug!(
+            "Existing stage slugs: {:?}, Current stage slugs: {:?}",
+            existing_stages.iter().map(|s| &s.slug).collect::<Vec<_>>(),
+            current_stage_slugs
+        );
         for existing_stage in existing_stages {
             if !current_stage_slugs.contains(&existing_stage.slug) {
                 StageRepository::delete(&mut tx, &existing_stage.slug).await?;
             }
         }
 
+        // Cleanup orphaned extensions
+        debug!(
+            "Existing extension slugs: {:?}, Current extension slugs: {:?}",
+            existing_exts.iter().map(|e| &e.slug).collect::<Vec<_>>(),
+            current_extension_slugs
+        );
         for existing_extension in existing_exts {
             if !current_extension_slugs.contains(&existing_extension.slug) {
                 ExtensionRepository::delete(&mut tx, &existing_extension.slug).await?;
@@ -190,26 +204,7 @@ impl CourseService {
         // Commits this transaction
         tx.commit().await?;
 
-        Ok(course_model.into())
-    }
-
-    /// Update or insert extension and its stages
-    async fn update_extension(
-        tx: &mut Transaction<'_>,
-        ext: &Extension,
-        course_id: Uuid,
-    ) -> Result<HashSet<String>> {
-        let ext_model = ExtensionModel::from(ext.clone()).with_course(course_id);
-        let ext_model = ExtensionRepository::upsert(tx, &ext_model).await?;
-
-        // Upsert extension stages and their solutions
-        let mut current_ext_stage_slugs = HashSet::new();
-        for (stage_slug, stage) in &ext.stages {
-            Self::update_stage(tx, stage, course_id, Some(ext_model.id)).await?;
-            current_ext_stage_slugs.insert(stage_slug.clone());
-        }
-
-        Ok(current_ext_stage_slugs)
+        Ok(())
     }
 
     /// Update stage and handle solution changes

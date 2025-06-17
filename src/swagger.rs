@@ -24,6 +24,7 @@ use crate::{handler, request, response};
         handler::course::create,
         handler::course::get,
         handler::course::delete,
+        handler::course::update,
     ),
     components(
         schemas(

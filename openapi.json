@@ -127,6 +127,35 @@
             "description": "Failed to delete course"
           }
         }
+      },
+      "patch": {
+        "tags": [
+          "Course"
+        ],
+        "summary": "Update course from git repository",
+        "operationId": "update-course",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "The slug of course",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Course retrieved successfully"
+          },
+          "404": {
+            "description": "Course not found"
+          },
+          "500": {
+            "description": "Failed to get course"
+          }
+        }
       }
     }
   },

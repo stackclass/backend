@@ -29,8 +29,8 @@ impl CourseRepository {
         let row = sqlx::query_as::<_, CourseModel>(
             r#"
             INSERT INTO courses (
-                id, slug, name, short_name, release_status, description, summary, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                id, slug, name, short_name, release_status, description, summary, repository, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING *
             "#,
         )
@@ -41,6 +41,7 @@ impl CourseRepository {
         .bind(&course.release_status)
         .bind(&course.description)
         .bind(&course.summary)
+        .bind(&course.repository)
         .bind(course.created_at)
         .bind(course.updated_at)
         .fetch_one(&mut **tx)
