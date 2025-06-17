@@ -145,6 +145,9 @@ impl CourseService {
             if let Some(sol) = &stage.solution {
                 let solution_model = SolutionModel::from(sol.clone()).with_stage(stage_model.id);
                 SolutionRepository::upsert(&mut tx, stage_slug, &solution_model).await?;
+            } else {
+                // Delete solution if it exists but stage no longer has one
+                SolutionRepository::delete(&mut tx, stage_slug).await?;
             }
         }
 
