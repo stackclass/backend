@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use sqlx::Error;
 use uuid::Uuid;
 
 use crate::{
     database::{Database, Transaction},
-    errors::Result,
     model::StageModel,
+    repository::Result,
 };
 
 /// Repository for managing stages in the database.
@@ -116,7 +117,7 @@ impl StageRepository {
     }
 
     /// Update a stage in the database.
-    pub async fn update(db: &Database, stage: &StageModel) -> Result<StageModel> {
+    pub async fn update(tx: &mut Transaction<'_>, stage: &StageModel) -> Result<StageModel> {
         let row = sqlx::query_as::<_, StageModel>(
             r#"
             UPDATE stages
@@ -133,15 +134,24 @@ impl StageRepository {
         .bind(&stage.description)
         .bind(&stage.instruction)
         .bind(stage.updated_at)
-        .fetch_one(db.pool())
+        .fetch_one(&mut **tx)
         .await?;
 
         Ok(row)
     }
 
+    /// Updates an existing record or inserts a new one if it doesn't exist.
+    pub async fn upsert(tx: &mut Transaction<'_>, stage: &StageModel) -> Result<StageModel> {
+        match Self::update(tx, stage).await {
+            Ok(stage) => Ok(stage),
+            Err(Error::RowNotFound) => Self::create(tx, stage).await,
+            Err(e) => Err(e),
+        }
+    }
+
     /// Delete a stage by its slug.
-    pub async fn delete(db: &Database, slug: &str) -> Result<()> {
-        sqlx::query(r#"DELETE FROM stages WHERE slug = $1"#).bind(slug).execute(db.pool()).await?;
+    pub async fn delete(tx: &mut Transaction<'_>, slug: &str) -> Result<()> {
+        sqlx::query(r#"DELETE FROM stages WHERE slug = $1"#).bind(slug).execute(&mut **tx).await?;
 
         Ok(())
     }

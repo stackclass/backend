@@ -25,7 +25,13 @@ pub struct Database {
 impl Database {
     /// Creates new database connection pool
     pub async fn new(database_url: &str) -> Result<Self> {
-        Ok(Self { pool: PoolOptions::new().max_connections(50).connect(database_url).await? })
+        Ok(Self {
+            pool: PoolOptions::new()
+                .test_before_acquire(true)
+                .max_connections(50)
+                .connect(database_url)
+                .await?,
+        })
     }
 
     /// Returns reference to the connection pool

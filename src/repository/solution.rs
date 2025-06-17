@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use sqlx::Error;
 use uuid::Uuid;
 
 use crate::{
     database::{Database, Transaction},
-    errors::Result,
     model::SolutionModel,
+    repository::Result,
 };
 
 /// Repository for managing solutions in the database.
@@ -74,7 +75,7 @@ impl SolutionRepository {
 
     /// Update a solution by its stage slug.
     pub async fn update(
-        db: &Database,
+        tx: &mut Transaction<'_>,
         stage_slug: &str,
         solution: &SolutionModel,
     ) -> Result<SolutionModel> {
@@ -91,14 +92,27 @@ impl SolutionRepository {
         .bind(&solution.explanation)
         .bind(&solution.patches)
         .bind(solution.updated_at)
-        .fetch_one(db.pool())
+        .fetch_one(&mut **tx)
         .await?;
 
         Ok(row)
     }
 
+    /// Updates an existing record or inserts a new one if it doesn't exist.
+    pub async fn upsert(
+        tx: &mut Transaction<'_>,
+        stage_slug: &str,
+        solution: &SolutionModel,
+    ) -> Result<SolutionModel> {
+        match Self::update(tx, stage_slug, solution).await {
+            Ok(solution) => Ok(solution),
+            Err(Error::RowNotFound) => Self::create(tx, solution).await,
+            Err(e) => Err(e),
+        }
+    }
+
     /// Delete a solution by its stage slug.
-    pub async fn delete(db: &Database, stage_slug: &str) -> Result<()> {
+    pub async fn delete(tx: &mut Transaction<'_>, stage_slug: &str) -> Result<()> {
         sqlx::query(
             r#"
             DELETE FROM solutions
@@ -107,7 +121,7 @@ impl SolutionRepository {
             "#,
         )
         .bind(stage_slug)
-        .execute(db.pool())
+        .execute(&mut **tx)
         .await?;
 
         Ok(())

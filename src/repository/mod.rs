@@ -22,3 +22,5 @@ pub use course::*;
 pub use extension::*;
 pub use solution::*;
 pub use stage::*;
+
+pub type Result<T, E = sqlx::Error> = std::result::Result<T, E>;

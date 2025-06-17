@@ -16,8 +16,8 @@ use uuid::Uuid;
 
 use crate::{
     database::{Database, Transaction},
-    errors::Result,
     model::CourseModel,
+    repository::Result,
 };
 
 /// Repository for managing courses in the database.
@@ -79,7 +79,7 @@ impl CourseRepository {
     }
 
     /// Update a course in the database.
-    pub async fn update(db: &Database, course: &CourseModel) -> Result<CourseModel> {
+    pub async fn update(tx: &mut Transaction<'_>, course: &CourseModel) -> Result<CourseModel> {
         let row = sqlx::query_as::<_, CourseModel>(
             r#"
             UPDATE courses
@@ -95,7 +95,7 @@ impl CourseRepository {
         .bind(&course.description)
         .bind(&course.summary)
         .bind(course.updated_at)
-        .fetch_one(db.pool())
+        .fetch_one(&mut **tx)
         .await?;
 
         Ok(row)

@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::sync::Arc;
-use tracing::{debug, info};
+use std::{collections::HashSet, sync::Arc};
+use tracing::{debug, error, info};
 
 use crate::{
     config::Config,
     context::Context,
-    errors::Result,
+    errors::{ApiError, Result},
     model::{CourseModel, ExtensionModel, SolutionModel, StageModel},
     repository::{CourseRepository, ExtensionRepository, SolutionRepository, StageRepository},
     response::CourseResponse,
@@ -88,6 +88,8 @@ impl CourseService {
                 }
             }
         }
+
+        // Commits this transaction
         tx.commit().await?;
 
         Ok(course_model.into())
@@ -107,13 +109,102 @@ impl CourseService {
         let course = schema::parse(&cache_dir.join(dir))?;
         debug!("Parsed course: {:?}", course.name);
 
-        let model = CourseModel::from(&course);
-        CourseRepository::update(&ctx.database, &model).await?;
+        let result = CourseRepository::get_by_slug(&ctx.database, &course.slug).await;
+        if let Err(err) = result {
+            error!("Course not found: {:?}", course.slug);
+            return Err(ApiError::DatabaseError(err));
+        }
 
+        Self::update_course(ctx, course).await?;
         Ok(true)
     }
 
+    async fn update_course(ctx: Arc<Context>, course: schema::Course) -> Result<CourseResponse> {
+        let mut tx = ctx.database.pool().begin().await?;
+
+        // Fetch existing stages and extensions
+        let course_slug = &course.slug;
+        let existing_stages = StageRepository::find_by_course(&ctx.database, course_slug).await?;
+        let existing_exts = ExtensionRepository::find_by_course(&ctx.database, course_slug).await?;
+
+        // Update the course
+        let course_model = CourseModel::from(&course);
+        let course_model = CourseRepository::update(&mut tx, &course_model).await?;
+
+        // Track current slugs for cleanup
+        let mut current_stage_slugs = HashSet::new();
+        let mut current_extension_slugs = HashSet::new();
+
+        // Upsert stages and their solutions
+        for (stage_slug, stage) in &course.stages {
+            current_stage_slugs.insert(stage_slug.clone());
+            let stage_model = StageModel::from(stage.clone()).with_course(course_model.id);
+            let stage_model = StageRepository::upsert(&mut tx, &stage_model).await?;
+
+            // Upsert solutions
+            if let Some(sol) = &stage.solution {
+                let solution_model = SolutionModel::from(sol.clone()).with_stage(stage_model.id);
+                SolutionRepository::upsert(&mut tx, stage_slug, &solution_model).await?;
+            }
+        }
+
+        // Upsert extensions and their stages
+        if let Some(extensions) = &course.extensions {
+            for (ext_slug, ext) in extensions {
+                current_extension_slugs.insert(ext_slug.clone());
+                let ext_model = ExtensionModel::from(ext.clone()).with_course(course_model.id);
+                let ext_model = ExtensionRepository::upsert(&mut tx, &ext_model).await?;
+
+                // Upsert extension stages
+                let mut current_ext_stage_slugs = HashSet::new();
+                for (stage_slug, stage) in &ext.stages {
+                    current_ext_stage_slugs.insert(stage_slug.clone());
+                    let stage_model = StageModel::from(stage.clone())
+                        .with_course(course_model.id)
+                        .with_extension(ext_model.id);
+                    let stage_model = StageRepository::upsert(&mut tx, &stage_model).await?;
+
+                    // Upsert solutions
+                    if let Some(sol) = &stage.solution {
+                        let sol_model = SolutionModel::from(sol.clone()).with_stage(stage_model.id);
+                        SolutionRepository::upsert(&mut tx, stage_slug, &sol_model).await?;
+                    } else {
+                        // Delete solution if it exists but stage no longer has one
+                        SolutionRepository::delete(&mut tx, stage_slug).await?;
+                    }
+                }
+
+                // Cleanup orphaned extension stages
+                let existing_ext_stages =
+                    StageRepository::find_by_extension(&ctx.database, &ext.slug).await?;
+                for existing_stage in existing_ext_stages {
+                    if !current_ext_stage_slugs.contains(&existing_stage.slug) {
+                        StageRepository::delete(&mut tx, &existing_stage.slug).await?;
+                    }
+                }
+            }
+        }
+
+        // Cleanup orphaned stages and extensions
+        for existing_stage in existing_stages {
+            if !current_stage_slugs.contains(&existing_stage.slug) {
+                StageRepository::delete(&mut tx, &existing_stage.slug).await?;
+            }
+        }
+
+        for existing_extension in existing_exts {
+            if !current_extension_slugs.contains(&existing_extension.slug) {
+                ExtensionRepository::delete(&mut tx, &existing_extension.slug).await?;
+            }
+        }
+
+        // Commits this transaction
+        tx.commit().await?;
+
+        Ok(course_model.into())
+    }
+
     pub(crate) async fn delete(ctx: Arc<Context>, slug: &str) -> Result<()> {
-        CourseRepository::delete(&ctx.database, slug).await
+        CourseRepository::delete(&ctx.database, slug).await.map_err(ApiError::DatabaseError)
     }
 }

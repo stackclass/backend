@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use sqlx::Error;
 use uuid::Uuid;
 
 use crate::{
     database::{Database, Transaction},
-    errors::Result,
     model::ExtensionModel,
+    repository::Result,
 };
 
 /// Repository for managing extensions in the database.
@@ -86,7 +87,10 @@ impl ExtensionRepository {
     }
 
     /// Update an extension in the database.
-    pub async fn update(db: &Database, extension: &ExtensionModel) -> Result<ExtensionModel> {
+    pub async fn update(
+        tx: &mut Transaction<'_>,
+        extension: &ExtensionModel,
+    ) -> Result<ExtensionModel> {
         let row = sqlx::query_as::<_, ExtensionModel>(
             r#"
             UPDATE extensions
@@ -100,17 +104,29 @@ impl ExtensionRepository {
         .bind(&extension.name)
         .bind(&extension.description)
         .bind(extension.updated_at)
-        .fetch_one(db.pool())
+        .fetch_one(&mut **tx)
         .await?;
 
         Ok(row)
     }
 
+    /// Updates an existing record or inserts a new one if it doesn't exist.
+    pub async fn upsert(
+        tx: &mut Transaction<'_>,
+        extension: &ExtensionModel,
+    ) -> Result<ExtensionModel> {
+        match Self::update(tx, extension).await {
+            Ok(extension) => Ok(extension),
+            Err(Error::RowNotFound) => Self::create(tx, extension).await,
+            Err(e) => Err(e),
+        }
+    }
+
     /// Delete an extension by its slug.
-    pub async fn delete(db: &Database, slug: &str) -> Result<()> {
+    pub async fn delete(tx: &mut Transaction<'_>, slug: &str) -> Result<()> {
         sqlx::query(r#"DELETE FROM extensions WHERE slug = $1"#)
             .bind(slug)
-            .execute(db.pool())
+            .execute(&mut **tx)
             .await?;
 
         Ok(())
