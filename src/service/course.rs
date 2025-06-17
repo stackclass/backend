@@ -28,17 +28,17 @@ use crate::{
     service::storage::StorageService,
 };
 
-// Service for managing courses and related entities
+/// Service for managing courses and related entities
 pub struct CourseService;
 
 impl CourseService {
-    // Fetch all courses from repository
+    /// Fetch all courses from repository
     pub async fn find(ctx: Arc<Context>) -> Result<Vec<CourseResponse>> {
         let courses = CourseRepository::find(&ctx.database).await?;
         Ok(courses.into_iter().map(Into::into).collect())
     }
 
-    // Create new course from git repository URL
+    /// Create new course from git repository URL
     pub async fn create(ctx: Arc<Context>, url: &str) -> Result<CourseResponse> {
         let Config { cache_dir, github_token, .. } = &ctx.config;
 
@@ -56,7 +56,7 @@ impl CourseService {
         Self::create_course(ctx, course).await
     }
 
-    // Create course with all related entities in transaction
+    /// Create course with all related entities in transaction
     async fn create_course(ctx: Arc<Context>, course: schema::Course) -> Result<CourseResponse> {
         let mut tx = ctx.database.pool().begin().await?;
 
@@ -87,7 +87,7 @@ impl CourseService {
         Ok(course_model.into())
     }
 
-    // Create stage and optionally its solution
+    /// Create stage and optionally its solution
     async fn create_stage(
         tx: &mut Transaction<'_>,
         stage: &Stage,
@@ -108,13 +108,13 @@ impl CourseService {
         Ok(())
     }
 
-    // Get course by slug
+    /// Get course by slug
     pub async fn get(ctx: Arc<Context>, slug: &str) -> Result<CourseResponse> {
         let course = CourseRepository::get_by_slug(&ctx.database, slug).await?;
         Ok(course.into())
     }
 
-    // Update course from git repository URL
+    /// Update course from git repository URL
     pub async fn update(ctx: Arc<Context>, url: &str) -> Result<bool> {
         let Config { cache_dir, github_token, .. } = &ctx.config;
 
@@ -134,7 +134,7 @@ impl CourseService {
         Ok(true)
     }
 
-    // Update course and related entities with cleanup
+    /// Update course and related entities with cleanup
     async fn update_course(ctx: Arc<Context>, course: schema::Course) -> Result<CourseResponse> {
         let mut tx = ctx.database.pool().begin().await?;
 
@@ -193,7 +193,7 @@ impl CourseService {
         Ok(course_model.into())
     }
 
-    // Update or insert extension and its stages
+    /// Update or insert extension and its stages
     async fn update_extension(
         tx: &mut Transaction<'_>,
         ext: &Extension,
@@ -212,7 +212,7 @@ impl CourseService {
         Ok(current_ext_stage_slugs)
     }
 
-    // Update stage and handle solution changes
+    /// Update stage and handle solution changes
     async fn update_stage(
         tx: &mut Transaction<'_>,
         stage: &Stage,
@@ -237,7 +237,7 @@ impl CourseService {
         Ok(())
     }
 
-    // Delete course by slug
+    /// Delete course by slug
     pub(crate) async fn delete(ctx: Arc<Context>, slug: &str) -> Result<()> {
         CourseRepository::delete(&ctx.database, slug).await.map_err(ApiError::DatabaseError)
     }
