@@ -28,7 +28,7 @@ use std::{
 use tar::Archive;
 use thiserror::Error;
 use tokio::fs;
-use tracing::info;
+use tracing::{debug, info};
 
 type Result<T, E = StorageError> = std::result::Result<T, E>;
 
@@ -90,6 +90,7 @@ impl StorageService {
         let repo = GHRepo::from_url(url).map_err(StorageError::InvalidRepoUrl)?;
         let api = self.octocrab.repos(repo.owner(), repo.name());
 
+        info!("Fetching the repository info {}", repo);
         let repository = api.get().await.map_err(StorageError::FetchRepoInfo)?;
 
         let reference = match repository.default_branch {
@@ -106,25 +107,22 @@ impl StorageService {
             None => return Err(StorageError::NoDefaultBranch),
         };
 
-        // Create project directory to store the repository,
-        // To avoid conflicts, create a subfolder with repository name + latest commit hash
-        let dir = PathBuf::from(format!("{}/{}", repo, reference));
-
-        info!("Downloading repository {} to {:?}", repo, dir);
-        self.download(repo.owner(), repo.name(), &reference, &dir).await?;
+        info!("Downloading repository {}", repo);
+        let dir = self.download(repo.owner(), repo.name(), &reference).await?;
 
         Ok(dir)
     }
 
     // Downloads and extracts GitHub repository tarball to cache directory
-    async fn download(&self, owner: &str, repo: &str, reference: &str, dir: &Path) -> Result<()> {
-        let dir = self.cache_dir.join(dir);
+    async fn download(&self, owner: &str, repo: &str, reference: &str) -> Result<PathBuf> {
+        let dir = PathBuf::from(format!("{}-{}-{}", owner, repo, &reference[..7]));
 
-        if dir.exists() {
+        if self.cache_dir.join(&dir).exists() {
             info!("Repository {} (commit {}) already cached", repo, reference);
-            return Ok(());
+            return Ok(dir);
         }
 
+        debug!("Downloading tarball for {}/{} (commit {})", owner, repo, reference);
         let tarball = self
             .octocrab
             .repos(owner, repo)
@@ -132,16 +130,31 @@ impl StorageService {
             .await
             .map_err(StorageError::DownloadTarball)?;
 
+        debug!("Collecting tarball data...");
         let collected = tarball.collect().await.map_err(StorageError::DownloadTarball)?;
         let body = Body::from(collected.to_bytes());
+
         let bytes = to_bytes(body, usize::MAX).await.map_err(StorageError::ReadTarball)?;
+        debug!("Tarball size: {} bytes", bytes.len());
+        debug!("Tarball header (hex): {:02x?}", &bytes[..32.min(bytes.len())]);
 
-        // Create directory if it doesn't exist
-        fs::create_dir_all(&dir).await.map_err(StorageError::CreateDir)?;
+        // Create caches directory if it doesn't exist
+        fs::create_dir_all(&self.cache_dir).await.map_err(StorageError::CreateDir)?;
 
-        let tar = GzDecoder::new(&bytes[..]);
+        // Unpack the tarball
+        self.unarchive(&bytes)?;
+
+        debug!("Successfully unpacked tarball to {:?}", dir);
+        Ok(dir)
+    }
+
+    /// Unarchive the tarball data to the caches directory
+    fn unarchive(&self, bytes: &[u8]) -> Result<()> {
+        debug!("Unpacking tarball...");
+
+        let tar = GzDecoder::new(bytes);
         let mut archive = Archive::new(tar);
-        archive.unpack(dir).map_err(StorageError::UnpackTarball)?;
+        archive.unpack(&self.cache_dir).map_err(StorageError::UnpackTarball)?;
 
         Ok(())
     }
