@@ -49,16 +49,16 @@ pub struct CourseModel {
     pub updated_at: DateTime<Utc>,
 }
 
-impl From<Course> for CourseModel {
-    fn from(course: Course) -> Self {
+impl From<&Course> for CourseModel {
+    fn from(course: &Course) -> Self {
         Self {
             id: Uuid::new_v4(),
-            slug: course.slug,
-            name: course.name,
-            short_name: course.short_name,
+            slug: course.slug.clone(),
+            name: course.name.clone(),
+            short_name: course.short_name.clone(),
             release_status: course.release_status.to_string(),
-            description: course.description,
-            summary: course.summary,
+            description: course.description.clone(),
+            summary: course.summary.clone(),
             created_at: Utc::now(),
             updated_at: Utc::now(),
         }

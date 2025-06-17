@@ -14,14 +14,18 @@
 
 use uuid::Uuid;
 
-use crate::{database::Database, errors::Result, model::ExtensionModel};
+use crate::{
+    database::{Database, Transaction},
+    errors::Result,
+    model::ExtensionModel,
+};
 
 /// Repository for managing extensions in the database.
 pub struct ExtensionRepository;
 
 impl ExtensionRepository {
     /// Create a new extension in the database.
-    pub async fn create(db: &Database, extension: &ExtensionModel) -> Result<ExtensionModel> {
+    pub async fn create(tx: &mut Transaction<'_>, ext: &ExtensionModel) -> Result<ExtensionModel> {
         let row = sqlx::query_as::<_, ExtensionModel>(
             r#"
             INSERT INTO extensions (
@@ -30,14 +34,14 @@ impl ExtensionRepository {
             RETURNING *
             "#,
         )
-        .bind(extension.id)
-        .bind(extension.course_id)
-        .bind(&extension.slug)
-        .bind(&extension.name)
-        .bind(&extension.description)
-        .bind(extension.created_at)
-        .bind(extension.updated_at)
-        .fetch_one(db.pool())
+        .bind(ext.id)
+        .bind(ext.course_id)
+        .bind(&ext.slug)
+        .bind(&ext.name)
+        .bind(&ext.description)
+        .bind(ext.created_at)
+        .bind(ext.updated_at)
+        .fetch_one(&mut **tx)
         .await?;
 
         Ok(row)

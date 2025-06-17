@@ -14,14 +14,18 @@
 
 use uuid::Uuid;
 
-use crate::{database::Database, errors::Result, model::SolutionModel};
+use crate::{
+    database::{Database, Transaction},
+    errors::Result,
+    model::SolutionModel,
+};
 
 /// Repository for managing solutions in the database.
 pub struct SolutionRepository;
 
 impl SolutionRepository {
     /// Create a new solution in the database.
-    pub async fn create(db: &Database, solution: &SolutionModel) -> Result<SolutionModel> {
+    pub async fn create(tx: &mut Transaction<'_>, sol: &SolutionModel) -> Result<SolutionModel> {
         let row = sqlx::query_as::<_, SolutionModel>(
             r#"
             INSERT INTO solutions (
@@ -30,13 +34,13 @@ impl SolutionRepository {
             RETURNING *
             "#,
         )
-        .bind(solution.id)
-        .bind(solution.stage_id)
-        .bind(&solution.explanation)
-        .bind(&solution.patches)
-        .bind(solution.created_at)
-        .bind(solution.updated_at)
-        .fetch_one(db.pool())
+        .bind(sol.id)
+        .bind(sol.stage_id)
+        .bind(&sol.explanation)
+        .bind(&sol.patches)
+        .bind(sol.created_at)
+        .bind(sol.updated_at)
+        .fetch_one(&mut **tx)
         .await?;
 
         Ok(row)

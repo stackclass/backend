@@ -14,14 +14,18 @@
 
 use uuid::Uuid;
 
-use crate::{database::Database, errors::Result, model::StageModel};
+use crate::{
+    database::{Database, Transaction},
+    errors::Result,
+    model::StageModel,
+};
 
 /// Repository for managing stages in the database.
 pub struct StageRepository;
 
 impl StageRepository {
     /// Create a new stage in the database.
-    pub async fn create(db: &Database, stage: &StageModel) -> Result<StageModel> {
+    pub async fn create(tx: &mut Transaction<'_>, stage: &StageModel) -> Result<StageModel> {
         let row = sqlx::query_as::<_, StageModel>(
             r#"
             INSERT INTO stages (
@@ -40,7 +44,7 @@ impl StageRepository {
         .bind(&stage.instruction)
         .bind(stage.created_at)
         .bind(stage.updated_at)
-        .fetch_one(db.pool())
+        .fetch_one(&mut **tx)
         .await?;
 
         Ok(row)

@@ -41,6 +41,14 @@ pub struct SolutionModel {
     pub updated_at: DateTime<Utc>,
 }
 
+impl SolutionModel {
+    /// Sets the stage_id field
+    pub fn with_stage(mut self, id: Uuid) -> SolutionModel {
+        self.stage_id = id;
+        self
+    }
+}
+
 impl From<Solution> for SolutionModel {
     fn from(sol: Solution) -> Self {
         Self {

@@ -53,12 +53,27 @@ pub struct StageModel {
     pub updated_at: DateTime<Utc>,
 }
 
+impl StageModel {
+    /// Sets the course_id field
+    pub fn with_course(mut self, id: Uuid) -> StageModel {
+        self.course_id = id;
+        self
+    }
+
+    /// Sets the extension_id field
+    pub fn with_extension(mut self, id: Uuid) -> StageModel {
+        self.extension_id = Some(id);
+        self
+    }
+}
+
 impl From<Stage> for StageModel {
     fn from(stage: Stage) -> Self {
         Self {
             id: Uuid::new_v4(),
             // Will be replaced by actual course_id
             course_id: Uuid::new_v4(),
+            // Will be replaced by actual extension_id
             extension_id: None,
             slug: stage.slug,
             name: stage.name,

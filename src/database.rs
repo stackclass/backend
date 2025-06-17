@@ -15,6 +15,8 @@
 use crate::errors::Result;
 use sqlx::{pool::PoolOptions, Pool, Postgres};
 
+pub type Transaction<'a> = sqlx::Transaction<'a, Postgres>;
+
 /// Database connection pool wrapper for PostgreSQL
 pub struct Database {
     pool: Pool<Postgres>,

@@ -14,14 +14,18 @@
 
 use uuid::Uuid;
 
-use crate::{database::Database, errors::Result, model::CourseModel};
+use crate::{
+    database::{Database, Transaction},
+    errors::Result,
+    model::CourseModel,
+};
 
 /// Repository for managing courses in the database.
 pub struct CourseRepository;
 
 impl CourseRepository {
     /// Create a new course in the database.
-    pub async fn create(db: &Database, course: &CourseModel) -> Result<CourseModel> {
+    pub async fn create(tx: &mut Transaction<'_>, course: &CourseModel) -> Result<CourseModel> {
         let row = sqlx::query_as::<_, CourseModel>(
             r#"
             INSERT INTO courses (
@@ -39,7 +43,7 @@ impl CourseRepository {
         .bind(&course.summary)
         .bind(course.created_at)
         .bind(course.updated_at)
-        .fetch_one(db.pool())
+        .fetch_one(&mut **tx)
         .await?;
 
         Ok(row)

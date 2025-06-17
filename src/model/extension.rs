@@ -43,6 +43,14 @@ pub struct ExtensionModel {
     pub updated_at: DateTime<Utc>,
 }
 
+impl ExtensionModel {
+    /// Sets the course_id field
+    pub fn with_course(mut self, id: Uuid) -> ExtensionModel {
+        self.course_id = id;
+        self
+    }
+}
+
 impl From<Extension> for ExtensionModel {
     fn from(ext: Extension) -> Self {
         Self {
