@@ -14,26 +14,31 @@
 
 use std::{collections::HashSet, sync::Arc};
 use tracing::{debug, error, info};
+use uuid::Uuid;
 
 use crate::{
     config::Config,
     context::Context,
+    database::Transaction,
     errors::{ApiError, Result},
     model::{CourseModel, ExtensionModel, SolutionModel, StageModel},
     repository::{CourseRepository, ExtensionRepository, SolutionRepository, StageRepository},
     response::CourseResponse,
-    schema,
+    schema::{self, Extension, Stage},
     service::storage::StorageService,
 };
 
+// Service for managing courses and related entities
 pub struct CourseService;
 
 impl CourseService {
+    // Fetch all courses from repository
     pub async fn find(ctx: Arc<Context>) -> Result<Vec<CourseResponse>> {
         let courses = CourseRepository::find(&ctx.database).await?;
         Ok(courses.into_iter().map(Into::into).collect())
     }
 
+    // Create new course from git repository URL
     pub async fn create(ctx: Arc<Context>, url: &str) -> Result<CourseResponse> {
         let Config { cache_dir, github_token, .. } = &ctx.config;
 
@@ -51,6 +56,7 @@ impl CourseService {
         Self::create_course(ctx, course).await
     }
 
+    // Create course with all related entities in transaction
     async fn create_course(ctx: Arc<Context>, course: schema::Course) -> Result<CourseResponse> {
         let mut tx = ctx.database.pool().begin().await?;
 
@@ -60,13 +66,7 @@ impl CourseService {
 
         // Persist stages and their solutions
         for stage in course.stages.values() {
-            let stage_model = StageModel::from(stage.clone()).with_course(course_model.id);
-            let stage_model = StageRepository::create(&mut tx, &stage_model).await?;
-
-            if let Some(sol) = &stage.solution {
-                let solution_model = SolutionModel::from(sol.clone()).with_stage(stage_model.id);
-                SolutionRepository::create(&mut tx, &solution_model).await?;
-            }
+            Self::create_stage(&mut tx, stage, course_model.id, None).await?;
         }
 
         // Persist extensions and their stages
@@ -76,15 +76,7 @@ impl CourseService {
                 let ext_model = ExtensionRepository::create(&mut tx, &ext_model).await?;
 
                 for stage in ext.stages.values() {
-                    let stage_model = StageModel::from(stage.clone())
-                        .with_course(course_model.id)
-                        .with_extension(ext_model.id);
-                    let stage_model = StageRepository::create(&mut tx, &stage_model).await?;
-
-                    if let Some(sol) = &stage.solution {
-                        let sol_model = SolutionModel::from(sol.clone()).with_stage(stage_model.id);
-                        SolutionRepository::create(&mut tx, &sol_model).await?;
-                    }
+                    Self::create_stage(&mut tx, stage, course_model.id, Some(ext_model.id)).await?;
                 }
             }
         }
@@ -95,11 +87,34 @@ impl CourseService {
         Ok(course_model.into())
     }
 
+    // Create stage and optionally its solution
+    async fn create_stage(
+        tx: &mut Transaction<'_>,
+        stage: &Stage,
+        course_id: Uuid,
+        ext_id: Option<Uuid>,
+    ) -> Result<()> {
+        let mut stage_model = StageModel::from(stage.clone()).with_course(course_id);
+        if let Some(extension_id) = ext_id {
+            stage_model = stage_model.with_extension(extension_id);
+        }
+        let stage_model = StageRepository::create(tx, &stage_model).await?;
+
+        if let Some(sol) = &stage.solution {
+            let solution_model = SolutionModel::from(sol.clone()).with_stage(stage_model.id);
+            SolutionRepository::create(tx, &solution_model).await?;
+        }
+
+        Ok(())
+    }
+
+    // Get course by slug
     pub async fn get(ctx: Arc<Context>, slug: &str) -> Result<CourseResponse> {
         let course = CourseRepository::get_by_slug(&ctx.database, slug).await?;
         Ok(course.into())
     }
 
+    // Update course from git repository URL
     pub async fn update(ctx: Arc<Context>, url: &str) -> Result<bool> {
         let Config { cache_dir, github_token, .. } = &ctx.config;
 
@@ -119,6 +134,7 @@ impl CourseService {
         Ok(true)
     }
 
+    // Update course and related entities with cleanup
     async fn update_course(ctx: Arc<Context>, course: schema::Course) -> Result<CourseResponse> {
         let mut tx = ctx.database.pool().begin().await?;
 
@@ -135,47 +151,17 @@ impl CourseService {
         let mut current_stage_slugs = HashSet::new();
         let mut current_extension_slugs = HashSet::new();
 
-        // Upsert stages and their solutions
         for (stage_slug, stage) in &course.stages {
+            Self::update_stage(&mut tx, stage, course_model.id, None).await?;
             current_stage_slugs.insert(stage_slug.clone());
-            let stage_model = StageModel::from(stage.clone()).with_course(course_model.id);
-            let stage_model = StageRepository::upsert(&mut tx, &stage_model).await?;
-
-            // Upsert solutions
-            if let Some(sol) = &stage.solution {
-                let solution_model = SolutionModel::from(sol.clone()).with_stage(stage_model.id);
-                SolutionRepository::upsert(&mut tx, stage_slug, &solution_model).await?;
-            } else {
-                // Delete solution if it exists but stage no longer has one
-                SolutionRepository::delete(&mut tx, stage_slug).await?;
-            }
         }
 
         // Upsert extensions and their stages
         if let Some(extensions) = &course.extensions {
             for (ext_slug, ext) in extensions {
+                let current_ext_stage_slugs =
+                    Self::update_extension(&mut tx, ext, course_model.id).await?;
                 current_extension_slugs.insert(ext_slug.clone());
-                let ext_model = ExtensionModel::from(ext.clone()).with_course(course_model.id);
-                let ext_model = ExtensionRepository::upsert(&mut tx, &ext_model).await?;
-
-                // Upsert extension stages
-                let mut current_ext_stage_slugs = HashSet::new();
-                for (stage_slug, stage) in &ext.stages {
-                    current_ext_stage_slugs.insert(stage_slug.clone());
-                    let stage_model = StageModel::from(stage.clone())
-                        .with_course(course_model.id)
-                        .with_extension(ext_model.id);
-                    let stage_model = StageRepository::upsert(&mut tx, &stage_model).await?;
-
-                    // Upsert solutions
-                    if let Some(sol) = &stage.solution {
-                        let sol_model = SolutionModel::from(sol.clone()).with_stage(stage_model.id);
-                        SolutionRepository::upsert(&mut tx, stage_slug, &sol_model).await?;
-                    } else {
-                        // Delete solution if it exists but stage no longer has one
-                        SolutionRepository::delete(&mut tx, stage_slug).await?;
-                    }
-                }
 
                 // Cleanup orphaned extension stages
                 let existing_ext_stages =
@@ -207,6 +193,51 @@ impl CourseService {
         Ok(course_model.into())
     }
 
+    // Update or insert extension and its stages
+    async fn update_extension(
+        tx: &mut Transaction<'_>,
+        ext: &Extension,
+        course_id: Uuid,
+    ) -> Result<HashSet<String>> {
+        let ext_model = ExtensionModel::from(ext.clone()).with_course(course_id);
+        let ext_model = ExtensionRepository::upsert(tx, &ext_model).await?;
+
+        // Upsert extension stages and their solutions
+        let mut current_ext_stage_slugs = HashSet::new();
+        for (stage_slug, stage) in &ext.stages {
+            Self::update_stage(tx, stage, course_id, Some(ext_model.id)).await?;
+            current_ext_stage_slugs.insert(stage_slug.clone());
+        }
+
+        Ok(current_ext_stage_slugs)
+    }
+
+    // Update stage and handle solution changes
+    async fn update_stage(
+        tx: &mut Transaction<'_>,
+        stage: &Stage,
+        course_id: Uuid,
+        ext_id: Option<Uuid>,
+    ) -> Result<()> {
+        let mut stage_model = StageModel::from(stage.clone()).with_course(course_id);
+        if let Some(extension_id) = ext_id {
+            stage_model = stage_model.with_extension(extension_id);
+        }
+        let stage_model = StageRepository::upsert(tx, &stage_model).await?;
+
+        // Upsert solutions
+        if let Some(sol) = &stage.solution {
+            let solution_model = SolutionModel::from(sol.clone()).with_stage(stage_model.id);
+            SolutionRepository::upsert(tx, &stage.slug, &solution_model).await?;
+        } else {
+            // Delete solution if it exists but stage no longer has one
+            SolutionRepository::delete(tx, &stage.slug).await?;
+        }
+
+        Ok(())
+    }
+
+    // Delete course by slug
     pub(crate) async fn delete(ctx: Arc<Context>, slug: &str) -> Result<()> {
         CourseRepository::delete(&ctx.database, slug).await.map_err(ApiError::DatabaseError)
     }
