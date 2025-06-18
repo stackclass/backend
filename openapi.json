@@ -257,6 +257,40 @@
           }
         }
       }
+    },
+    "/v1/courses/{slug}/stages/{stage_slug}": {
+      "get": {
+        "tags": [
+          "Stage"
+        ],
+        "summary": "Get the details of the stage.",
+        "operationId": "get-stage-detail",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "The slug of course",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stage_slug",
+            "in": "path",
+            "description": "The slug of stage",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stage retrieved successfully"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -346,6 +380,90 @@
           "slug": {
             "type": "string",
             "description": "Unique identifier within course"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        }
+      },
+      "SolutionResponse": {
+        "type": "object",
+        "required": [
+          "explanation",
+          "patches"
+        ],
+        "properties": {
+          "explanation": {
+            "type": "string",
+            "description": "Detailed description of the solution approach and logic"
+          },
+          "patches": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": false,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Collection of file changes needed to implement this solution\nStored as tuples of (file_path, patch_content)"
+          }
+        }
+      },
+      "StageDetailResponse": {
+        "type": "object",
+        "required": [
+          "slug",
+          "name",
+          "difficulty",
+          "description",
+          "instruction",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "description": {
+            "type": "string",
+            "description": "A short markdown description of the stage,\nused in the course overview page."
+          },
+          "difficulty": {
+            "type": "string",
+            "description": "Difficulty level (very_easy, easy, medium, hard)"
+          },
+          "instruction": {
+            "type": "string",
+            "description": "A markdown description for this stage."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the stage"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Unique human-readable identifier within parent context"
+          },
+          "solution": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SolutionResponse",
+                "description": "The solution to this stage, if available."
+              }
+            ]
           },
           "updated_at": {
             "type": "string",

@@ -80,3 +80,23 @@ pub async fn find_extended_stages(
 ) -> Result<impl IntoResponse> {
     Ok((StatusCode::OK, Json(StageService::find_extended_stages(ctx, &slug).await?)))
 }
+
+/// Get the details of the stage.
+#[utoipa::path(
+    operation_id = "get-stage-detail",
+    get, path = "/v1/courses/{slug}/stages/{stage_slug}",
+    params(
+        ("slug" = String, description = "The slug of course"),
+        ("stage_slug" = String, description = "The slug of stage"),
+    ),
+    responses(
+        (status = 200, description = "Stage retrieved successfully"),
+    ),
+    tag = "Stage"
+)]
+pub async fn get(
+    State(ctx): State<Arc<Context>>,
+    Path((slug, stage_slug)): Path<(String, String)>,
+) -> Result<impl IntoResponse> {
+    Ok((StatusCode::OK, Json(StageService::get(ctx, &slug, &stage_slug).await?)))
+}

@@ -15,7 +15,10 @@
 use std::sync::Arc;
 
 use crate::{
-    context::Context, errors::Result, repository::StageRepository, response::StageResponse,
+    context::Context,
+    errors::Result,
+    repository::{SolutionRepository, StageRepository},
+    response::{StageDetailResponse, StageResponse},
 };
 
 /// Service for managing stages
@@ -38,5 +41,22 @@ impl StageService {
     pub async fn find_extended_stages(ctx: Arc<Context>, slug: &str) -> Result<Vec<StageResponse>> {
         let stages = StageRepository::find_extended_by_course(&ctx.database, slug).await?;
         Ok(stages.into_iter().map(Into::into).collect())
+    }
+
+    /// Get the details of the stage.
+    pub async fn get(
+        ctx: Arc<Context>,
+        course_slug: &str,
+        stage_slug: &str,
+    ) -> Result<StageDetailResponse> {
+        // Load stage and solution
+        let stage = StageRepository::get_by_slug(&ctx.database, course_slug, stage_slug).await?;
+        let solution = SolutionRepository::get_by_stage(&ctx.database, stage_slug).await.ok();
+
+        // Build response
+        let mut response: StageDetailResponse = stage.into();
+        response.solution = solution.map(|s| s.into());
+
+        Ok(response)
     }
 }

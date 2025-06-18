@@ -54,12 +54,21 @@ impl StageRepository {
         Ok(row)
     }
 
-    /// Fetch a stage by its slug.
-    pub async fn get_by_slug(db: &Database, slug: &str) -> Result<StageModel> {
-        let row = sqlx::query_as::<_, StageModel>(r#"SELECT * FROM stages WHERE slug = $1"#)
-            .bind(slug)
-            .fetch_one(db.pool())
-            .await?;
+    /// Fetch a stage by course slug and its slug.
+    pub async fn get_by_slug(
+        db: &Database,
+        course_slug: &str,
+        stage_slug: &str,
+    ) -> Result<StageModel> {
+        let row = sqlx::query_as::<_, StageModel>(
+            r#"SELECT s.* FROM stages s
+                JOIN courses c ON s.course_id = c.id
+                WHERE c.slug = $1 AND s.slug = $2"#,
+        )
+        .bind(course_slug)
+        .bind(stage_slug)
+        .fetch_one(db.pool())
+        .await?;
 
         Ok(row)
     }

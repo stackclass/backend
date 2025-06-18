@@ -31,7 +31,9 @@ pub struct SolutionModel {
     /// Detailed solution explanation in Markdown format
     pub explanation: String,
 
-    /// JSON array of file patches (path -> content)
+    ///
+    /// JSON array of file patches.
+    /// Patch format: [ ["file/path", "content"], ... ]
     pub patches: Option<Value>,
 
     /// Creation timestamp

@@ -31,6 +31,7 @@ use crate::{handler, request, response};
         handler::stage::find_all_stages,
         handler::stage::find_base_stages,
         handler::stage::find_extended_stages,
+        handler::stage::get,
     ),
     components(
         schemas(
@@ -40,6 +41,8 @@ use crate::{handler, request, response};
             response::ExtensionResponse,
 
             response::StageResponse,
+            response::StageDetailResponse,
+            response::SolutionResponse,
         )
     ),
     tags(
