@@ -25,15 +25,20 @@ use crate::{handler, request, response};
         handler::course::get,
         handler::course::delete,
         handler::course::update,
+
+        handler::extension::find,
     ),
     components(
         schemas(
             request::CreateCourseRequest,
             response::CourseResponse,
+
+            response::ExtensionResponse,
         )
     ),
     tags(
         (name = "Course", description = "The Course Service Handlers"),
+        (name = "Extension", description = "The Extension Service Handlers"),
     ),
 )]
 pub struct ApiDoc;

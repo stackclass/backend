@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod course;
-pub mod git;
-pub mod storage;
+mod course;
+mod extension;
+mod git;
+mod storage;
+
+pub use course::CourseService;
+pub use extension::ExtensionService;
+pub use git::GitService;
+pub use storage::*;

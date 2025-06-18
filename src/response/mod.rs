@@ -13,6 +13,8 @@
 // limitations under the License.
 
 mod course;
+mod extension;
 
 // Re-exports
 pub use course::*;
+pub use extension::*;

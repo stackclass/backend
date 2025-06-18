@@ -12,6 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod course;
-pub mod extension;
-pub mod git;
+use std::sync::Arc;
+
+use crate::{
+    context::Context, errors::Result, repository::ExtensionRepository, response::ExtensionResponse,
+};
+
+/// Service for managing extensions
+pub struct ExtensionService;
+
+impl ExtensionService {
+    /// Find all extensions for a course.
+    pub async fn find(ctx: Arc<Context>, slug: &str) -> Result<Vec<ExtensionResponse>> {
+        let extensions = ExtensionRepository::find_by_course(&ctx.database, slug).await?;
+        Ok(extensions.into_iter().map(Into::into).collect())
+    }
+}

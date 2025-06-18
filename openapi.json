@@ -157,6 +157,31 @@
           }
         }
       }
+    },
+    "/v1/courses/{slug}/extensions": {
+      "get": {
+        "tags": [
+          "Extension"
+        ],
+        "summary": "Find all extensions for a course.",
+        "operationId": "find-all-extensions",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "The slug of course",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Extensions retrieved successfully"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -219,6 +244,40 @@
             "description": "The git repository URL of the course"
           }
         }
+      },
+      "ExtensionResponse": {
+        "type": "object",
+        "required": [
+          "slug",
+          "name",
+          "description",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "description": {
+            "type": "string",
+            "description": "Extension description"
+          },
+          "name": {
+            "type": "string",
+            "description": "Extension name"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Unique identifier within course"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        }
       }
     }
   },
@@ -226,6 +285,10 @@
     {
       "name": "Course",
       "description": "The Course Service Handlers"
+    },
+    {
+      "name": "Extension",
+      "description": "The Extension Service Handlers"
     }
   ]
 }

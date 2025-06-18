@@ -21,7 +21,7 @@ use axum::{
 
 use crate::{
     context::Context,
-    handler::{course, git},
+    handler::{course, extension, git},
 };
 
 pub fn build() -> Router<Arc<Context>> {
@@ -31,6 +31,8 @@ pub fn build() -> Router<Arc<Context>> {
         .route("/v1/courses/{slug}", get(course::get))
         .route("/v1/courses/{slug}", delete(course::delete))
         .route("/v1/courses/{slug}", patch(course::update))
+        // Extension
+        .route("/v1/courses/{slug}/extensions", get(extension::find))
         // git-http-backend
         .route("/git/{repo}/HEAD", get(git::head))
         .route("/git/{repo}/info/refs", get(git::info_refs))

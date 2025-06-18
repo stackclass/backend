@@ -22,7 +22,7 @@ use std::sync::Arc;
 
 use crate::{
     context::Context, errors::Result, request::CreateCourseRequest, response::CourseResponse,
-    service::course::CourseService,
+    service::CourseService,
 };
 
 // The Course Service Handlers.

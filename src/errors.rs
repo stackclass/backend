@@ -21,7 +21,7 @@ use serde_json::json;
 use thiserror::Error;
 use tracing::error;
 
-use crate::{schema, service::storage::StorageError};
+use crate::{schema, service::StorageError};
 
 pub type Result<T, E = ApiError> = std::result::Result<T, E>;
 
