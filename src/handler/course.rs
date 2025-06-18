@@ -32,7 +32,7 @@ use crate::{
     operation_id = "find-all-courses",
     get, path = "/v1/courses",
     responses(
-        (status = 200, description = "Courses retrieved successfully"),
+        (status = 200, description = "Courses retrieved successfully", body = Vec<CourseResponse>),
     ),
     tag = "Course"
 )]
@@ -50,7 +50,8 @@ pub async fn find(State(ctx): State<Arc<Context>>) -> Result<impl IntoResponse> 
         content_type = "application/json"
     ),
     responses(
-        (status = 201, description = "Course created successfully", body = CourseResponse)
+        (status = 201, description = "Course created successfully", body = CourseResponse),
+        (status = 500, description = "Failed to create course")
     ),
     tag = "Course"
 )]
@@ -112,9 +113,9 @@ pub async fn delete(
         ("slug" = String, description = "The slug of course"),
     ),
     responses(
-        (status = 204, description = "Course retrieved successfully"),
+        (status = 204, description = "Course updated successfully"),
         (status = 404, description = "Course not found"),
-        (status = 500, description = "Failed to get course")
+        (status = 500, description = "Failed to update course")
     ),
     tag = "Course"
 )]

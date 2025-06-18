@@ -20,7 +20,12 @@ use axum::{
 };
 use std::sync::Arc;
 
-use crate::{context::Context, errors::Result, service::StageService};
+use crate::{
+    context::Context,
+    errors::Result,
+    response::{StageDetailResponse, StageResponse},
+    service::StageService,
+};
 
 // The Stage Service Handlers.
 
@@ -32,7 +37,9 @@ use crate::{context::Context, errors::Result, service::StageService};
         ("slug" = String, description = "The slug of course"),
     ),
     responses(
-        (status = 200, description = "Stages retrieved successfully"),
+        (status = 200, description = "Stages retrieved successfully", body = Vec<StageResponse>),
+        (status = 404, description = "Course not found"),
+        (status = 500, description = "Failed to get course")
     ),
     tag = "Stage"
 )]
@@ -51,7 +58,9 @@ pub async fn find_all_stages(
         ("slug" = String, description = "The slug of course"),
     ),
     responses(
-        (status = 200, description = "Stages retrieved successfully"),
+        (status = 200, description = "Stages retrieved successfully", body = Vec<StageResponse>),
+        (status = 404, description = "Course not found"),
+        (status = 500, description = "Failed to get course")
     ),
     tag = "Stage"
 )]
@@ -70,7 +79,9 @@ pub async fn find_base_stages(
         ("slug" = String, description = "The slug of course"),
     ),
     responses(
-        (status = 200, description = "Stages retrieved successfully"),
+        (status = 200, description = "Stages retrieved successfully", body = Vec<StageResponse>),
+        (status = 404, description = "Course not found"),
+        (status = 500, description = "Failed to get course")
     ),
     tag = "Stage"
 )]
@@ -90,7 +101,9 @@ pub async fn find_extended_stages(
         ("stage_slug" = String, description = "The slug of stage"),
     ),
     responses(
-        (status = 200, description = "Stage retrieved successfully"),
+        (status = 200, description = "Stage retrieved successfully", body = StageDetailResponse),
+        (status = 404, description = "Course or stage not found"),
+        (status = 500, description = "Failed to get course or stage")
     ),
     tag = "Stage"
 )]

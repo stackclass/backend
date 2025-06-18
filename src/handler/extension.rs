@@ -20,7 +20,9 @@ use axum::{
 };
 use std::sync::Arc;
 
-use crate::{context::Context, errors::Result, service::ExtensionService};
+use crate::{
+    context::Context, errors::Result, response::ExtensionResponse, service::ExtensionService,
+};
 
 // The Extension Service Handlers.
 
@@ -32,7 +34,9 @@ use crate::{context::Context, errors::Result, service::ExtensionService};
         ("slug" = String, description = "The slug of course"),
     ),
     responses(
-        (status = 200, description = "Extensions retrieved successfully"),
+        (status = 200, description = "Extensions retrieved successfully", body = Vec<ExtensionResponse>),
+        (status = 404, description = "Course not found"),
+        (status = 500, description = "Failed to get course")
     ),
     tag = "Extension"
 )]

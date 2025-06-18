@@ -18,7 +18,17 @@
         "operationId": "find-all-courses",
         "responses": {
           "200": {
-            "description": "Courses retrieved successfully"
+            "description": "Courses retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CourseResponse"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -58,6 +68,9 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Failed to create course"
           }
         }
       }
@@ -147,13 +160,13 @@
         ],
         "responses": {
           "204": {
-            "description": "Course retrieved successfully"
+            "description": "Course updated successfully"
           },
           "404": {
             "description": "Course not found"
           },
           "500": {
-            "description": "Failed to get course"
+            "description": "Failed to update course"
           }
         }
       }
@@ -178,7 +191,23 @@
         ],
         "responses": {
           "200": {
-            "description": "Extensions retrieved successfully"
+            "description": "Extensions retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExtensionResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Course not found"
+          },
+          "500": {
+            "description": "Failed to get course"
           }
         }
       }
@@ -203,7 +232,23 @@
         ],
         "responses": {
           "200": {
-            "description": "Stages retrieved successfully"
+            "description": "Stages retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StageResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Course not found"
+          },
+          "500": {
+            "description": "Failed to get course"
           }
         }
       }
@@ -228,7 +273,23 @@
         ],
         "responses": {
           "200": {
-            "description": "Stages retrieved successfully"
+            "description": "Stages retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StageResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Course not found"
+          },
+          "500": {
+            "description": "Failed to get course"
           }
         }
       }
@@ -253,7 +314,23 @@
         ],
         "responses": {
           "200": {
-            "description": "Stages retrieved successfully"
+            "description": "Stages retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StageResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Course not found"
+          },
+          "500": {
+            "description": "Failed to get course"
           }
         }
       }
@@ -287,7 +364,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Stage retrieved successfully"
+            "description": "Stage retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StageDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Course or stage not found"
+          },
+          "500": {
+            "description": "Failed to get course or stage"
           }
         }
       }
