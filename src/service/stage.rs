@@ -27,4 +27,10 @@ impl StageService {
         let stages = StageRepository::find_by_course(&ctx.database, slug).await?;
         Ok(stages.into_iter().map(Into::into).collect())
     }
+
+    /// Find only base stages for a course (excluding extensions).
+    pub async fn find_base_stages(ctx: Arc<Context>, slug: &str) -> Result<Vec<StageResponse>> {
+        let stages = StageRepository::find_base_by_course(&ctx.database, slug).await?;
+        Ok(stages.into_iter().map(Into::into).collect())
+    }
 }

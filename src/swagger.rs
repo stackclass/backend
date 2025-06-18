@@ -29,6 +29,7 @@ use crate::{handler, request, response};
         handler::extension::find,
 
         handler::stage::find_all_stages,
+        handler::stage::find_base_stages,
     ),
     components(
         schemas(

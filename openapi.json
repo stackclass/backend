@@ -207,6 +207,31 @@
           }
         }
       }
+    },
+    "/v1/courses/{slug}/stages/base": {
+      "get": {
+        "tags": [
+          "Stage"
+        ],
+        "summary": "Find only base stages for a course (excluding extensions).",
+        "operationId": "find-base-stages",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "The slug of course",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stages retrieved successfully"
+          }
+        }
+      }
     }
   },
   "components": {

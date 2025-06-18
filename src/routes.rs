@@ -44,4 +44,5 @@ pub fn build() -> Router<Arc<Context>> {
         .route("/git/{repo}/objects/{two}/{thirtyeight}", get(git::loose_object))
         // Stage
         .route("/v1/courses/{slug}/stages", get(stage::find_all_stages))
+        .route("/v1/courses/{slug}/stages/base", get(stage::find_base_stages))
 }
