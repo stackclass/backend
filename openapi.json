@@ -232,6 +232,31 @@
           }
         }
       }
+    },
+    "/v1/courses/{slug}/stages/extended": {
+      "get": {
+        "tags": [
+          "Stage"
+        ],
+        "summary": "Find only extended stages for a course.",
+        "operationId": "find-extended-stages",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "The slug of course",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stages retrieved successfully"
+          }
+        }
+      }
     }
   },
   "components": {

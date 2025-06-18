@@ -30,6 +30,7 @@ use crate::{handler, request, response};
 
         handler::stage::find_all_stages,
         handler::stage::find_base_stages,
+        handler::stage::find_extended_stages,
     ),
     components(
         schemas(

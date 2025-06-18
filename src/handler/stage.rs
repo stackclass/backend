@@ -61,3 +61,22 @@ pub async fn find_base_stages(
 ) -> Result<impl IntoResponse> {
     Ok((StatusCode::OK, Json(StageService::find_base_stages(ctx, &slug).await?)))
 }
+
+/// Find only extended stages for a course.
+#[utoipa::path(
+    operation_id = "find-extended-stages",
+    get, path = "/v1/courses/{slug}/stages/extended",
+    params(
+        ("slug" = String, description = "The slug of course"),
+    ),
+    responses(
+        (status = 200, description = "Stages retrieved successfully"),
+    ),
+    tag = "Stage"
+)]
+pub async fn find_extended_stages(
+    State(ctx): State<Arc<Context>>,
+    Path(slug): Path<String>,
+) -> Result<impl IntoResponse> {
+    Ok((StatusCode::OK, Json(StageService::find_extended_stages(ctx, &slug).await?)))
+}

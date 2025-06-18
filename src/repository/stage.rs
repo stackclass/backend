@@ -104,6 +104,24 @@ impl StageRepository {
         Ok(rows)
     }
 
+    /// Find only extended stages for a course.
+    pub async fn find_extended_by_course(
+        db: &Database,
+        course_slug: &str,
+    ) -> Result<Vec<StageModel>> {
+        let rows = sqlx::query_as::<_, StageModel>(
+            r#"SELECT s.* FROM stages s
+                JOIN courses c ON s.course_id = c.id
+                WHERE c.slug = $1 AND s.extension_id IS NOT NULL
+                ORDER BY s.created_at ASC"#,
+        )
+        .bind(course_slug)
+        .fetch_all(db.pool())
+        .await?;
+
+        Ok(rows)
+    }
+
     /// Find stages for a specific extension.
     pub async fn find_by_extension(db: &Database, extension_slug: &str) -> Result<Vec<StageModel>> {
         let rows = sqlx::query_as::<_, StageModel>(
