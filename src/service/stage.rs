@@ -12,15 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod course;
-mod extension;
-mod git;
-mod stage;
-mod storage;
+use std::sync::Arc;
 
-// Re-exports
-pub use course::CourseService;
-pub use extension::ExtensionService;
-pub use git::GitService;
-pub use stage::StageService;
-pub use storage::*;
+use crate::{
+    context::Context, errors::Result, repository::StageRepository, response::StageResponse,
+};
+
+/// Service for managing stages
+pub struct StageService;
+
+impl StageService {
+    /// Find all stages for a course (including extensions)
+    pub async fn find_all_stages(ctx: Arc<Context>, slug: &str) -> Result<Vec<StageResponse>> {
+        let stages = StageRepository::find_by_course(&ctx.database, slug).await?;
+        Ok(stages.into_iter().map(Into::into).collect())
+    }
+}

@@ -182,6 +182,31 @@
           }
         }
       }
+    },
+    "/v1/courses/{slug}/stages": {
+      "get": {
+        "tags": [
+          "Stage"
+        ],
+        "summary": "Find all stages for a course (including extensions)",
+        "operationId": "find-all-stages",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "The slug of course",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stages retrieved successfully"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -278,6 +303,45 @@
             "description": "Last update timestamp"
           }
         }
+      },
+      "StageResponse": {
+        "type": "object",
+        "required": [
+          "slug",
+          "name",
+          "difficulty",
+          "description",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "description": {
+            "type": "string",
+            "description": "A short markdown description of the stage,\nused in the course overview page."
+          },
+          "difficulty": {
+            "type": "string",
+            "description": "Difficulty level (very_easy, easy, medium, hard)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the stage"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Unique human-readable identifier within parent context"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        }
       }
     }
   },
@@ -289,6 +353,10 @@
     {
       "name": "Extension",
       "description": "The Extension Service Handlers"
+    },
+    {
+      "name": "Stage",
+      "description": "The Stage Service Handlers"
     }
   ]
 }

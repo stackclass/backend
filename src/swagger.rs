@@ -27,6 +27,8 @@ use crate::{handler, request, response};
         handler::course::update,
 
         handler::extension::find,
+
+        handler::stage::find_all_stages,
     ),
     components(
         schemas(
@@ -34,11 +36,14 @@ use crate::{handler, request, response};
             response::CourseResponse,
 
             response::ExtensionResponse,
+
+            response::StageResponse,
         )
     ),
     tags(
         (name = "Course", description = "The Course Service Handlers"),
         (name = "Extension", description = "The Extension Service Handlers"),
+        (name = "Stage", description = "The Stage Service Handlers"),
     ),
 )]
 pub struct ApiDoc;

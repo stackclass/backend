@@ -21,7 +21,7 @@ use axum::{
 
 use crate::{
     context::Context,
-    handler::{course, extension, git},
+    handler::{course, extension, git, stage},
 };
 
 pub fn build() -> Router<Arc<Context>> {
@@ -42,4 +42,6 @@ pub fn build() -> Router<Arc<Context>> {
         .route("/git/{repo}/objects/pack/{file}", get(git::pack_file))
         .route("/git/{repo}/objects/info/{file}", get(git::text_file))
         .route("/git/{repo}/objects/{two}/{thirtyeight}", get(git::loose_object))
+        // Stage
+        .route("/v1/courses/{slug}/stages", get(stage::find_all_stages))
 }

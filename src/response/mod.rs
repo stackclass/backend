@@ -14,7 +14,9 @@
 
 mod course;
 mod extension;
+mod stage;
 
 // Re-exports
 pub use course::*;
 pub use extension::*;
+pub use stage::*;
