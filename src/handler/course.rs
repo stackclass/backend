@@ -21,7 +21,10 @@ use axum::{
 use std::sync::Arc;
 
 use crate::{
-    context::Context, errors::Result, request::CreateCourseRequest, response::CourseResponse,
+    context::Context,
+    errors::Result,
+    request::CreateCourseRequest,
+    response::{CourseDetailResponse, CourseResponse},
     service::CourseService,
 };
 
@@ -70,7 +73,7 @@ pub async fn create(
         ("slug" = String, description = "The slug of course"),
     ),
     responses(
-        (status = 200, description = "Course retrieved successfully", body = CourseResponse),
+        (status = 200, description = "Course retrieved successfully", body = CourseDetailResponse),
         (status = 404, description = "Course not found"),
         (status = 500, description = "Failed to get course")
     ),

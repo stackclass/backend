@@ -32,6 +32,44 @@ pub struct CourseResponse {
     /// Release status (alpha/beta/live)
     pub release_status: String,
 
+    /// Brief summary
+    pub summary: String,
+
+    /// Creation timestamp
+    pub created_at: DateTime<Utc>,
+
+    /// Last update timestamp
+    pub updated_at: DateTime<Utc>,
+}
+
+impl From<CourseModel> for CourseResponse {
+    fn from(model: CourseModel) -> Self {
+        Self {
+            slug: model.slug,
+            name: model.name,
+            short_name: model.short_name,
+            release_status: model.release_status,
+            summary: model.summary,
+            created_at: model.created_at,
+            updated_at: model.updated_at,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct CourseDetailResponse {
+    /// Unique human-readable identifier
+    pub slug: String,
+
+    // Full course name
+    pub name: String,
+
+    // Short display name
+    pub short_name: String,
+
+    /// Release status (alpha/beta/live)
+    pub release_status: String,
+
     /// Detailed description
     pub description: String,
 
@@ -45,7 +83,7 @@ pub struct CourseResponse {
     pub updated_at: DateTime<Utc>,
 }
 
-impl From<CourseModel> for CourseResponse {
+impl From<CourseModel> for CourseDetailResponse {
     fn from(model: CourseModel) -> Self {
         Self {
             slug: model.slug,

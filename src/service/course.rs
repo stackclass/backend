@@ -23,7 +23,7 @@ use crate::{
     errors::{ApiError, Result},
     model::{CourseModel, ExtensionModel, SolutionModel, StageModel},
     repository::{CourseRepository, ExtensionRepository, SolutionRepository, StageRepository},
-    response::CourseResponse,
+    response::{CourseDetailResponse, CourseResponse},
     schema::{self, Course, Stage},
     service::storage::StorageService,
 };
@@ -48,9 +48,9 @@ impl CourseService {
         let course = schema::parse(&cache_dir.join(dir))?;
         debug!("Parsed course: {:?}", course.name);
 
-        if let Ok(course) = Self::get(ctx.clone(), &course.slug).await {
+        if let Ok(model) = CourseRepository::get_by_slug(&ctx.database, &course.slug).await {
             info!("Course already exists: {:?}", course.name);
-            return Ok(course);
+            return Ok(model.into());
         }
 
         let model = Self::create_course(ctx, course, repository).await?;
@@ -112,7 +112,7 @@ impl CourseService {
     }
 
     /// Get course by slug
-    pub async fn get(ctx: Arc<Context>, slug: &str) -> Result<CourseResponse> {
+    pub async fn get(ctx: Arc<Context>, slug: &str) -> Result<CourseDetailResponse> {
         let course = CourseRepository::get_by_slug(&ctx.database, slug).await?;
         Ok(course.into())
     }

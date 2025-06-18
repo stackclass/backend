@@ -99,7 +99,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CourseResponse"
+                  "$ref": "#/components/schemas/CourseDetailResponse"
                 }
               }
             }
@@ -385,7 +385,7 @@
   },
   "components": {
     "schemas": {
-      "CourseResponse": {
+      "CourseDetailResponse": {
         "type": "object",
         "required": [
           "slug",
@@ -406,6 +406,48 @@
           "description": {
             "type": "string",
             "description": "Detailed description"
+          },
+          "name": {
+            "type": "string"
+          },
+          "release_status": {
+            "type": "string",
+            "description": "Release status (alpha/beta/live)"
+          },
+          "short_name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Unique human-readable identifier"
+          },
+          "summary": {
+            "type": "string",
+            "description": "Brief summary"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        }
+      },
+      "CourseResponse": {
+        "type": "object",
+        "required": [
+          "slug",
+          "name",
+          "short_name",
+          "release_status",
+          "summary",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
           },
           "name": {
             "type": "string"

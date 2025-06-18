@@ -37,6 +37,7 @@ use crate::{handler, request, response};
         schemas(
             request::CreateCourseRequest,
             response::CourseResponse,
+            response::CourseDetailResponse,
 
             response::ExtensionResponse,
 
