@@ -574,6 +574,13 @@
             "type": "string",
             "description": "Difficulty level (very_easy, easy, medium, hard)"
           },
+          "extension_slug": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional slug of the parent extension (null if part of main course)"
+          },
           "instruction": {
             "type": "string",
             "description": "A markdown description for this stage."
@@ -627,6 +634,13 @@
           "difficulty": {
             "type": "string",
             "description": "Difficulty level (very_easy, easy, medium, hard)"
+          },
+          "extension_slug": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional slug of the parent extension (null if part of main course)"
           },
           "name": {
             "type": "string",

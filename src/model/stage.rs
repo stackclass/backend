@@ -33,6 +33,9 @@ pub struct StageModel {
     /// Unique human-readable identifier within parent context
     pub slug: String,
 
+    /// Optional slug of the parent extension (null if part of main course)
+    pub extension_slug: Option<String>,
+
     /// Display name of the stage
     pub name: String,
 
@@ -75,6 +78,7 @@ impl From<Stage> for StageModel {
             course_id: Uuid::new_v4(),
             // Will be replaced by actual extension_id
             extension_id: None,
+            extension_slug: None,
             slug: stage.slug,
             name: stage.name,
             difficulty: stage.difficulty.to_string(),

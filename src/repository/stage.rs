@@ -61,9 +61,12 @@ impl StageRepository {
         stage_slug: &str,
     ) -> Result<StageModel> {
         let row = sqlx::query_as::<_, StageModel>(
-            r#"SELECT s.* FROM stages s
-                JOIN courses c ON s.course_id = c.id
-                WHERE c.slug = $1 AND s.slug = $2"#,
+            r#"
+            SELECT s.*, e.slug as extension_slug FROM stages s
+            JOIN courses c ON s.course_id = c.id
+            LEFT JOIN extensions e ON s.extension_id = e.id
+            WHERE c.slug = $1 AND s.slug = $2
+            "#,
         )
         .bind(course_slug)
         .bind(stage_slug)
@@ -75,10 +78,16 @@ impl StageRepository {
 
     /// Fetch a stage by its internal ID.
     pub async fn get_by_id(db: &Database, id: Uuid) -> Result<StageModel> {
-        let row = sqlx::query_as::<_, StageModel>(r#"SELECT * FROM stages WHERE id = $1"#)
-            .bind(id)
-            .fetch_one(db.pool())
-            .await?;
+        let row = sqlx::query_as::<_, StageModel>(
+            r#"
+            SELECT s.*, e.slug as extension_slug FROM stages s
+            LEFT JOIN extensions e ON s.extension_id = e.id
+            WHERE s.id = $1
+            "#,
+        )
+        .bind(id)
+        .fetch_one(db.pool())
+        .await?;
 
         Ok(row)
     }
@@ -86,10 +95,13 @@ impl StageRepository {
     /// Find all stages for a course (including extensions)
     pub async fn find_by_course(db: &Database, course_slug: &str) -> Result<Vec<StageModel>> {
         let rows = sqlx::query_as::<_, StageModel>(
-            r#"SELECT s.* FROM stages s
-                JOIN courses c ON s.course_id = c.id
-                WHERE c.slug = $1
-                ORDER BY s.created_at ASC"#,
+            r#"
+            SELECT s.*, e.slug as extension_slug FROM stages s
+            JOIN courses c ON s.course_id = c.id
+            LEFT JOIN extensions e ON s.extension_id = e.id
+            WHERE c.slug = $1
+            ORDER BY s.created_at ASC
+            "#,
         )
         .bind(course_slug)
         .fetch_all(db.pool())
@@ -101,10 +113,13 @@ impl StageRepository {
     /// Find only base stages for a course (excluding extensions).
     pub async fn find_base_by_course(db: &Database, course_slug: &str) -> Result<Vec<StageModel>> {
         let rows = sqlx::query_as::<_, StageModel>(
-            r#"SELECT s.* FROM stages s
-                JOIN courses c ON s.course_id = c.id
-                WHERE c.slug = $1 AND s.extension_id IS NULL
-                ORDER BY s.created_at ASC"#,
+            r#"
+            SELECT s.*, e.slug as extension_slug FROM stages s
+            JOIN courses c ON s.course_id = c.id
+            LEFT JOIN extensions e ON s.extension_id = e.id
+            WHERE c.slug = $1 AND s.extension_id IS NULL
+            ORDER BY s.created_at ASC
+            "#,
         )
         .bind(course_slug)
         .fetch_all(db.pool())
@@ -119,10 +134,13 @@ impl StageRepository {
         course_slug: &str,
     ) -> Result<Vec<StageModel>> {
         let rows = sqlx::query_as::<_, StageModel>(
-            r#"SELECT s.* FROM stages s
-                JOIN courses c ON s.course_id = c.id
-                WHERE c.slug = $1 AND s.extension_id IS NOT NULL
-                ORDER BY s.created_at ASC"#,
+            r#"
+            SELECT s.*, e.slug as extension_slug FROM stages s
+            JOIN courses c ON s.course_id = c.id
+            LEFT JOIN extensions e ON s.extension_id = e.id
+            WHERE c.slug = $1 AND s.extension_id IS NOT NULL
+            ORDER BY s.created_at ASC
+            "#,
         )
         .bind(course_slug)
         .fetch_all(db.pool())
@@ -134,10 +152,12 @@ impl StageRepository {
     /// Find stages for a specific extension.
     pub async fn find_by_extension(db: &Database, extension_slug: &str) -> Result<Vec<StageModel>> {
         let rows = sqlx::query_as::<_, StageModel>(
-            r#"SELECT s.* FROM stages s
-                JOIN extensions e ON s.extension_id = e.id
-                WHERE e.slug = $1
-                ORDER BY s.created_at ASC"#,
+            r#"
+            SELECT s.*, e.slug as extension_slug FROM stages s
+            JOIN extensions e ON s.extension_id = e.id
+            WHERE e.slug = $1
+            ORDER BY s.created_at ASC
+            "#,
         )
         .bind(extension_slug)
         .fetch_all(db.pool())

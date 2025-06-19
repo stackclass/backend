@@ -24,6 +24,9 @@ pub struct StageResponse {
     /// Unique human-readable identifier within parent context
     pub slug: String,
 
+    /// Optional slug of the parent extension (null if part of main course)
+    pub extension_slug: Option<String>,
+
     /// Display name of the stage
     pub name: String,
 
@@ -45,6 +48,7 @@ impl From<StageModel> for StageResponse {
     fn from(model: StageModel) -> Self {
         Self {
             slug: model.slug,
+            extension_slug: model.extension_slug,
             name: model.name,
             difficulty: model.difficulty,
             description: model.description,
@@ -58,6 +62,9 @@ impl From<StageModel> for StageResponse {
 pub struct StageDetailResponse {
     /// Unique human-readable identifier within parent context
     pub slug: String,
+
+    /// Optional slug of the parent extension (null if part of main course)
+    pub extension_slug: Option<String>,
 
     /// Display name of the stage
     pub name: String,
@@ -87,6 +94,7 @@ impl From<StageModel> for StageDetailResponse {
     fn from(model: StageModel) -> Self {
         Self {
             slug: model.slug,
+            extension_slug: model.extension_slug,
             name: model.name,
             difficulty: model.difficulty,
             description: model.description,
