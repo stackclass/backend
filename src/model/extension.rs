@@ -36,6 +36,9 @@ pub struct ExtensionModel {
     /// Extension description
     pub description: String,
 
+    /// Sorting weight (default: 0)
+    pub weight: i32,
+
     /// Creation timestamp
     pub created_at: DateTime<Utc>,
 
@@ -60,6 +63,7 @@ impl From<Extension> for ExtensionModel {
             slug: ext.slug,
             name: ext.name,
             description: ext.description,
+            weight: 0,
             created_at: Utc::now(),
             updated_at: Utc::now(),
         }

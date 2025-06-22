@@ -32,10 +32,15 @@ impl StageRepository {
 
         let row = sqlx::query_as::<_, StageModel>(
             r#"
-            INSERT INTO stages (
-                id, course_id, extension_id, slug, name, difficulty, description, instruction, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            RETURNING *
+            WITH inserted_stage AS (
+                INSERT INTO stages (
+                    id, course_id, extension_id, slug, name, difficulty, description, instruction, weight, created_at, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                RETURNING *
+            )
+            SELECT s.*, e.slug as extension_slug
+            FROM inserted_stage s
+            LEFT JOIN extensions e ON s.extension_id = e.id
             "#,
         )
         .bind(stage.id)
@@ -46,6 +51,7 @@ impl StageRepository {
         .bind(&stage.difficulty)
         .bind(&stage.description)
         .bind(&stage.instruction)
+        .bind(stage.weight)
         .bind(stage.created_at)
         .bind(stage.updated_at)
         .fetch_one(&mut **tx)
@@ -100,7 +106,7 @@ impl StageRepository {
             JOIN courses c ON s.course_id = c.id
             LEFT JOIN extensions e ON s.extension_id = e.id
             WHERE c.slug = $1
-            ORDER BY s.created_at ASC
+            ORDER BY s.weight ASC
             "#,
         )
         .bind(course_slug)
@@ -118,7 +124,7 @@ impl StageRepository {
             JOIN courses c ON s.course_id = c.id
             LEFT JOIN extensions e ON s.extension_id = e.id
             WHERE c.slug = $1 AND s.extension_id IS NULL
-            ORDER BY s.created_at ASC
+            ORDER BY s.weight ASC
             "#,
         )
         .bind(course_slug)
@@ -139,7 +145,7 @@ impl StageRepository {
             JOIN courses c ON s.course_id = c.id
             LEFT JOIN extensions e ON s.extension_id = e.id
             WHERE c.slug = $1 AND s.extension_id IS NOT NULL
-            ORDER BY s.created_at ASC
+            ORDER BY s.weight ASC
             "#,
         )
         .bind(course_slug)
@@ -156,7 +162,7 @@ impl StageRepository {
             SELECT s.*, e.slug as extension_slug FROM stages s
             JOIN extensions e ON s.extension_id = e.id
             WHERE e.slug = $1
-            ORDER BY s.created_at ASC
+            ORDER BY s.weight ASC
             "#,
         )
         .bind(extension_slug)
@@ -172,10 +178,15 @@ impl StageRepository {
 
         let row = sqlx::query_as::<_, StageModel>(
             r#"
-            UPDATE stages
-            SET course_id = $2, extension_id = $3, name = $4, difficulty = $5, description = $6, instruction = $7, updated_at = $8
-            WHERE slug = $1
-            RETURNING *
+            WITH updated_stage AS (
+                UPDATE stages
+                SET course_id = $2, extension_id = $3, name = $4, difficulty = $5, description = $6, instruction = $7, weight = $8, updated_at = $9
+                WHERE slug = $1
+                RETURNING *
+            )
+            SELECT s.*, e.slug as extension_slug
+            FROM updated_stage s
+            LEFT JOIN extensions e ON s.extension_id = e.id
             "#,
         )
         .bind(&stage.slug)
@@ -185,6 +196,7 @@ impl StageRepository {
         .bind(&stage.difficulty)
         .bind(&stage.description)
         .bind(&stage.instruction)
+        .bind(stage.weight)
         .bind(stage.updated_at)
         .fetch_one(&mut **tx)
         .await?;

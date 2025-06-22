@@ -30,8 +30,8 @@ impl ExtensionRepository {
         let row = sqlx::query_as::<_, ExtensionModel>(
             r#"
             INSERT INTO extensions (
-                id, course_id, slug, name, description, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                id, course_id, slug, name, description, weight, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING *
             "#,
         )
@@ -40,6 +40,7 @@ impl ExtensionRepository {
         .bind(&ext.slug)
         .bind(&ext.name)
         .bind(&ext.description)
+        .bind(ext.weight)
         .bind(ext.created_at)
         .bind(ext.updated_at)
         .fetch_one(&mut **tx)
@@ -76,7 +77,7 @@ impl ExtensionRepository {
             SELECT e.* FROM extensions e
             JOIN courses c ON e.course_id = c.id
             WHERE c.slug = $1
-            ORDER BY e.created_at DESC
+            ORDER BY e.weight ASC
             "#,
         )
         .bind(course_slug)
@@ -94,7 +95,7 @@ impl ExtensionRepository {
         let row = sqlx::query_as::<_, ExtensionModel>(
             r#"
             UPDATE extensions
-            SET course_id = $2, name = $3, description = $4, updated_at = $5
+            SET course_id = $2, name = $3, description = $4, weight = $5, updated_at = $6
             WHERE slug = $1
             RETURNING *
             "#,
@@ -103,6 +104,7 @@ impl ExtensionRepository {
         .bind(extension.course_id)
         .bind(&extension.name)
         .bind(&extension.description)
+        .bind(extension.weight)
         .bind(extension.updated_at)
         .fetch_one(&mut **tx)
         .await?;

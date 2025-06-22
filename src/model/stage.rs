@@ -49,6 +49,9 @@ pub struct StageModel {
     /// A markdown description for this stage.
     pub instruction: String,
 
+    /// Sorting weight (default: 0)
+    pub weight: i32,
+
     /// Creation timestamp
     pub created_at: DateTime<Utc>,
 
@@ -84,6 +87,7 @@ impl From<Stage> for StageModel {
             difficulty: stage.difficulty.to_string(),
             description: stage.description,
             instruction: stage.instruction,
+            weight: 0,
             created_at: Utc::now(),
             updated_at: Utc::now(),
         }
