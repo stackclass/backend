@@ -102,11 +102,15 @@ impl StageRepository {
     pub async fn find_by_course(db: &Database, course_slug: &str) -> Result<Vec<StageModel>> {
         let rows = sqlx::query_as::<_, StageModel>(
             r#"
-            SELECT s.*, e.slug as extension_slug FROM stages s
+            SELECT s.*, e.slug as extension_slug
+            FROM stages s
             JOIN courses c ON s.course_id = c.id
             LEFT JOIN extensions e ON s.extension_id = e.id
             WHERE c.slug = $1
-            ORDER BY s.weight ASC
+            ORDER BY
+                s.extension_id IS NULL DESC,
+                e.weight ASC NULLS FIRST,
+                s.weight ASC
             "#,
         )
         .bind(course_slug)
@@ -141,11 +145,14 @@ impl StageRepository {
     ) -> Result<Vec<StageModel>> {
         let rows = sqlx::query_as::<_, StageModel>(
             r#"
-            SELECT s.*, e.slug as extension_slug FROM stages s
+            SELECT s.*, e.slug as extension_slug
+            FROM stages s
             JOIN courses c ON s.course_id = c.id
-            LEFT JOIN extensions e ON s.extension_id = e.id
+            JOIN extensions e ON s.extension_id = e.id
             WHERE c.slug = $1 AND s.extension_id IS NOT NULL
-            ORDER BY s.weight ASC
+            ORDER BY
+                e.weight,
+                s.weight
             "#,
         )
         .bind(course_slug)
@@ -159,7 +166,8 @@ impl StageRepository {
     pub async fn find_by_extension(db: &Database, extension_slug: &str) -> Result<Vec<StageModel>> {
         let rows = sqlx::query_as::<_, StageModel>(
             r#"
-            SELECT s.*, e.slug as extension_slug FROM stages s
+            SELECT s.*, e.slug as extension_slug
+            FROM stages s
             JOIN extensions e ON s.extension_id = e.id
             WHERE e.slug = $1
             ORDER BY s.weight ASC
