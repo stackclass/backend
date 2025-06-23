@@ -71,6 +71,12 @@ impl StageModel {
         self.extension_id = Some(id);
         self
     }
+
+    /// Sets the weight field
+    pub fn with_weight(mut self, weight: i32) -> StageModel {
+        self.weight = weight;
+        self
+    }
 }
 
 impl From<Stage> for StageModel {

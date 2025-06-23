@@ -67,19 +67,28 @@ impl CourseService {
         let course_model = CourseModel::from(&course).with_repository(url);
         let course_model = CourseRepository::create(&mut tx, &course_model).await?;
 
-        // Persist stages and their solutions
-        for stage in course.stages.values() {
-            Self::create_stage(&mut tx, stage, course_model.id, None).await?;
+        // Persist stages and their solutions with weight
+        for (index, (_, stage)) in course.stages.iter().enumerate() {
+            Self::create_stage(&mut tx, stage, course_model.id, None, index as i32).await?;
         }
 
-        // Persist extensions and their stages
+        // Persist extensions and their stages with weight
         if let Some(extensions) = course.extensions {
-            for ext in extensions.values() {
-                let ext_model = ExtensionModel::from(ext.clone()).with_course(course_model.id);
+            for (index, (_, ext)) in extensions.iter().enumerate() {
+                let ext_model = ExtensionModel::from(ext.clone())
+                    .with_course(course_model.id)
+                    .with_weight(index as i32);
                 let ext_model = ExtensionRepository::create(&mut tx, &ext_model).await?;
 
-                for stage in ext.stages.values() {
-                    Self::create_stage(&mut tx, stage, course_model.id, Some(ext_model.id)).await?;
+                for (stage_index, (_, stage)) in ext.stages.iter().enumerate() {
+                    Self::create_stage(
+                        &mut tx,
+                        stage,
+                        course_model.id,
+                        Some(ext_model.id),
+                        stage_index as i32,
+                    )
+                    .await?;
                 }
             }
         }
@@ -96,11 +105,15 @@ impl CourseService {
         stage: &Stage,
         course_id: Uuid,
         ext_id: Option<Uuid>,
+        weight: i32,
     ) -> Result<()> {
-        let mut stage_model = StageModel::from(stage.clone()).with_course(course_id);
+        let mut stage_model =
+            StageModel::from(stage.clone()).with_course(course_id).with_weight(weight);
+
         if let Some(extension_id) = ext_id {
             stage_model = stage_model.with_extension(extension_id);
         }
+
         let stage_model = StageRepository::create(tx, &stage_model).await?;
 
         if let Some(sol) = &stage.solution {
@@ -155,21 +168,30 @@ impl CourseService {
         let mut current_stage_slugs = HashSet::new();
         let mut current_extension_slugs = HashSet::new();
 
-        // Update and track base stages
-        for stage in course.stages.values() {
-            Self::update_stage(&mut tx, stage, course_model.id, None).await?;
+        // Update and track base stages with weight
+        for (index, (_, stage)) in course.stages.iter().enumerate() {
+            Self::update_stage(&mut tx, stage, course_model.id, None, index as i32).await?;
             current_stage_slugs.insert(stage.slug.clone());
         }
 
-        // Update and track extension stages
+        // Update and track extension stages with weight
         if let Some(extensions) = &course.extensions {
-            for ext in extensions.values() {
-                let ext_model = ExtensionModel::from(ext.clone()).with_course(course_model.id);
+            for (index, (_, ext)) in extensions.iter().enumerate() {
+                let ext_model = ExtensionModel::from(ext.clone())
+                    .with_course(course_model.id)
+                    .with_weight(index as i32);
                 let ext_model = ExtensionRepository::upsert(&mut tx, &ext_model).await?;
 
                 // Upsert extension stages and their solutions
-                for stage in ext.stages.values() {
-                    Self::update_stage(&mut tx, stage, course_model.id, Some(ext_model.id)).await?;
+                for (stage_index, (_, stage)) in ext.stages.iter().enumerate() {
+                    Self::update_stage(
+                        &mut tx,
+                        stage,
+                        course_model.id,
+                        Some(ext_model.id),
+                        stage_index as i32,
+                    )
+                    .await?;
                     current_stage_slugs.insert(stage.slug.clone());
                 }
 
@@ -213,11 +235,15 @@ impl CourseService {
         stage: &Stage,
         course_id: Uuid,
         ext_id: Option<Uuid>,
+        weight: i32,
     ) -> Result<()> {
-        let mut stage_model = StageModel::from(stage.clone()).with_course(course_id);
+        let mut stage_model =
+            StageModel::from(stage.clone()).with_course(course_id).with_weight(weight);
+
         if let Some(extension_id) = ext_id {
             stage_model = stage_model.with_extension(extension_id);
         }
+
         let stage_model = StageRepository::upsert(tx, &stage_model).await?;
 
         // Upsert solutions

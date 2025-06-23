@@ -52,6 +52,12 @@ impl ExtensionModel {
         self.course_id = id;
         self
     }
+
+    /// Sets the weight field
+    pub fn with_weight(mut self, weight: i32) -> ExtensionModel {
+        self.weight = weight;
+        self
+    }
 }
 
 impl From<Extension> for ExtensionModel {
