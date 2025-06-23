@@ -394,6 +394,7 @@
           "release_status",
           "description",
           "summary",
+          "logo",
           "created_at",
           "updated_at"
         ],
@@ -406,6 +407,10 @@
           "description": {
             "type": "string",
             "description": "Detailed description"
+          },
+          "logo": {
+            "type": "string",
+            "description": "URL or path to the course logo"
           },
           "name": {
             "type": "string"
@@ -440,6 +445,7 @@
           "short_name",
           "release_status",
           "summary",
+          "logo",
           "created_at",
           "updated_at"
         ],
@@ -448,6 +454,10 @@
             "type": "string",
             "format": "date-time",
             "description": "Creation timestamp"
+          },
+          "logo": {
+            "type": "string",
+            "description": "URL or path to the course logo"
           },
           "name": {
             "type": "string"

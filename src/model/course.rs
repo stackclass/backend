@@ -45,6 +45,9 @@ pub struct CourseModel {
     /// The git repository URL of the course
     pub repository: String,
 
+    /// URL or path to the course logo
+    pub logo: String,
+
     /// Creation timestamp
     pub created_at: DateTime<Utc>,
 
@@ -71,6 +74,7 @@ impl From<&Course> for CourseModel {
             description: course.description.clone(),
             summary: course.summary.clone(),
             repository: String::new(),
+            logo: String::new(),
             created_at: Utc::now(),
             updated_at: Utc::now(),
         }

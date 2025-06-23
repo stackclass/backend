@@ -29,8 +29,8 @@ impl CourseRepository {
         let row = sqlx::query_as::<_, CourseModel>(
             r#"
             INSERT INTO courses (
-                id, slug, name, short_name, release_status, description, summary, repository, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                id, slug, name, short_name, release_status, description, summary, repository, logo, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING *
             "#,
         )
@@ -42,6 +42,7 @@ impl CourseRepository {
         .bind(&course.description)
         .bind(&course.summary)
         .bind(&course.repository)
+        .bind(&course.logo)
         .bind(course.created_at)
         .bind(course.updated_at)
         .fetch_one(&mut **tx)
@@ -84,7 +85,7 @@ impl CourseRepository {
         let row = sqlx::query_as::<_, CourseModel>(
             r#"
             UPDATE courses
-            SET name = $2, short_name = $3, release_status = $4, description = $5, summary = $6, updated_at = $7
+            SET name = $2, short_name = $3, release_status = $4, description = $5, summary = $6, repository = $7, logo = $8, updated_at = $9
             WHERE slug = $1
             RETURNING *
             "#,
@@ -95,6 +96,8 @@ impl CourseRepository {
         .bind(&course.release_status)
         .bind(&course.description)
         .bind(&course.summary)
+        .bind(&course.repository)
+        .bind(&course.logo)
         .bind(course.updated_at)
         .fetch_one(&mut **tx)
         .await?;

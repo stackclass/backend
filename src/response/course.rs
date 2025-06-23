@@ -35,6 +35,9 @@ pub struct CourseResponse {
     /// Brief summary
     pub summary: String,
 
+    /// URL or path to the course logo
+    pub logo: String,
+
     /// Creation timestamp
     pub created_at: DateTime<Utc>,
 
@@ -50,6 +53,7 @@ impl From<CourseModel> for CourseResponse {
             short_name: model.short_name,
             release_status: model.release_status,
             summary: model.summary,
+            logo: model.logo,
             created_at: model.created_at,
             updated_at: model.updated_at,
         }
@@ -76,6 +80,9 @@ pub struct CourseDetailResponse {
     /// Brief summary
     pub summary: String,
 
+    /// URL or path to the course logo
+    pub logo: String,
+
     /// Creation timestamp
     pub created_at: DateTime<Utc>,
 
@@ -92,6 +99,7 @@ impl From<CourseModel> for CourseDetailResponse {
             release_status: model.release_status,
             description: model.description,
             summary: model.summary,
+            logo: model.logo,
             created_at: model.created_at,
             updated_at: model.updated_at,
         }
