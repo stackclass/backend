@@ -38,6 +38,9 @@ pub struct CourseResponse {
     /// URL or path to the course logo
     pub logo: String,
 
+    /// Number of stages in the course
+    pub stage_count: i32,
+
     /// Creation timestamp
     pub created_at: DateTime<Utc>,
 
@@ -54,6 +57,7 @@ impl From<CourseModel> for CourseResponse {
             release_status: model.release_status,
             summary: model.summary,
             logo: model.logo,
+            stage_count: model.stage_count,
             created_at: model.created_at,
             updated_at: model.updated_at,
         }
@@ -83,6 +87,9 @@ pub struct CourseDetailResponse {
     /// URL or path to the course logo
     pub logo: String,
 
+    /// Number of stages in the course
+    pub stage_count: i32,
+
     /// Creation timestamp
     pub created_at: DateTime<Utc>,
 
@@ -100,6 +107,7 @@ impl From<CourseModel> for CourseDetailResponse {
             description: model.description,
             summary: model.summary,
             logo: model.logo,
+            stage_count: model.stage_count,
             created_at: model.created_at,
             updated_at: model.updated_at,
         }

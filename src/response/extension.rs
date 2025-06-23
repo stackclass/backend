@@ -29,6 +29,9 @@ pub struct ExtensionResponse {
     /// Extension description
     pub description: String,
 
+    /// Number of stages in the extension
+    pub stage_count: i32,
+
     /// Creation timestamp
     pub created_at: DateTime<Utc>,
 
@@ -42,6 +45,7 @@ impl From<ExtensionModel> for ExtensionResponse {
             slug: model.slug,
             name: model.name,
             description: model.description,
+            stage_count: model.stage_count,
             created_at: model.created_at,
             updated_at: model.updated_at,
         }

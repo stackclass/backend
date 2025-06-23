@@ -36,6 +36,9 @@ pub struct ExtensionModel {
     /// Extension description
     pub description: String,
 
+    /// Number of stages in the extension
+    pub stage_count: i32,
+
     /// Sorting weight (default: 0)
     pub weight: i32,
 
@@ -50,6 +53,12 @@ impl ExtensionModel {
     /// Sets the course_id field
     pub fn with_course(mut self, id: Uuid) -> ExtensionModel {
         self.course_id = id;
+        self
+    }
+
+    /// Sets the stage_count field
+    pub fn with_stage_count(mut self, stage_count: i32) -> ExtensionModel {
+        self.stage_count = stage_count;
         self
     }
 
@@ -69,6 +78,7 @@ impl From<Extension> for ExtensionModel {
             slug: ext.slug,
             name: ext.name,
             description: ext.description,
+            stage_count: 0,
             weight: 0,
             created_at: Utc::now(),
             updated_at: Utc::now(),

@@ -48,6 +48,9 @@ pub struct CourseModel {
     /// URL or path to the course logo
     pub logo: String,
 
+    /// Number of stages in the course
+    pub stage_count: i32,
+
     /// Creation timestamp
     pub created_at: DateTime<Utc>,
 
@@ -59,6 +62,12 @@ impl CourseModel {
     /// Sets the repository field
     pub fn with_repository(mut self, repository: &str) -> CourseModel {
         self.repository = repository.to_string();
+        self
+    }
+
+    /// Sets the stage_count field
+    pub fn with_stage_count(mut self, stage_count: i32) -> CourseModel {
+        self.stage_count = stage_count;
         self
     }
 }
@@ -75,6 +84,7 @@ impl From<&Course> for CourseModel {
             summary: course.summary.clone(),
             repository: String::new(),
             logo: String::new(),
+            stage_count: 0,
             created_at: Utc::now(),
             updated_at: Utc::now(),
         }

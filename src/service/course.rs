@@ -64,7 +64,9 @@ impl CourseService {
         let mut tx = ctx.database.pool().begin().await?;
 
         // Persist the course
-        let course_model = CourseModel::from(&course).with_repository(url);
+        let course_model = CourseModel::from(&course)
+            .with_repository(url)
+            .with_stage_count(calculate_total_stages(&course));
         let course_model = CourseRepository::create(&mut tx, &course_model).await?;
 
         // Persist stages and their solutions with weight
@@ -77,6 +79,7 @@ impl CourseService {
             for (index, (_, ext)) in extensions.iter().enumerate() {
                 let ext_model = ExtensionModel::from(ext.clone())
                     .with_course(course_model.id)
+                    .with_stage_count(ext.stages.len() as i32)
                     .with_weight(index as i32);
                 let ext_model = ExtensionRepository::create(&mut tx, &ext_model).await?;
 
@@ -161,7 +164,8 @@ impl CourseService {
         let existing_exts = ExtensionRepository::find_by_course(&ctx.database, slug).await?;
 
         // Update the course
-        let course_model = CourseModel::from(&course);
+        let course_model =
+            CourseModel::from(&course).with_stage_count(calculate_total_stages(&course));
         let course_model = CourseRepository::update(&mut tx, &course_model).await?;
 
         // Track current slugs for cleanup
@@ -179,6 +183,7 @@ impl CourseService {
             for (index, (_, ext)) in extensions.iter().enumerate() {
                 let ext_model = ExtensionModel::from(ext.clone())
                     .with_course(course_model.id)
+                    .with_stage_count(ext.stages.len() as i32)
                     .with_weight(index as i32);
                 let ext_model = ExtensionRepository::upsert(&mut tx, &ext_model).await?;
 
@@ -262,4 +267,12 @@ impl CourseService {
     pub(crate) async fn delete(ctx: Arc<Context>, slug: &str) -> Result<()> {
         CourseRepository::delete(&ctx.database, slug).await.map_err(ApiError::DatabaseError)
     }
+}
+
+fn calculate_total_stages(course: &Course) -> i32 {
+    let mut total = course.stages.len() as i32;
+    if let Some(extensions) = &course.extensions {
+        total += extensions.iter().map(|(_, ext)| ext.stages.len() as i32).sum::<i32>();
+    }
+    total
 }

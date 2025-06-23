@@ -395,6 +395,7 @@
           "description",
           "summary",
           "logo",
+          "stage_count",
           "created_at",
           "updated_at"
         ],
@@ -426,6 +427,11 @@
             "type": "string",
             "description": "Unique human-readable identifier"
           },
+          "stage_count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of stages in the course"
+          },
           "summary": {
             "type": "string",
             "description": "Brief summary"
@@ -446,6 +452,7 @@
           "release_status",
           "summary",
           "logo",
+          "stage_count",
           "created_at",
           "updated_at"
         ],
@@ -472,6 +479,11 @@
           "slug": {
             "type": "string",
             "description": "Unique human-readable identifier"
+          },
+          "stage_count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of stages in the course"
           },
           "summary": {
             "type": "string",
@@ -502,6 +514,7 @@
           "slug",
           "name",
           "description",
+          "stage_count",
           "created_at",
           "updated_at"
         ],
@@ -522,6 +535,11 @@
           "slug": {
             "type": "string",
             "description": "Unique identifier within course"
+          },
+          "stage_count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of stages in the extension"
           },
           "updated_at": {
             "type": "string",
