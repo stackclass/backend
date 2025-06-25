@@ -18,7 +18,7 @@ use uuid::Uuid;
 
 use crate::{
     database::{Database, Transaction},
-    model::StageModel,
+    model::{StageModel, UserStageModel},
     repository::Result,
 };
 
@@ -227,5 +227,32 @@ impl StageRepository {
         sqlx::query(r#"DELETE FROM stages WHERE slug = $1"#).bind(slug).execute(&mut **tx).await?;
 
         Ok(())
+    }
+
+    /// Find user stages for the current user.
+    pub async fn find_user_stages(
+        db: &Database,
+        user_id: &str,
+        course_slug: &str,
+    ) -> Result<Vec<UserStageModel>> {
+        let rows = sqlx::query_as::<_, UserStageModel>(
+            r#"
+            SELECT
+                us.*,
+                c.slug AS course_slug,
+                s.slug AS stage_slug
+            FROM user_stages us
+            JOIN user_courses uc ON us.user_course_id = uc.id
+            JOIN courses c ON uc.course_id = c.id
+            JOIN stages s ON us.stage_id = s.id
+            WHERE uc.user_id = $1 AND c.slug = $2
+            "#,
+        )
+        .bind(user_id)
+        .bind(course_slug)
+        .fetch_all(db.pool())
+        .await?;
+
+        Ok(rows)
     }
 }

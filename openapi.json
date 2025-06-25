@@ -445,6 +445,48 @@
           }
         }
       }
+    },
+    "/v1/user/courses/{slug}/stages": {
+      "get": {
+        "tags": [
+          "User",
+          "Stage"
+        ],
+        "summary": "Find all stages for the current user.",
+        "operationId": "find-user-stages",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "The slug of course",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stages retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserStageResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Course not found"
+          },
+          "500": {
+            "description": "Failed to get course"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -777,6 +819,42 @@
             "type": "string",
             "format": "date-time",
             "description": "Timestamp when the enrollment started"
+          }
+        }
+      },
+      "UserStageResponse": {
+        "type": "object",
+        "required": [
+          "course_slug",
+          "stage_slug",
+          "status",
+          "started_at"
+        ],
+        "properties": {
+          "completed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Timestamp when the stage was completed"
+          },
+          "course_slug": {
+            "type": "string",
+            "description": "Slug of the enrolled course"
+          },
+          "stage_slug": {
+            "type": "string",
+            "description": "Slug of the stage"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the stage was started"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current progress status (PENDING, IN_PROGRESS, COMPLETED)"
           }
         }
       }

@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use utoipa::ToSchema;
 
-use crate::model::{SolutionModel, StageModel};
+use crate::model::{SolutionModel, StageModel, UserStageModel};
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct StageResponse {
@@ -137,5 +137,35 @@ impl From<SolutionModel> for SolutionResponse {
             .unwrap_or_default();
 
         Self { explanation, patches }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct UserStageResponse {
+    /// Slug of the enrolled course
+    pub course_slug: String,
+
+    /// Slug of the stage
+    pub stage_slug: String,
+
+    /// Current progress status (PENDING, IN_PROGRESS, COMPLETED)
+    pub status: String,
+
+    /// Timestamp when the stage was started
+    pub started_at: DateTime<Utc>,
+
+    /// Timestamp when the stage was completed
+    pub completed_at: Option<DateTime<Utc>>,
+}
+
+impl From<UserStageModel> for UserStageResponse {
+    fn from(model: UserStageModel) -> Self {
+        Self {
+            course_slug: model.course_slug,
+            stage_slug: model.stage_slug,
+            status: model.status,
+            started_at: model.started_at,
+            completed_at: model.completed_at,
+        }
     }
 }

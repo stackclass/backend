@@ -109,14 +109,20 @@ pub struct UserStageModel {
     /// ID of the user's course enrollment
     pub user_course_id: Uuid,
 
+    /// Slug of the enrolled course
+    pub course_slug: String,
+
     /// ID of the stage
     pub stage_id: Uuid,
+
+    /// Slug of the stage
+    pub stage_slug: String,
 
     /// Current progress status (PENDING, IN_PROGRESS, COMPLETED)
     pub status: String,
 
     /// Timestamp when the stage was started
-    pub started_at: Option<DateTime<Utc>>,
+    pub started_at: DateTime<Utc>,
 
     /// Timestamp when the stage was completed
     pub completed_at: Option<DateTime<Utc>>,

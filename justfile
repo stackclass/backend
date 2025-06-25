@@ -42,3 +42,7 @@ all:
     just check
     just build
     just openapi
+
+# Run the main program
+run:
+    cargo run --bin codecraft-server

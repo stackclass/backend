@@ -35,6 +35,8 @@ use crate::{handler, request, response};
 
         handler::course::find_user_courses,
         handler::course::get_user_course,
+
+        handler::stage::find_user_stages,
     ),
     components(
         schemas(
@@ -49,6 +51,7 @@ use crate::{handler, request, response};
             response::SolutionResponse,
 
             response::UserCourseResponse,
+            response::UserStageResponse,
         )
     ),
     tags(

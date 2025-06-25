@@ -18,7 +18,7 @@ use crate::{
     context::Context,
     errors::Result,
     repository::{SolutionRepository, StageRepository},
-    response::{StageDetailResponse, StageResponse},
+    response::{StageDetailResponse, StageResponse, UserStageResponse},
 };
 
 /// Service for managing stages
@@ -58,5 +58,15 @@ impl StageService {
         response.solution = solution.map(|s| s.into());
 
         Ok(response)
+    }
+
+    /// Fetch user stages for the current user.
+    pub async fn find_user_stages(
+        ctx: Arc<Context>,
+        user_id: &str,
+        course_slug: &str,
+    ) -> Result<Vec<UserStageResponse>> {
+        let stages = StageRepository::find_user_stages(&ctx.database, user_id, course_slug).await?;
+        Ok(stages.into_iter().map(Into::into).collect())
     }
 }

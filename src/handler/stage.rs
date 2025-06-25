@@ -23,7 +23,7 @@ use std::sync::Arc;
 use crate::{
     context::Context,
     errors::Result,
-    response::{StageDetailResponse, StageResponse},
+    response::{StageDetailResponse, StageResponse, UserStageResponse},
     service::StageService,
 };
 
@@ -112,4 +112,25 @@ pub async fn get(
     Path((slug, stage_slug)): Path<(String, String)>,
 ) -> Result<impl IntoResponse> {
     Ok((StatusCode::OK, Json(StageService::get(ctx, &slug, &stage_slug).await?)))
+}
+
+/// Find all stages for the current user.
+#[utoipa::path(
+    operation_id = "find-user-stages",
+    get, path = "/v1/user/courses/{slug}/stages",
+    params(
+        ("slug" = String, description = "The slug of course"),
+    ),
+    responses(
+        (status = 200, description = "Stages retrieved successfully", body = Vec<UserStageResponse>),
+        (status = 404, description = "Course not found"),
+        (status = 500, description = "Failed to get course")
+    ),
+    tags = ["User", "Stage"]
+)]
+pub async fn find_user_stages(
+    State(ctx): State<Arc<Context>>,
+    Path(slug): Path<String>,
+) -> Result<impl IntoResponse> {
+    Ok((StatusCode::OK, Json(StageService::find_user_stages(ctx, "<user_id>", &slug).await?)))
 }
