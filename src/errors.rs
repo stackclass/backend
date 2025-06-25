@@ -53,6 +53,24 @@ pub enum ApiError {
 
     #[error("Migrate error: {0}")]
     MigrateError(#[from] sqlx::migrate::MigrateError),
+
+    #[error("Stage is already completed")]
+    StageAlreadyCompleted,
+
+    #[error("Stage must be in progress to complete")]
+    StageNotInProgress,
+
+    #[error("Cannot complete a stage out of order")]
+    StageOutOfOrder,
+
+    #[error("User is not enrolled in the course")]
+    UserNotEnrolled,
+
+    #[error("Course not found")]
+    CourseNotFound,
+
+    #[error("Stage not found")]
+    StageNotFound,
 }
 
 impl IntoResponse for ApiError {
@@ -67,6 +85,12 @@ impl IntoResponse for ApiError {
             ApiError::SchemaParserError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::MigrateError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::StageAlreadyCompleted => StatusCode::BAD_REQUEST,
+            ApiError::StageNotInProgress => StatusCode::BAD_REQUEST,
+            ApiError::StageOutOfOrder => StatusCode::BAD_REQUEST,
+            ApiError::UserNotEnrolled => StatusCode::BAD_REQUEST,
+            ApiError::CourseNotFound => StatusCode::NOT_FOUND,
+            ApiError::StageNotFound => StatusCode::NOT_FOUND,
         };
         let message = self.to_string();
 

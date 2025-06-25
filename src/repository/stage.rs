@@ -180,6 +180,36 @@ impl StageRepository {
         Ok(rows)
     }
 
+    /// Find the next stage by current stage slug (ordered by weight)
+    pub async fn find_next_stage_by_slug(
+        db: &Database,
+        course_slug: &str,
+        stage_slug: &str,
+    ) -> Result<Option<StageModel>> {
+        let stage = sqlx::query_as::<_, StageModel>(
+            r#"
+                WITH current_stage AS (
+                    SELECT weight FROM stages s
+                    JOIN courses c ON s.course_id = c.id
+                    WHERE c.slug = $1 AND s.slug = $2
+                )
+                SELECT s.*, e.slug as extension_slug
+                FROM stages s
+                JOIN courses c ON s.course_id = c.id
+                LEFT JOIN extensions e ON s.extension_id = e.id
+                WHERE c.slug = $1 AND s.weight > (SELECT weight FROM current_stage)
+                ORDER BY s.weight ASC
+                LIMIT 1
+                "#,
+        )
+        .bind(course_slug)
+        .bind(stage_slug)
+        .fetch_optional(db.pool())
+        .await?;
+
+        Ok(stage)
+    }
+
     /// Update a stage in the database.
     pub async fn update(tx: &mut Transaction<'_>, stage: &StageModel) -> Result<StageModel> {
         debug!("Updating stage with slug: {}", stage.slug);
@@ -280,6 +310,42 @@ impl StageRepository {
         .bind(course_slug)
         .bind(stage_slug)
         .fetch_one(db.pool())
+        .await?;
+
+        Ok(row)
+    }
+
+    /// Create a new user stage in the database.
+    pub async fn create_user_stage(
+        tx: &mut Transaction<'_>,
+        user_stage: &UserStageModel,
+    ) -> Result<UserStageModel> {
+        debug!("Creating user stage for user_course_id: {}", user_stage.user_course_id);
+
+        let row = sqlx::query_as::<_, UserStageModel>(
+            r#"
+            WITH inserted AS (
+                INSERT INTO user_stages (
+                    id, user_course_id, stage_id, status, started_at
+                ) VALUES ($1, $2, $3, $4, $5)
+                RETURNING *
+            )
+            SELECT
+                i.*,
+                c.slug AS course_slug,
+                s.slug AS stage_slug
+            FROM inserted i
+            JOIN user_courses uc ON i.user_course_id = uc.id
+            JOIN courses c ON uc.course_id = c.id
+            JOIN stages s ON i.stage_id = s.id
+            "#,
+        )
+        .bind(user_stage.id)
+        .bind(user_stage.user_course_id)
+        .bind(user_stage.stage_id)
+        .bind(&user_stage.status)
+        .bind(user_stage.started_at)
+        .fetch_one(&mut **tx)
         .await?;
 
         Ok(row)

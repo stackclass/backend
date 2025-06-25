@@ -959,7 +959,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Current progress status (pending, in_progress, completed)"
+            "description": "Current progress status (in_progress, completed)"
           }
         }
       }

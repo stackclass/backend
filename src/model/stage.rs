@@ -118,7 +118,7 @@ pub struct UserStageModel {
     /// Slug of the stage
     pub stage_slug: String,
 
-    /// Current progress status (pending, in_progress, completed)
+    /// Current progress status (in_progress, completed)
     pub status: String,
 
     /// Timestamp when the stage was started
@@ -137,17 +137,10 @@ impl UserStageModel {
             course_slug: String::new(),
             stage_id,
             stage_slug: String::new(),
-            status: "pending".to_string(),
+            status: "in_progress".to_string(),
             started_at: Utc::now(),
             completed_at: None,
         }
-    }
-
-    /// Marks the stage as started with current timestamp
-    pub fn start(mut self) -> Self {
-        self.status = "in_progress".to_string();
-        self.started_at = Utc::now();
-        self
     }
 
     /// Marks the stage as completed with current timestamp

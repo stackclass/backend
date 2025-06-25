@@ -16,8 +16,10 @@ use std::sync::Arc;
 
 use crate::{
     context::Context,
-    errors::Result,
-    repository::{SolutionRepository, StageRepository},
+    database::{Database, Transaction},
+    errors::{ApiError, Result},
+    model::{UserCourseModel, UserStageModel},
+    repository::{CourseRepository, SolutionRepository, StageRepository},
     response::{StageDetailResponse, StageResponse, UserStageResponse},
 };
 
@@ -90,17 +92,78 @@ impl StageService {
         course_slug: &str,
         stage_slug: &str,
     ) -> Result<UserStageResponse> {
-        let stage =
-            StageRepository::get_user_stage(&ctx.database, user_id, course_slug, stage_slug)
-                .await?;
+        let db = &ctx.database;
 
+        //  Fetch the user's course enrollment and current user stage.
+        let user_course =
+            CourseRepository::get_user_course(db, user_id, course_slug).await.map_err(|e| {
+                if let sqlx::Error::RowNotFound = e {
+                    ApiError::UserNotEnrolled
+                } else {
+                    e.into()
+                }
+            })?;
+        let mut user_stage = StageRepository::get_user_stage(db, user_id, course_slug, stage_slug)
+            .await
+            .map_err(|e| {
+                if let sqlx::Error::RowNotFound = e {
+                    ApiError::StageNotFound
+                } else {
+                    e.into()
+                }
+            })?;
+
+        //  Validate the stage can be completed.
+        if user_stage.status == "completed" {
+            return Err(ApiError::StageAlreadyCompleted);
+        }
+        if user_stage.status != "in_progress" {
+            return Err(ApiError::StageNotInProgress);
+        }
+        if user_course.current_stage_id != Some(user_stage.stage_id) {
+            return Err(ApiError::StageOutOfOrder);
+        }
+
+        // Begins a new transaction.
         let mut tx = ctx.database.pool().begin().await?;
 
-        let stage = stage.complete();
-        let user_stage = StageRepository::update_user_stage(&mut tx, &stage).await?;
+        // Mark the stage as completed.
+        user_stage = user_stage.complete();
+        let completed_stage = StageRepository::update_user_stage(&mut tx, &user_stage).await?;
 
+        // Update user course and create next stage if needed.
+        Self::start_next_stage(&mut tx, db, user_course, course_slug, stage_slug).await?;
+
+        // Commits this transaction.
         tx.commit().await?;
 
-        Ok(user_stage.into())
+        Ok(completed_stage.into())
+    }
+
+    /// Update user course and create next stage if needed.
+    async fn start_next_stage(
+        tx: &mut Transaction<'_>,
+        db: &Database,
+        user_course: UserCourseModel,
+        course_slug: &str,
+        stage_slug: &str,
+    ) -> Result<()> {
+        let mut updated_user_course = user_course;
+
+        // Find the next stage (if any) by current stage slug.
+        let next_stage =
+            StageRepository::find_next_stage_by_slug(db, course_slug, stage_slug).await?;
+
+        // If there is a next stage, create a new instance for it
+        if let Some(next_stage) = next_stage {
+            let user_stage = UserStageModel::new(updated_user_course.id, next_stage.id);
+            StageRepository::create_user_stage(tx, &user_stage).await?;
+            updated_user_course.current_stage_id = Some(next_stage.id);
+        }
+
+        updated_user_course.completed_stage_count += 1;
+        CourseRepository::update_user_course(tx, &updated_user_course).await?;
+
+        Ok(())
     }
 }
