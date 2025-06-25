@@ -23,7 +23,7 @@ use crate::{
     errors::{ApiError, Result},
     model::{CourseModel, ExtensionModel, SolutionModel, StageModel},
     repository::{CourseRepository, ExtensionRepository, SolutionRepository, StageRepository},
-    response::{CourseDetailResponse, CourseResponse},
+    response::{CourseDetailResponse, CourseResponse, UserCourseResponse},
     schema::{self, Course, Stage},
     service::storage::StorageService,
 };
@@ -266,6 +266,15 @@ impl CourseService {
     /// Delete course by slug
     pub(crate) async fn delete(ctx: Arc<Context>, slug: &str) -> Result<()> {
         CourseRepository::delete(&ctx.database, slug).await.map_err(ApiError::DatabaseError)
+    }
+
+    /// Fetch all courses for the current user.
+    pub async fn find_user_courses(
+        ctx: Arc<Context>,
+        user_id: &str,
+    ) -> Result<Vec<UserCourseResponse>> {
+        let courses = CourseRepository::find_user_courses(&ctx.database, user_id).await?;
+        Ok(courses.into_iter().map(Into::into).collect())
     }
 }
 

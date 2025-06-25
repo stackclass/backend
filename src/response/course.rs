@@ -16,7 +16,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::model::CourseModel;
+use crate::model::{CourseModel, UserCourseModel};
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct CourseResponse {
@@ -110,6 +110,32 @@ impl From<CourseModel> for CourseDetailResponse {
             stage_count: model.stage_count,
             created_at: model.created_at,
             updated_at: model.updated_at,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct UserCourseResponse {
+    /// Slug of the enrolled course
+    pub course_slug: String,
+
+    /// Timestamp when the enrollment started
+    pub started_at: DateTime<Utc>,
+
+    /// Slug of the current stage the user is on
+    pub current_stage_slug: Option<String>,
+
+    /// Number of stages completed by the user
+    pub completed_stage_count: i32,
+}
+
+impl From<UserCourseModel> for UserCourseResponse {
+    fn from(model: UserCourseModel) -> Self {
+        Self {
+            course_slug: model.course_slug,
+            started_at: model.started_at,
+            current_stage_slug: model.current_stage_slug,
+            completed_stage_count: model.completed_stage_count,
         }
     }
 }

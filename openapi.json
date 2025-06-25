@@ -381,6 +381,31 @@
           }
         }
       }
+    },
+    "/v1/user/courses": {
+      "get": {
+        "tags": [
+          "User",
+          "Course"
+        ],
+        "summary": "Find all courses for the current user.",
+        "operationId": "find-user-courses",
+        "responses": {
+          "200": {
+            "description": "User courses retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserCourseResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -684,6 +709,37 @@
             "description": "Last update timestamp"
           }
         }
+      },
+      "UserCourseResponse": {
+        "type": "object",
+        "required": [
+          "course_slug",
+          "started_at",
+          "completed_stage_count"
+        ],
+        "properties": {
+          "completed_stage_count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of stages completed by the user"
+          },
+          "course_slug": {
+            "type": "string",
+            "description": "Slug of the enrolled course"
+          },
+          "current_stage_slug": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Slug of the current stage the user is on"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the enrollment started"
+          }
+        }
       }
     }
   },
@@ -699,6 +755,10 @@
     {
       "name": "Stage",
       "description": "The Stage Service Handlers"
+    },
+    {
+      "name": "User",
+      "description": "The User Service Handlers"
     }
   ]
 }

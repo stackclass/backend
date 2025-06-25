@@ -24,7 +24,7 @@ use crate::{
     context::Context,
     errors::Result,
     request::CreateCourseRequest,
-    response::{CourseDetailResponse, CourseResponse},
+    response::{CourseDetailResponse, CourseResponse, UserCourseResponse},
     service::CourseService,
 };
 
@@ -128,4 +128,17 @@ pub async fn update(
 ) -> Result<impl IntoResponse> {
     CourseService::update(ctx, &slug).await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// Find all courses for the current user.
+#[utoipa::path(
+    operation_id = "find-user-courses",
+    get, path = "/v1/user/courses",
+    responses(
+        (status = 200, description = "User courses retrieved successfully", body = Vec<UserCourseResponse>),
+    ),
+    tags = ["User", "Course"]
+)]
+pub async fn find_user_courses(State(ctx): State<Arc<Context>>) -> Result<impl IntoResponse> {
+    Ok((StatusCode::OK, Json(CourseService::find_user_courses(ctx, "<user_id>").await?)))
 }

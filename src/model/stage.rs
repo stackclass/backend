@@ -102,7 +102,7 @@ impl From<Stage> for StageModel {
 
 /// Database model representing a user's progress in a course stage
 #[derive(Debug, FromRow)]
-pub struct UserStage {
+pub struct UserStageModel {
     /// Unique internal identifier
     pub id: Uuid,
 

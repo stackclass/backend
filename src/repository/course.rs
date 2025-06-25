@@ -16,7 +16,7 @@ use uuid::Uuid;
 
 use crate::{
     database::{Database, Transaction},
-    model::CourseModel,
+    model::{CourseModel, UserCourseModel},
     repository::Result,
 };
 
@@ -73,9 +73,9 @@ impl CourseRepository {
     }
 
     /// Find all courses
-    pub(crate) async fn find(database: &Database) -> Result<Vec<CourseModel>> {
+    pub(crate) async fn find(db: &Database) -> Result<Vec<CourseModel>> {
         let rows = sqlx::query_as::<_, CourseModel>(r#"SELECT * FROM courses"#)
-            .fetch_all(database.pool())
+            .fetch_all(db.pool())
             .await?;
 
         Ok(rows)
@@ -111,5 +111,26 @@ impl CourseRepository {
         sqlx::query(r#"DELETE FROM courses WHERE slug = $1"#).bind(slug).execute(db.pool()).await?;
 
         Ok(())
+    }
+
+    /// Find all courses for the current user.
+    pub async fn find_user_courses(db: &Database, user_id: &str) -> Result<Vec<UserCourseModel>> {
+        let rows = sqlx::query_as::<_, UserCourseModel>(
+            r#"
+            SELECT
+                uc.*,
+                c.slug AS course_slug,
+                s.slug AS current_stage_slug
+            FROM user_courses uc
+            LEFT JOIN courses c ON uc.course_id = c.id
+            LEFT JOIN stages s ON uc.current_stage_id = s.id
+            WHERE uc.user_id = $1
+            "#,
+        )
+        .bind(user_id)
+        .fetch_all(db.pool())
+        .await?;
+
+        Ok(rows)
     }
 }
