@@ -107,10 +107,7 @@ impl StageRepository {
             JOIN courses c ON s.course_id = c.id
             LEFT JOIN extensions e ON s.extension_id = e.id
             WHERE c.slug = $1
-            ORDER BY
-                s.extension_id IS NULL DESC,
-                e.weight ASC NULLS FIRST,
-                s.weight ASC
+            ORDER BY s.weight ASC
             "#,
         )
         .bind(course_slug)
@@ -150,9 +147,7 @@ impl StageRepository {
             JOIN courses c ON s.course_id = c.id
             JOIN extensions e ON s.extension_id = e.id
             WHERE c.slug = $1 AND s.extension_id IS NOT NULL
-            ORDER BY
-                e.weight,
-                s.weight
+            ORDER BY s.weight ASC
             "#,
         )
         .bind(course_slug)
