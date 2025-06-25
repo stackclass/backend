@@ -23,6 +23,7 @@ use std::sync::Arc;
 use crate::{
     context::Context,
     errors::Result,
+    request::CompleteStageRequest,
     response::{StageDetailResponse, StageResponse, UserStageResponse},
     service::StageService,
 };
@@ -155,5 +156,33 @@ pub async fn get_user_stage(
     Path((slug, stage_slug)): Path<(String, String)>,
 ) -> Result<impl IntoResponse> {
     let res = StageService::get_user_stage(ctx, "<user_id>", &slug, &stage_slug).await?;
+    Ok((StatusCode::OK, Json(res)))
+}
+
+/// Mark a stage as completed for the current user.
+#[utoipa::path(
+    operation_id = "complete-stage",
+    post, path = "/v1/user/courses/{slug}/stages",
+    params(
+        ("slug" = String, description = "The slug of course"),
+    ),
+    request_body(
+        content = inline(CompleteStageRequest),
+        description = "Complete stage request",
+        content_type = "application/json"
+    ),
+    responses(
+        (status = 200, description = "Stage completed successfully", body = UserStageResponse),
+        (status = 404, description = "Course or stage not found"),
+        (status = 500, description = "Failed to complete stage")
+    ),
+    tags = ["User", "Stage"]
+)]
+pub async fn complete_stage(
+    State(ctx): State<Arc<Context>>,
+    Path(slug): Path<String>,
+    Json(req): Json<CompleteStageRequest>,
+) -> Result<impl IntoResponse> {
+    let res = StageService::complete_stage(ctx, "<user_id>", &slug, &req.slug).await?;
     Ok((StatusCode::OK, Json(res)))
 }

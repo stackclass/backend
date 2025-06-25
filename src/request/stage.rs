@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod course;
-mod stage;
+use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
-// Re-exports
-pub use course::*;
-pub use stage::*;
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct CompleteStageRequest {
+    /// The slug of the stage to mark as completed
+    pub slug: String,
+}

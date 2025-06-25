@@ -486,6 +486,63 @@
             "description": "Failed to get course"
           }
         }
+      },
+      "post": {
+        "tags": [
+          "User",
+          "Stage"
+        ],
+        "summary": "Mark a stage as completed for the current user.",
+        "operationId": "complete-stage",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "The slug of course",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Complete stage request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "slug"
+                ],
+                "properties": {
+                  "slug": {
+                    "type": "string",
+                    "description": "The slug of the stage to mark as completed"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Stage completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserStageResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Course or stage not found"
+          },
+          "500": {
+            "description": "Failed to complete stage"
+          }
+        }
       }
     },
     "/v1/user/courses/{slug}/stages/{stage_slug}": {
@@ -902,7 +959,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Current progress status (PENDING, IN_PROGRESS, COMPLETED)"
+            "description": "Current progress status (pending, in_progress, completed)"
           }
         }
       }

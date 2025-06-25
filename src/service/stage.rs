@@ -60,7 +60,7 @@ impl StageService {
         Ok(response)
     }
 
-    /// Fetch user stages for the current user.
+    /// Fetch user stages for the user.
     pub async fn find_user_stages(
         ctx: Arc<Context>,
         user_id: &str,
@@ -70,7 +70,7 @@ impl StageService {
         Ok(stages.into_iter().map(Into::into).collect())
     }
 
-    /// Get the details of the stage for the current user.
+    /// Get the details of the stage for the user.
     pub async fn get_user_stage(
         ctx: Arc<Context>,
         user_id: &str,
@@ -81,5 +81,26 @@ impl StageService {
             StageRepository::get_user_stage(&ctx.database, user_id, course_slug, stage_slug)
                 .await?;
         Ok(stage.into())
+    }
+
+    /// Mark a stage as completed for a user.
+    pub async fn complete_stage(
+        ctx: Arc<Context>,
+        user_id: &str,
+        course_slug: &str,
+        stage_slug: &str,
+    ) -> Result<UserStageResponse> {
+        let stage =
+            StageRepository::get_user_stage(&ctx.database, user_id, course_slug, stage_slug)
+                .await?;
+
+        let mut tx = ctx.database.pool().begin().await?;
+
+        let stage = stage.complete();
+        let user_stage = StageRepository::update_user_stage(&mut tx, &stage).await?;
+
+        tx.commit().await?;
+
+        Ok(user_stage.into())
     }
 }

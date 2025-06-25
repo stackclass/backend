@@ -148,7 +148,7 @@ pub struct UserStageResponse {
     /// Slug of the stage
     pub stage_slug: String,
 
-    /// Current progress status (PENDING, IN_PROGRESS, COMPLETED)
+    /// Current progress status (pending, in_progress, completed)
     pub status: String,
 
     /// Timestamp when the stage was started

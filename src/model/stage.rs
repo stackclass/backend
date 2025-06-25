@@ -118,7 +118,7 @@ pub struct UserStageModel {
     /// Slug of the stage
     pub stage_slug: String,
 
-    /// Current progress status (PENDING, IN_PROGRESS, COMPLETED)
+    /// Current progress status (pending, in_progress, completed)
     pub status: String,
 
     /// Timestamp when the stage was started
@@ -126,4 +126,34 @@ pub struct UserStageModel {
 
     /// Timestamp when the stage was completed
     pub completed_at: Option<DateTime<Utc>>,
+}
+
+impl UserStageModel {
+    /// Creates a new instance with default values
+    pub fn new(user_course_id: Uuid, stage_id: Uuid) -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            user_course_id,
+            course_slug: String::new(),
+            stage_id,
+            stage_slug: String::new(),
+            status: "pending".to_string(),
+            started_at: Utc::now(),
+            completed_at: None,
+        }
+    }
+
+    /// Marks the stage as started with current timestamp
+    pub fn start(mut self) -> Self {
+        self.status = "in_progress".to_string();
+        self.started_at = Utc::now();
+        self
+    }
+
+    /// Marks the stage as completed with current timestamp
+    pub fn complete(mut self) -> Self {
+        self.status = "completed".to_string();
+        self.completed_at = Some(Utc::now());
+        self
+    }
 }
