@@ -84,14 +84,9 @@ impl CourseService {
                 let ext_model = ExtensionRepository::create(&mut tx, &ext_model).await?;
 
                 for (stage_index, (_, stage)) in ext.stages.iter().enumerate() {
-                    Self::create_stage(
-                        &mut tx,
-                        stage,
-                        course_model.id,
-                        Some(ext_model.id),
-                        stage_index as i32,
-                    )
-                    .await?;
+                    let weight = ((index + 1) * 1000 + stage_index) as i32;
+                    Self::create_stage(&mut tx, stage, course_model.id, Some(ext_model.id), weight)
+                        .await?;
                 }
             }
         }
@@ -189,14 +184,9 @@ impl CourseService {
 
                 // Upsert extension stages and their solutions
                 for (stage_index, (_, stage)) in ext.stages.iter().enumerate() {
-                    Self::update_stage(
-                        &mut tx,
-                        stage,
-                        course_model.id,
-                        Some(ext_model.id),
-                        stage_index as i32,
-                    )
-                    .await?;
+                    let weight = ((index + 1) * 1000 + stage_index) as i32;
+                    Self::update_stage(&mut tx, stage, course_model.id, Some(ext_model.id), weight)
+                        .await?;
                     current_stage_slugs.insert(stage.slug.clone());
                 }
 
