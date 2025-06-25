@@ -142,3 +142,24 @@ pub async fn update(
 pub async fn find_user_courses(State(ctx): State<Arc<Context>>) -> Result<impl IntoResponse> {
     Ok((StatusCode::OK, Json(CourseService::find_user_courses(ctx, "<user_id>").await?)))
 }
+
+/// Find the course detail for the current user.
+#[utoipa::path(
+    operation_id = "get-user-course-detail",
+    get, path = "/v1/user/courses/{slug}",
+    params(
+        ("slug" = String, description = "The slug of course"),
+    ),
+    responses(
+        (status = 200, description = "Course retrieved successfully", body = UserCourseResponse),
+        (status = 404, description = "Course not found"),
+        (status = 500, description = "Failed to get course")
+    ),
+    tags = ["User", "Course"]
+)]
+pub async fn get_user_course(
+    State(ctx): State<Arc<Context>>,
+    Path(slug): Path<String>,
+) -> Result<impl IntoResponse> {
+    Ok((StatusCode::OK, Json(CourseService::get_user_course(ctx, "<user_id>", &slug).await?)))
+}

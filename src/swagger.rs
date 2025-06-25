@@ -34,6 +34,7 @@ use crate::{handler, request, response};
         handler::stage::get,
 
         handler::course::find_user_courses,
+        handler::course::get_user_course,
     ),
     components(
         schemas(

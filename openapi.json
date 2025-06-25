@@ -406,6 +406,45 @@
           }
         }
       }
+    },
+    "/v1/user/courses/{slug}": {
+      "get": {
+        "tags": [
+          "User",
+          "Course"
+        ],
+        "summary": "Find the course detail for the current user.",
+        "operationId": "get-user-course-detail",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "The slug of course",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Course retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserCourseResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Course not found"
+          },
+          "500": {
+            "description": "Failed to get course"
+          }
+        }
+      }
     }
   },
   "components": {

@@ -276,6 +276,16 @@ impl CourseService {
         let courses = CourseRepository::find_user_courses(&ctx.database, user_id).await?;
         Ok(courses.into_iter().map(Into::into).collect())
     }
+
+    /// Fetch the course detail for the current user.
+    pub async fn get_user_course(
+        ctx: Arc<Context>,
+        user_id: &str,
+        course_slug: &str,
+    ) -> Result<UserCourseResponse> {
+        let course = CourseRepository::get_user_course(&ctx.database, user_id, course_slug).await?;
+        Ok(course.into())
+    }
 }
 
 fn calculate_total_stages(course: &Course) -> i32 {
