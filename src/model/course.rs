@@ -90,3 +90,28 @@ impl From<&Course> for CourseModel {
         }
     }
 }
+
+/// Database model representing a user's enrollment in a course
+#[derive(Debug, FromRow)]
+pub struct UserCourse {
+    /// Unique internal identifier
+    pub id: Uuid,
+
+    /// ID of the enrolled user
+    pub user_id: String,
+
+    /// ID of the enrolled course
+    pub course_id: Uuid,
+
+    /// Timestamp when the enrollment started
+    pub started_at: DateTime<Utc>,
+
+    /// Timestamp of the last access
+    pub last_accessed_at: Option<DateTime<Utc>>,
+
+    /// ID of the current stage the user is on
+    pub current_stage_id: Option<Uuid>,
+
+    /// Number of stages completed by the user
+    pub completed_stage_count: i32,
+}

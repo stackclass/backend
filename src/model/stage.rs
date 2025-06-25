@@ -99,3 +99,25 @@ impl From<Stage> for StageModel {
         }
     }
 }
+
+/// Database model representing a user's progress in a course stage
+#[derive(Debug, FromRow)]
+pub struct UserStage {
+    /// Unique internal identifier
+    pub id: Uuid,
+
+    /// ID of the user's course enrollment
+    pub user_course_id: Uuid,
+
+    /// ID of the stage
+    pub stage_id: Uuid,
+
+    /// Current progress status (PENDING, IN_PROGRESS, COMPLETED)
+    pub status: String,
+
+    /// Timestamp when the stage was started
+    pub started_at: Option<DateTime<Utc>>,
+
+    /// Timestamp when the stage was completed
+    pub completed_at: Option<DateTime<Utc>>,
+}
