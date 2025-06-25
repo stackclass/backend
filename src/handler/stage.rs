@@ -134,3 +134,26 @@ pub async fn find_user_stages(
 ) -> Result<impl IntoResponse> {
     Ok((StatusCode::OK, Json(StageService::find_user_stages(ctx, "<user_id>", &slug).await?)))
 }
+
+/// Get the details of the stage for the current user.
+#[utoipa::path(
+    operation_id = "get-user-stage-detail",
+    get, path = "/v1/user/courses/{slug}/stages/{stage_slug}",
+    params(
+        ("slug" = String, description = "The slug of course"),
+        ("stage_slug" = String, description = "The slug of stage"),
+    ),
+    responses(
+        (status = 200, description = "Stage retrieved successfully", body = UserStageResponse),
+        (status = 404, description = "Course or stage not found"),
+        (status = 500, description = "Failed to get course or stage")
+    ),
+    tags = ["User", "Stage"]
+)]
+pub async fn get_user_stage(
+    State(ctx): State<Arc<Context>>,
+    Path((slug, stage_slug)): Path<(String, String)>,
+) -> Result<impl IntoResponse> {
+    let res = StageService::get_user_stage(ctx, "<user_id>", &slug, &stage_slug).await?;
+    Ok((StatusCode::OK, Json(res)))
+}

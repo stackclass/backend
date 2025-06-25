@@ -487,6 +487,54 @@
           }
         }
       }
+    },
+    "/v1/user/courses/{slug}/stages/{stage_slug}": {
+      "get": {
+        "tags": [
+          "User",
+          "Stage"
+        ],
+        "summary": "Get the details of the stage for the current user.",
+        "operationId": "get-user-stage-detail",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "The slug of course",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stage_slug",
+            "in": "path",
+            "description": "The slug of stage",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stage retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserStageResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Course or stage not found"
+          },
+          "500": {
+            "description": "Failed to get course or stage"
+          }
+        }
+      }
     }
   },
   "components": {

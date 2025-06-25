@@ -69,4 +69,17 @@ impl StageService {
         let stages = StageRepository::find_user_stages(&ctx.database, user_id, course_slug).await?;
         Ok(stages.into_iter().map(Into::into).collect())
     }
+
+    /// Get the details of the stage for the current user.
+    pub async fn get_user_stage(
+        ctx: Arc<Context>,
+        user_id: &str,
+        course_slug: &str,
+        stage_slug: &str,
+    ) -> Result<UserStageResponse> {
+        let stage =
+            StageRepository::get_user_stage(&ctx.database, user_id, course_slug, stage_slug)
+                .await?;
+        Ok(stage.into())
+    }
 }

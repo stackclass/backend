@@ -255,4 +255,33 @@ impl StageRepository {
 
         Ok(rows)
     }
+
+    /// Find user stage for the current user.
+    pub async fn get_user_stage(
+        db: &Database,
+        user_id: &str,
+        course_slug: &str,
+        stage_slug: &str,
+    ) -> Result<UserStageModel> {
+        let row = sqlx::query_as::<_, UserStageModel>(
+            r#"
+            SELECT
+                us.*,
+                c.slug AS course_slug,
+                s.slug AS stage_slug
+            FROM user_stages us
+            JOIN user_courses uc ON us.user_course_id = uc.id
+            JOIN courses c ON uc.course_id = c.id
+            JOIN stages s ON us.stage_id = s.id
+            WHERE uc.user_id = $1 AND c.slug = $2 AND s.slug = $3
+            "#,
+        )
+        .bind(user_id)
+        .bind(course_slug)
+        .bind(stage_slug)
+        .fetch_one(db.pool())
+        .await?;
+
+        Ok(row)
+    }
 }

@@ -52,4 +52,5 @@ pub fn build() -> Router<Arc<Context>> {
         .route("/v1/user/courses/{slug}", get(course::get_user_course))
         // User stage
         .route("/v1/user/courses/{slug}/stages", get(stage::find_user_stages))
+        .route("/v1/user/courses/{slug}/stages/{stage_slug}", get(stage::get_user_stage))
 }
