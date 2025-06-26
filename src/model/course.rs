@@ -117,4 +117,16 @@ pub struct UserCourseModel {
 
     /// Number of stages completed by the user
     pub completed_stage_count: i32,
+
+    /// Language proficiency level of the user
+    pub proficiency: String,
+
+    /// Practice cadence of the user
+    pub cadence: String,
+
+    /// Whether the user wants accountability emails
+    pub accountability: bool,
+
+    /// Whether the first Git push was received
+    pub activated: bool,
 }

@@ -167,26 +167,34 @@ impl CourseRepository {
     ) -> Result<UserCourseModel> {
         let row = sqlx::query_as::<_, UserCourseModel>(
             r#"
-               WITH updated AS (
-                   UPDATE user_courses
-                   SET
-                       current_stage_id = $2,
-                       completed_stage_count = $3
-                   WHERE id = $1
-                   RETURNING *
-               )
-               SELECT
-                   u.*,
-                   c.slug AS course_slug,
-                   s.slug AS current_stage_slug
-               FROM updated u
-               LEFT JOIN courses c ON u.course_id = c.id
-               LEFT JOIN stages s ON u.current_stage_id = s.id
-               "#,
+            WITH updated AS (
+                UPDATE user_courses
+                SET
+                    current_stage_id = $2,
+                    completed_stage_count = $3,
+                    proficiency = $4,
+                    cadence = $5,
+                    accountability = $6
+                    activated = $7
+                WHERE id = $1
+                RETURNING *
+            )
+            SELECT
+                u.*,
+                c.slug AS course_slug,
+                s.slug AS current_stage_slug
+            FROM updated u
+            LEFT JOIN courses c ON u.course_id = c.id
+            LEFT JOIN stages s ON u.current_stage_id = s.id
+            "#,
         )
         .bind(user_course.id)
         .bind(user_course.current_stage_id)
         .bind(user_course.completed_stage_count)
+        .bind(&user_course.proficiency)
+        .bind(&user_course.cadence)
+        .bind(user_course.accountability)
+        .bind(user_course.activated)
         .fetch_one(&mut **tx)
         .await?;
 

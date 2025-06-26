@@ -901,9 +901,25 @@
         "required": [
           "course_slug",
           "started_at",
-          "completed_stage_count"
+          "completed_stage_count",
+          "proficiency",
+          "cadence",
+          "accountability",
+          "activated"
         ],
         "properties": {
+          "accountability": {
+            "type": "boolean",
+            "description": "Whether the user wants accountability emails"
+          },
+          "activated": {
+            "type": "boolean",
+            "description": "Whether the first Git push was received"
+          },
+          "cadence": {
+            "type": "string",
+            "description": "Practice cadence of the user"
+          },
           "completed_stage_count": {
             "type": "integer",
             "format": "int32",
@@ -919,6 +935,10 @@
               "null"
             ],
             "description": "Slug of the current stage the user is on"
+          },
+          "proficiency": {
+            "type": "string",
+            "description": "Language proficiency level of the user"
           },
           "started_at": {
             "type": "string",
