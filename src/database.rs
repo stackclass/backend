@@ -41,7 +41,7 @@ impl Database {
 
     /// Runs database migrations from migrations folder
     pub async fn migrate(&self) -> Result<()> {
-        sqlx::migrate!().run(&self.pool).await?;
+        sqlx::migrate!("./migrations").run(&self.pool).await?;
 
         Ok(())
     }
