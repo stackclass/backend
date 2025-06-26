@@ -312,7 +312,15 @@ impl CourseService {
         user_id: &str,
         course_slug: &str,
     ) -> Result<UserCourseResponse> {
-        let course = CourseRepository::get_user_course(&ctx.database, user_id, course_slug).await?;
+        let course = CourseRepository::get_user_course(&ctx.database, user_id, course_slug)
+            .await
+            .map_err(|e| {
+            if let sqlx::Error::RowNotFound = e {
+                ApiError::CourseNotFound
+            } else {
+                e.into()
+            }
+        })?;
         Ok(course.into())
     }
 }
