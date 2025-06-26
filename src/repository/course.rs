@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use tracing::debug;
 use uuid::Uuid;
 
 use crate::{
@@ -155,6 +156,49 @@ impl CourseRepository {
         .bind(user_id)
         .bind(course_slug)
         .fetch_one(db.pool())
+        .await?;
+
+        Ok(row)
+    }
+
+    /// Create a new user course enrollment.
+    pub async fn create_user_course(
+        tx: &mut Transaction<'_>,
+        user_course: &UserCourseModel,
+    ) -> Result<UserCourseModel> {
+        debug!(
+            "Creating new user course enrollment for user {} and course {}",
+            &user_course.user_id, user_course.course_id
+        );
+
+        let row = sqlx::query_as::<_, UserCourseModel>(
+            r#"
+            WITH inserted AS (
+                INSERT INTO user_courses (
+                    id, user_id, course_id, started_at, current_stage_id, completed_stage_count, proficiency, cadence, accountability, activated
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                RETURNING *
+            )
+            SELECT
+                i.*,
+                c.slug AS course_slug,
+                s.slug AS current_stage_slug
+            FROM inserted i
+            JOIN courses c ON i.course_id = c.id
+            LEFT JOIN stages s ON i.current_stage_id = s.id
+            "#,
+        )
+        .bind(user_course.id)
+        .bind(&user_course.user_id)
+        .bind(user_course.course_id)
+        .bind(user_course.started_at)
+        .bind(user_course.current_stage_id)
+        .bind(user_course.completed_stage_count)
+        .bind(&user_course.proficiency)
+        .bind(&user_course.cadence)
+        .bind(user_course.accountability)
+        .bind(user_course.activated)
+        .fetch_one(&mut **tx)
         .await?;
 
         Ok(row)

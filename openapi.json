@@ -405,6 +405,67 @@
             }
           }
         }
+      },
+      "post": {
+        "tags": [
+          "User",
+          "Course"
+        ],
+        "summary": "Enroll the current user in a course.",
+        "operationId": "enroll-user-in-course",
+        "requestBody": {
+          "description": "Enroll user in course request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "course_slug",
+                  "proficiency",
+                  "cadence",
+                  "accountability"
+                ],
+                "properties": {
+                  "accountability": {
+                    "type": "boolean",
+                    "description": "Whether the user wants accountability emails"
+                  },
+                  "cadence": {
+                    "type": "string",
+                    "description": "Practice cadence of the user"
+                  },
+                  "course_slug": {
+                    "type": "string",
+                    "description": "The slug of the course to enroll in"
+                  },
+                  "proficiency": {
+                    "type": "string",
+                    "description": "Language proficiency level of the user"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "User enrolled in course successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserCourseResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Course not found"
+          },
+          "500": {
+            "description": "Failed to enroll user in course"
+          }
+        }
       }
     },
     "/v1/user/courses/{slug}": {
@@ -716,6 +777,33 @@
           "repository": {
             "type": "string",
             "description": "The git repository URL of the course"
+          }
+        }
+      },
+      "CreateUserCourseRequest": {
+        "type": "object",
+        "required": [
+          "course_slug",
+          "proficiency",
+          "cadence",
+          "accountability"
+        ],
+        "properties": {
+          "accountability": {
+            "type": "boolean",
+            "description": "Whether the user wants accountability emails"
+          },
+          "cadence": {
+            "type": "string",
+            "description": "Practice cadence of the user"
+          },
+          "course_slug": {
+            "type": "string",
+            "description": "The slug of the course to enroll in"
+          },
+          "proficiency": {
+            "type": "string",
+            "description": "Language proficiency level of the user"
           }
         }
       },

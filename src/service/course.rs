@@ -21,8 +21,9 @@ use crate::{
     context::Context,
     database::Transaction,
     errors::{ApiError, Result},
-    model::{CourseModel, ExtensionModel, SolutionModel, StageModel},
+    model::{CourseModel, ExtensionModel, SolutionModel, StageModel, UserCourseModel},
     repository::{CourseRepository, ExtensionRepository, SolutionRepository, StageRepository},
+    request::CreateUserCourseRequest,
     response::{CourseDetailResponse, CourseResponse, UserCourseResponse},
     schema::{self, Course, Stage},
     service::storage::StorageService,
@@ -265,6 +266,29 @@ impl CourseService {
     ) -> Result<Vec<UserCourseResponse>> {
         let courses = CourseRepository::find_user_courses(&ctx.database, user_id).await?;
         Ok(courses.into_iter().map(Into::into).collect())
+    }
+
+    /// Enroll a user in a course.
+    pub async fn create_user_course(
+        ctx: Arc<Context>,
+        user_id: &str,
+        req: &CreateUserCourseRequest,
+    ) -> Result<UserCourseResponse> {
+        let mut tx = ctx.database.pool().begin().await?;
+
+        // Fetch the course by slug
+        let course = CourseRepository::get_by_slug(&ctx.database, &req.course_slug).await?;
+
+        // Create a new user course enrollment
+        let user_course = UserCourseModel::new(user_id, &course.id)
+            .with_proficiency(&req.proficiency)
+            .with_cadence(&req.cadence)
+            .with_accountability(req.accountability);
+
+        let user_course = CourseRepository::create_user_course(&mut tx, &user_course).await?;
+        tx.commit().await?;
+
+        Ok(user_course.into())
     }
 
     /// Fetch the course detail for the current user.

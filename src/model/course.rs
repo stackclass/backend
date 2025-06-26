@@ -130,3 +130,47 @@ pub struct UserCourseModel {
     /// Whether the first Git push was received
     pub activated: bool,
 }
+
+impl Default for UserCourseModel {
+    fn default() -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            user_id: String::new(),
+            course_id: Uuid::new_v4(),
+            course_slug: String::new(),
+            started_at: Utc::now(),
+            current_stage_id: None,
+            current_stage_slug: None,
+            completed_stage_count: 0,
+            proficiency: "beginner".to_string(),
+            cadence: "weekly".to_string(),
+            accountability: false,
+            activated: false,
+        }
+    }
+}
+
+impl UserCourseModel {
+    /// Creates a new instance with default values
+    pub fn new(user_id: &str, course_id: &Uuid) -> Self {
+        Self { user_id: user_id.to_string(), course_id: *course_id, ..Default::default() }
+    }
+
+    /// Sets the proficiency field
+    pub fn with_proficiency(mut self, proficiency: &str) -> Self {
+        self.proficiency = proficiency.to_string();
+        self
+    }
+
+    /// Sets the cadence field
+    pub fn with_cadence(mut self, cadence: &str) -> Self {
+        self.cadence = cadence.to_string();
+        self
+    }
+
+    /// Sets the accountability field
+    pub fn with_accountability(mut self, accountability: bool) -> Self {
+        self.accountability = accountability;
+        self
+    }
+}

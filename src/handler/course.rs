@@ -23,7 +23,7 @@ use std::sync::Arc;
 use crate::{
     context::Context,
     errors::Result,
-    request::CreateCourseRequest,
+    request::{CreateCourseRequest, CreateUserCourseRequest},
     response::{CourseDetailResponse, CourseResponse, UserCourseResponse},
     service::CourseService,
 };
@@ -141,6 +141,32 @@ pub async fn update(
 )]
 pub async fn find_user_courses(State(ctx): State<Arc<Context>>) -> Result<impl IntoResponse> {
     Ok((StatusCode::OK, Json(CourseService::find_user_courses(ctx, "<user_id>").await?)))
+}
+
+/// Enroll the current user in a course.
+#[utoipa::path(
+    operation_id = "enroll-user-in-course",
+    post, path = "/v1/user/courses",
+    request_body(
+        content = inline(CreateUserCourseRequest),
+        description = "Enroll user in course request",
+        content_type = "application/json"
+    ),
+    responses(
+        (status = 201, description = "User enrolled in course successfully", body = UserCourseResponse),
+        (status = 404, description = "Course not found"),
+        (status = 500, description = "Failed to enroll user in course")
+    ),
+    tags = ["User", "Course"]
+)]
+pub async fn create_user_course(
+    State(ctx): State<Arc<Context>>,
+    Json(req): Json<CreateUserCourseRequest>,
+) -> Result<impl IntoResponse> {
+    let user_id = "<user_id>"; // Replace with actual user ID from authentication
+    let res = CourseService::create_user_course(ctx, user_id, &req).await?;
+
+    Ok((StatusCode::CREATED, Json(res)))
 }
 
 /// Find the course detail for the current user.

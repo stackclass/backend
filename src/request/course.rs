@@ -20,3 +20,18 @@ pub struct CreateCourseRequest {
     /// The git repository URL of the course
     pub repository: String,
 }
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct CreateUserCourseRequest {
+    /// The slug of the course to enroll in
+    pub course_slug: String,
+
+    /// Language proficiency level of the user
+    pub proficiency: String,
+
+    /// Practice cadence of the user
+    pub cadence: String,
+
+    /// Whether the user wants accountability emails
+    pub accountability: bool,
+}
