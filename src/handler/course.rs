@@ -12,17 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
     Json,
 };
-use std::sync::Arc;
 
 use crate::{
     context::Context,
     errors::Result,
+    extractor::Claims,
     request::{CreateCourseRequest, CreateUserCourseRequest},
     response::{CourseDetailResponse, CourseResponse, UserCourseResponse},
     service::CourseService,
@@ -137,10 +139,14 @@ pub async fn update(
     responses(
         (status = 200, description = "User courses retrieved successfully", body = Vec<UserCourseResponse>),
     ),
+    security(("JWTBearerAuth" = [])),
     tags = ["User", "Course"]
 )]
-pub async fn find_user_courses(State(ctx): State<Arc<Context>>) -> Result<impl IntoResponse> {
-    Ok((StatusCode::OK, Json(CourseService::find_user_courses(ctx, "<user_id>").await?)))
+pub async fn find_user_courses(
+    claims: Claims,
+    State(ctx): State<Arc<Context>>,
+) -> Result<impl IntoResponse> {
+    Ok((StatusCode::OK, Json(CourseService::find_user_courses(ctx, &claims.id).await?)))
 }
 
 /// Enroll the current user in a course.
@@ -157,15 +163,15 @@ pub async fn find_user_courses(State(ctx): State<Arc<Context>>) -> Result<impl I
         (status = 404, description = "Course not found"),
         (status = 500, description = "Failed to enroll user in course")
     ),
+    security(("JWTBearerAuth" = [])),
     tags = ["User", "Course"]
 )]
 pub async fn create_user_course(
+    claims: Claims,
     State(ctx): State<Arc<Context>>,
     Json(req): Json<CreateUserCourseRequest>,
 ) -> Result<impl IntoResponse> {
-    let user_id = "<user_id>"; // Replace with actual user ID from authentication
-    let res = CourseService::create_user_course(ctx, user_id, &req).await?;
-
+    let res = CourseService::create_user_course(ctx, &claims.id, &req).await?;
     Ok((StatusCode::CREATED, Json(res)))
 }
 
@@ -181,11 +187,13 @@ pub async fn create_user_course(
         (status = 404, description = "Course not found"),
         (status = 500, description = "Failed to get course")
     ),
+    security(("JWTBearerAuth" = [])),
     tags = ["User", "Course"]
 )]
 pub async fn get_user_course(
+    claims: Claims,
     State(ctx): State<Arc<Context>>,
     Path(slug): Path<String>,
 ) -> Result<impl IntoResponse> {
-    Ok((StatusCode::OK, Json(CourseService::get_user_course(ctx, "<user_id>", &slug).await?)))
+    Ok((StatusCode::OK, Json(CourseService::get_user_course(ctx, &claims.id, &slug).await?)))
 }

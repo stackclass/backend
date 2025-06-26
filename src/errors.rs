@@ -14,12 +14,12 @@
 
 use axum::{
     http::{self, StatusCode},
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     Json,
 };
 use serde_json::json;
 use thiserror::Error;
-use tracing::error;
+use tracing::{debug, error};
 
 use crate::{schema, service::StorageError};
 
@@ -76,9 +76,9 @@ pub enum ApiError {
     Conflict(String),
 }
 
-impl IntoResponse for ApiError {
-    fn into_response(self) -> axum::response::Response {
-        let status = match self {
+impl From<&ApiError> for StatusCode {
+    fn from(val: &ApiError) -> Self {
+        match val {
             ApiError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::NotFound => StatusCode::NOT_FOUND,
             ApiError::BadRequest(_) => StatusCode::BAD_REQUEST,
@@ -95,10 +95,41 @@ impl IntoResponse for ApiError {
             ApiError::CourseNotFound => StatusCode::NOT_FOUND,
             ApiError::StageNotFound => StatusCode::NOT_FOUND,
             ApiError::Conflict(_) => StatusCode::CONFLICT,
-        };
+        }
+    }
+}
+
+impl IntoResponse for ApiError {
+    fn into_response(self) -> Response {
+        AutoIntoResponse::into(&self)
+    }
+}
+
+/// Automatically implement `IntoResponse` for types that satisfy:
+/// - `impl thiserror::Error`
+/// - `impl Into<StatusCode> for &T`
+pub trait AutoIntoResponse: std::error::Error + Sized
+where
+    for<'a> StatusCode: From<&'a Self>,
+{
+    fn into(&self) -> Response;
+}
+
+impl<T> AutoIntoResponse for T
+where
+    T: std::error::Error + Sized,
+    for<'a> StatusCode: From<&'a T>,
+{
+    fn into(&self) -> Response {
+        let status = StatusCode::from(self);
         let message = self.to_string();
 
-        error!("{} - {}", status, message);
+        if status.is_server_error() {
+            error!("{} - {} - {:?}", status, message, self);
+        } else {
+            debug!("{} - {}", status, message);
+        }
+
         (status, Json(json!({ "message": message }))).into_response()
     }
 }

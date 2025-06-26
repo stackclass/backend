@@ -14,21 +14,32 @@
 
 use std::{net::SocketAddr, sync::Arc};
 
-use tracing::info;
+use tracing::{error, info};
 
-use crate::{context::Context, routes, swagger};
+use crate::{context::Context, extractor, routes, swagger};
 
 pub async fn run(ctx: Arc<Context>) {
     let port = ctx.config.port;
 
-    // build our application with a route
+    // Runs database migrations from migrations folder
+    if let Err(e) = ctx.database.migrate().await {
+        error!("Failed to run database migrations: {}", e);
+        std::process::exit(1);
+    }
+
+    // Refresh keys from database and update cache
+    if let Err(e) = extractor::refresh_keys(ctx.clone()).await {
+        error!("Failed to initialize keys: {}", e);
+        std::process::exit(1);
+    }
+
+    // Build our application with a route
     let app = routes::build().merge(swagger::build()).with_state(ctx);
 
-    // run our app with hyper, and serve it over HTTP
+    // Run our app with hyper, and serve it over HTTP
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    info!("Server running on {}", addr);
-
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    info!("Server running on {}", addr);
 
     // Run this server for ... forever!
     if let Err(err) = axum::serve(listener, app).await {

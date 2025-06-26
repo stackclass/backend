@@ -12,7 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use utoipa::OpenApi;
+use utoipa::{
+    openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
+    Modify, OpenApi,
+};
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{handler, request, response};
@@ -64,8 +67,24 @@ use crate::{handler, request, response};
         (name = "Stage", description = "The Stage Service Handlers"),
         (name = "User", description = "The User Service Handlers"),
     ),
+    modifiers(&SecurityAddon),
 )]
 pub struct ApiDoc;
+
+struct SecurityAddon;
+
+impl Modify for SecurityAddon {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        if let Some(components) = openapi.components.as_mut() {
+            components.add_security_scheme(
+                "JWTBearerAuth",
+                SecurityScheme::Http(
+                    HttpBuilder::new().scheme(HttpAuthScheme::Bearer).bearer_format("JWT").build(),
+                ),
+            )
+        }
+    }
+}
 
 pub fn build() -> SwaggerUi {
     SwaggerUi::new("/swagger").url("/openapi.json", ApiDoc::openapi())

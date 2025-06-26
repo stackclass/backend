@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod app;
-pub mod config;
-pub mod context;
-pub mod database;
-pub mod errors;
-pub mod extractor;
-pub mod handler;
-pub mod logger;
-pub mod model;
-pub mod repository;
-pub mod request;
-pub mod response;
-pub mod routes;
-pub mod schema;
-pub mod service;
-pub mod swagger;
+use tracing::debug;
+
+use crate::{database::Database, model::JsonWebKey, repository::Result};
+
+/// Repository for managing user-related operations in the database.
+pub struct UserRepository;
+
+impl UserRepository {
+    /// Fetch all JSON Web Keys (JWKS) from the database.
+    pub async fn find_all_json_web_keys(db: &Database) -> Result<Vec<JsonWebKey>> {
+        debug!("Fetching all JSON Web Keys (JWKS) from the database");
+        let keys =
+            sqlx::query_as::<_, JsonWebKey>("SELECT * FROM jwks").fetch_all(db.pool()).await?;
+        Ok(keys)
+    }
+}

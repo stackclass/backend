@@ -66,3 +66,18 @@ impl UserModel {
         self
     }
 }
+
+#[derive(Debug, FromRow)]
+pub struct JsonWebKey {
+    /// Unique identifier for each web key
+    pub id: String,
+
+    /// The public part of the web key
+    pub public_key: String,
+
+    /// The private part of the web key
+    pub private_key: String,
+
+    /// Timestamp of when the web key was created
+    pub created_at: DateTime<Utc>,
+}

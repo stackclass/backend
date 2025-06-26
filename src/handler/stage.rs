@@ -23,6 +23,7 @@ use std::sync::Arc;
 use crate::{
     context::Context,
     errors::Result,
+    extractor::Claims,
     request::CompleteStageRequest,
     response::{StageDetailResponse, StageResponse, UserStageResponse},
     service::StageService,
@@ -127,13 +128,15 @@ pub async fn get(
         (status = 404, description = "Course not found"),
         (status = 500, description = "Failed to get course")
     ),
+    security(("JWTBearerAuth" = [])),
     tags = ["User", "Stage"]
 )]
 pub async fn find_user_stages(
+    claims: Claims,
     State(ctx): State<Arc<Context>>,
     Path(slug): Path<String>,
 ) -> Result<impl IntoResponse> {
-    Ok((StatusCode::OK, Json(StageService::find_user_stages(ctx, "<user_id>", &slug).await?)))
+    Ok((StatusCode::OK, Json(StageService::find_user_stages(ctx, &claims.id, &slug).await?)))
 }
 
 /// Get the details of the stage for the current user.
@@ -149,13 +152,15 @@ pub async fn find_user_stages(
         (status = 404, description = "Course or stage not found"),
         (status = 500, description = "Failed to get course or stage")
     ),
+    security(("JWTBearerAuth" = [])),
     tags = ["User", "Stage"]
 )]
 pub async fn get_user_stage(
+    claims: Claims,
     State(ctx): State<Arc<Context>>,
     Path((slug, stage_slug)): Path<(String, String)>,
 ) -> Result<impl IntoResponse> {
-    let res = StageService::get_user_stage(ctx, "<user_id>", &slug, &stage_slug).await?;
+    let res = StageService::get_user_stage(ctx, &claims.id, &slug, &stage_slug).await?;
     Ok((StatusCode::OK, Json(res)))
 }
 
@@ -176,13 +181,15 @@ pub async fn get_user_stage(
         (status = 404, description = "Course or stage not found"),
         (status = 500, description = "Failed to complete stage")
     ),
+    security(("JWTBearerAuth" = [])),
     tags = ["User", "Stage"]
 )]
 pub async fn complete_stage(
+    claims: Claims,
     State(ctx): State<Arc<Context>>,
     Path(slug): Path<String>,
     Json(req): Json<CompleteStageRequest>,
 ) -> Result<impl IntoResponse> {
-    let res = StageService::complete_stage(ctx, "<user_id>", &slug, &req.slug).await?;
+    let res = StageService::complete_stage(ctx, &claims.id, &slug, &req.slug).await?;
     Ok((StatusCode::OK, Json(res)))
 }
