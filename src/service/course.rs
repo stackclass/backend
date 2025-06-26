@@ -277,7 +277,14 @@ impl CourseService {
         let mut tx = ctx.database.pool().begin().await?;
 
         // Fetch the course by slug
-        let course = CourseRepository::get_by_slug(&ctx.database, &req.course_slug).await?;
+        let course =
+            CourseRepository::get_by_slug(&ctx.database, &req.course_slug).await.map_err(|e| {
+                if let sqlx::Error::RowNotFound = e {
+                    ApiError::CourseNotFound
+                } else {
+                    e.into()
+                }
+            })?;
 
         // Create a new user course enrollment
         let user_course = UserCourseModel::new(user_id, &course.id)
@@ -285,7 +292,15 @@ impl CourseService {
             .with_cadence(&req.cadence)
             .with_accountability(req.accountability);
 
-        let user_course = CourseRepository::create_user_course(&mut tx, &user_course).await?;
+        let user_course =
+            CourseRepository::create_user_course(&mut tx, &user_course).await.map_err(|e| {
+                if let sqlx::Error::Database(db_err) = &e {
+                    if db_err.is_unique_violation() {
+                        return ApiError::Conflict("User is already enrolled in this course".into());
+                    }
+                }
+                e.into()
+            })?;
         tx.commit().await?;
 
         Ok(user_course.into())

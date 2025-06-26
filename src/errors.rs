@@ -71,6 +71,9 @@ pub enum ApiError {
 
     #[error("Stage not found")]
     StageNotFound,
+
+    #[error("Conflict: {0}")]
+    Conflict(String),
 }
 
 impl IntoResponse for ApiError {
@@ -91,6 +94,7 @@ impl IntoResponse for ApiError {
             ApiError::UserNotEnrolled => StatusCode::BAD_REQUEST,
             ApiError::CourseNotFound => StatusCode::NOT_FOUND,
             ApiError::StageNotFound => StatusCode::NOT_FOUND,
+            ApiError::Conflict(_) => StatusCode::CONFLICT,
         };
         let message = self.to_string();
 
