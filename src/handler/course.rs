@@ -175,7 +175,7 @@ pub async fn create_user_course(
     Ok((StatusCode::CREATED, Json(res)))
 }
 
-/// Find the course detail for the current user.
+/// Get the course detail for the current user.
 #[utoipa::path(
     operation_id = "get-user-course-detail",
     get, path = "/v1/user/courses/{slug}",

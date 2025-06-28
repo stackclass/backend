@@ -484,7 +484,7 @@
           "User",
           "Course"
         ],
-        "summary": "Find the course detail for the current user.",
+        "summary": "Get the course detail for the current user.",
         "operationId": "get-user-course-detail",
         "parameters": [
           {
