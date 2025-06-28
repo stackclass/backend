@@ -383,6 +383,7 @@ dependencies = [
  "tar",
  "thiserror",
  "tokio",
+ "tower-http",
  "tracing",
  "tracing-subscriber",
  "utoipa",

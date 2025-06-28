@@ -14,6 +14,8 @@
 
 use std::{net::SocketAddr, sync::Arc};
 
+use axum::http::header::{self, HeaderValue};
+use tower_http::cors::{Any, CorsLayer};
 use tracing::{error, info};
 
 use crate::{context::Context, extractor, routes, swagger};
@@ -34,7 +36,12 @@ pub async fn run(ctx: Arc<Context>) {
     }
 
     // Build our application with a route
-    let app = routes::build().merge(swagger::build()).with_state(ctx);
+    let Ok(cors) = configure_cors(&ctx.config.allowed_origin) else {
+        error!("Invalid CORS configuration: invalid origin format");
+        std::process::exit(1);
+    };
+
+    let app = routes::build().merge(swagger::build()).layer(cors).with_state(ctx);
 
     // Run our app with hyper, and serve it over HTTP
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
@@ -45,5 +52,28 @@ pub async fn run(ctx: Arc<Context>) {
     if let Err(err) = axum::serve(listener, app).await {
         tracing::error!("Server error: {}", err);
         std::process::exit(1)
+    }
+}
+
+/// Configures CORS middleware based on the allowed origin
+fn configure_cors(allowed_origin: &Option<Vec<String>>) -> Result<CorsLayer, ()> {
+    let layer = CorsLayer::new()
+        .allow_headers(vec![header::CONTENT_TYPE, header::AUTHORIZATION])
+        .allow_methods(Any);
+
+    let Some(origins) = allowed_origin else {
+        return Ok(layer);
+    };
+
+    if origins.contains(&"*".to_string()) {
+        Ok(layer.allow_origin(Any))
+    } else {
+        let header_values: Vec<HeaderValue> = origins
+            .iter()
+            .map(|s| s.parse::<HeaderValue>())
+            .collect::<Result<_, _>>()
+            .map_err(|_| ())?;
+
+        Ok(layer.allow_origin(header_values))
     }
 }

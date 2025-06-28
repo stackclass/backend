@@ -49,4 +49,8 @@ pub struct Config {
     /// Database connection URL.
     #[clap(long, env)]
     pub database_url: String,
+
+    /// Allowed CORS origin.
+    #[clap(long, env, value_delimiter = ',')]
+    pub allowed_origin: Option<Vec<String>>,
 }
