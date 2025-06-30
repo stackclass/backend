@@ -81,7 +81,14 @@ impl StageService {
     ) -> Result<UserStageResponse> {
         let stage =
             StageRepository::get_user_stage(&ctx.database, user_id, course_slug, stage_slug)
-                .await?;
+                .await
+                .map_err(|e| {
+                    if let sqlx::Error::RowNotFound = e {
+                        ApiError::CourseNotFound
+                    } else {
+                        e.into()
+                    }
+                })?;
         Ok(stage.into())
     }
 
