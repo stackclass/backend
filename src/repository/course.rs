@@ -218,7 +218,7 @@ impl CourseRepository {
                     completed_stage_count = $3,
                     proficiency = $4,
                     cadence = $5,
-                    accountability = $6
+                    accountability = $6,
                     activated = $7
                 WHERE id = $1
                 RETURNING *
