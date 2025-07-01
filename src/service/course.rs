@@ -265,7 +265,9 @@ impl CourseService {
         user_id: &str,
     ) -> Result<Vec<UserCourseResponse>> {
         let courses = CourseRepository::find_user_courses(&ctx.database, user_id).await?;
-        Ok(courses.into_iter().map(Into::into).collect())
+
+        let endpoint = &ctx.config.git_server_endpoint;
+        Ok(courses.into_iter().map(|model| UserCourseResponse::from((endpoint, model))).collect())
     }
 
     /// Enroll a user in a course.
@@ -303,7 +305,8 @@ impl CourseService {
             })?;
         tx.commit().await?;
 
-        Ok(user_course.into())
+        let endpoint = &ctx.config.git_server_endpoint;
+        Ok(UserCourseResponse::from((endpoint, user_course)))
     }
 
     /// Fetch the course detail for the user.
@@ -312,16 +315,18 @@ impl CourseService {
         user_id: &str,
         course_slug: &str,
     ) -> Result<UserCourseResponse> {
-        let course = CourseRepository::get_user_course(&ctx.database, user_id, course_slug)
+        let user_course = CourseRepository::get_user_course(&ctx.database, user_id, course_slug)
             .await
             .map_err(|e| {
-            if let sqlx::Error::RowNotFound = e {
-                ApiError::CourseNotFound
-            } else {
-                e.into()
-            }
-        })?;
-        Ok(course.into())
+                if let sqlx::Error::RowNotFound = e {
+                    ApiError::CourseNotFound
+                } else {
+                    e.into()
+                }
+            })?;
+
+        let endpoint = &ctx.config.git_server_endpoint;
+        Ok(UserCourseResponse::from((endpoint, user_course)))
     }
 
     /// Update the user course for the user.

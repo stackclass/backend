@@ -139,10 +139,15 @@ pub struct UserCourseResponse {
 
     /// Whether the first Git push was received
     pub activated: bool,
+
+    /// The git repository URL of the user course
+    pub repository: String,
 }
 
-impl From<UserCourseModel> for UserCourseResponse {
-    fn from(model: UserCourseModel) -> Self {
+impl From<(&String, UserCourseModel)> for UserCourseResponse {
+    fn from((endpoint, model): (&String, UserCourseModel)) -> Self {
+        let repository = format!("{}/{}", endpoint, model.id);
+
         Self {
             course_slug: model.course_slug,
             started_at: model.started_at,
@@ -152,6 +157,7 @@ impl From<UserCourseModel> for UserCourseResponse {
             cadence: model.cadence,
             accountability: model.accountability,
             activated: model.activated,
+            repository,
         }
     }
 }

@@ -53,4 +53,8 @@ pub struct Config {
     /// Allowed CORS origin.
     #[clap(long, env, value_delimiter = ',')]
     pub allowed_origin: Option<Vec<String>>,
+
+    /// Git server endpoint.
+    #[clap(long, env)]
+    pub git_server_endpoint: String,
 }

@@ -1058,7 +1058,8 @@
           "proficiency",
           "cadence",
           "accountability",
-          "activated"
+          "activated",
+          "repository"
         ],
         "properties": {
           "accountability": {
@@ -1092,6 +1093,10 @@
           "proficiency": {
             "type": "string",
             "description": "Language proficiency level of the user"
+          },
+          "repository": {
+            "type": "string",
+            "description": "The git repository URL of the user course"
           },
           "started_at": {
             "type": "string",
