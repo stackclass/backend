@@ -35,3 +35,15 @@ pub struct CreateUserCourseRequest {
     /// Whether the user wants accountability emails
     pub accountability: bool,
 }
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct UpdateUserCourseRequest {
+    /// Language proficiency level of the user
+    pub proficiency: String,
+
+    /// Practice cadence of the user
+    pub cadence: String,
+
+    /// Whether the user wants accountability emails
+    pub accountability: bool,
+}

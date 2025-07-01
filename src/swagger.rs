@@ -39,6 +39,7 @@ use crate::{handler, request, response};
         handler::course::find_user_courses,
         handler::course::create_user_course,
         handler::course::get_user_course,
+        handler::course::update_user_course,
 
         handler::stage::find_user_stages,
         handler::stage::complete_stage,
@@ -57,6 +58,7 @@ use crate::{handler, request, response};
             response::SolutionResponse,
 
             request::CreateUserCourseRequest,
+            request::UpdateUserCourseRequest,
             response::UserCourseResponse,
             response::UserStageResponse,
         )

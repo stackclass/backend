@@ -25,7 +25,7 @@ use crate::{
     context::Context,
     errors::Result,
     extractor::Claims,
-    request::{CreateCourseRequest, CreateUserCourseRequest},
+    request::{CreateCourseRequest, CreateUserCourseRequest, UpdateUserCourseRequest},
     response::{CourseDetailResponse, CourseResponse, UserCourseResponse},
     service::CourseService,
 };
@@ -50,7 +50,7 @@ pub async fn find(State(ctx): State<Arc<Context>>) -> Result<impl IntoResponse> 
     operation_id = "create-course",
     post, path = "/v1/courses",
     request_body(
-        content = inline(CreateCourseRequest),
+        content = CreateCourseRequest,
         description = "Create course request",
         content_type = "application/json"
     ),
@@ -154,7 +154,7 @@ pub async fn find_user_courses(
     operation_id = "enroll-user-in-course",
     post, path = "/v1/user/courses",
     request_body(
-        content = inline(CreateUserCourseRequest),
+        content = CreateUserCourseRequest,
         description = "Enroll user in course request",
         content_type = "application/json"
     ),
@@ -196,4 +196,34 @@ pub async fn get_user_course(
     Path(slug): Path<String>,
 ) -> Result<impl IntoResponse> {
     Ok((StatusCode::OK, Json(CourseService::get_user_course(ctx, &claims.id, &slug).await?)))
+}
+
+/// Update this course for the current user.
+#[utoipa::path(
+    operation_id = "update-user-course",
+    patch, path = "/v1/user/courses/{slug}",
+    params(
+        ("slug" = String, description = "The slug of course"),
+    ),
+    request_body(
+        content = UpdateUserCourseRequest,
+        description = "Update this course for the current user",
+        content_type = "application/json"
+    ),
+    responses(
+        (status = 204, description = "User course updated successfully"),
+        (status = 404, description = "Course not found"),
+        (status = 500, description = "Failed to enroll user in course")
+    ),
+    security(("JWTBearerAuth" = [])),
+    tags = ["User", "Course"]
+)]
+pub async fn update_user_course(
+    claims: Claims,
+    State(ctx): State<Arc<Context>>,
+    Path(slug): Path<String>,
+    Json(req): Json<UpdateUserCourseRequest>,
+) -> Result<impl IntoResponse> {
+    CourseService::update_user_course(ctx, &claims.id, &slug, &req).await?;
+    Ok(StatusCode::NO_CONTENT)
 }

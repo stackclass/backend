@@ -23,7 +23,7 @@ use crate::{
     errors::{ApiError, Result},
     model::{CourseModel, ExtensionModel, SolutionModel, StageModel, UserCourseModel},
     repository::{CourseRepository, ExtensionRepository, SolutionRepository, StageRepository},
-    request::CreateUserCourseRequest,
+    request::{CreateUserCourseRequest, UpdateUserCourseRequest},
     response::{CourseDetailResponse, CourseResponse, UserCourseResponse},
     schema::{self, Course, Stage},
     service::storage::StorageService,
@@ -259,7 +259,7 @@ impl CourseService {
         CourseRepository::delete(&ctx.database, slug).await.map_err(ApiError::DatabaseError)
     }
 
-    /// Fetch all courses for the current user.
+    /// Fetch all courses for the user.
     pub async fn find_user_courses(
         ctx: Arc<Context>,
         user_id: &str,
@@ -306,7 +306,7 @@ impl CourseService {
         Ok(user_course.into())
     }
 
-    /// Fetch the course detail for the current user.
+    /// Fetch the course detail for the user.
     pub async fn get_user_course(
         ctx: Arc<Context>,
         user_id: &str,
@@ -322,6 +322,34 @@ impl CourseService {
             }
         })?;
         Ok(course.into())
+    }
+
+    /// Update the user course for the user.
+    pub async fn update_user_course(
+        ctx: Arc<Context>,
+        user_id: &str,
+        course_slug: &str,
+        req: &UpdateUserCourseRequest,
+    ) -> Result<()> {
+        let mut user_course =
+            CourseRepository::get_user_course(&ctx.database, user_id, course_slug).await.map_err(
+                |e| {
+                    if let sqlx::Error::RowNotFound = e {
+                        ApiError::CourseNotFound
+                    } else {
+                        e.into()
+                    }
+                },
+            )?;
+        user_course.proficiency = req.proficiency.clone();
+        user_course.cadence = req.cadence.clone();
+        user_course.accountability = req.accountability;
+
+        let mut tx = ctx.database.pool().begin().await?;
+        CourseRepository::update_user_course(&mut tx, &user_course).await?;
+        tx.commit().await?;
+
+        Ok(())
     }
 }
 
