@@ -56,7 +56,7 @@ pub async fn info_refs(
     body.push_str(protocol);
     body.push_str(&String::from_utf8(refs).unwrap());
 
-    let content_type = format!("application/x-git-{}-advertisement", srv);
+    let content_type = format!("application/x-git-{srv}-advertisement");
 
     Ok(Response::builder()
         .status(StatusCode::OK)
@@ -151,7 +151,7 @@ pub async fn loose_object(
     debug!("git::loose_object({}, {}, {})", repo, two, thirtyeight);
 
     let service = GitService::new(&ctx.config.repo_dir);
-    let path = format!("objects/{}/{}", two, thirtyeight);
+    let path = format!("objects/{two}/{thirtyeight}");
 
     let content = service.get_loose_object(&repo, &path).await?;
 
@@ -170,7 +170,7 @@ pub async fn pack_file(
     let (_, _, ext) = parse_pack_filename(&file)?;
 
     let service = GitService::new(&ctx.config.repo_dir);
-    let path = format!("objects/pack/{}", file);
+    let path = format!("objects/pack/{file}");
     let content = service.get_pack_file(&repo, &path).await?;
 
     let content_type = match ext {

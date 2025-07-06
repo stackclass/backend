@@ -20,5 +20,5 @@ fn main() {
     let json = serde_json::to_string_pretty(&openapi).unwrap();
 
     // Print the OpenAPI document to stdout
-    println!("{}", json);
+    println!("{json}");
 }
