@@ -133,14 +133,7 @@ impl RepoService {
             &self.ctx.database,
             Uuid::from_str(repo).unwrap(),
         )
-        .await
-        .map_err(|e| {
-            if let sqlx::Error::RowNotFound = e {
-                ApiError::CourseNotFound
-            } else {
-                e.into()
-            }
-        })?;
+        .await?;
 
         match &user_course.current_stage_slug {
             None => CourseService::activate(self.ctx.clone(), &mut user_course).await?,

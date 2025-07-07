@@ -74,14 +74,7 @@ impl StageService {
     ) -> Result<UserStageResponse> {
         let stage =
             StageRepository::get_user_stage(&ctx.database, user_id, course_slug, stage_slug)
-                .await
-                .map_err(|e| {
-                    if let sqlx::Error::RowNotFound = e {
-                        ApiError::StageNotFound
-                    } else {
-                        e.into()
-                    }
-                })?;
+                .await?;
         Ok(stage.into())
     }
 
@@ -95,23 +88,9 @@ impl StageService {
         let db = &ctx.database;
 
         //  Fetch the user's course enrollment and current user stage.
-        let user_course =
-            CourseRepository::get_user_course(db, user_id, course_slug).await.map_err(|e| {
-                if let sqlx::Error::RowNotFound = e {
-                    ApiError::UserNotEnrolled
-                } else {
-                    e.into()
-                }
-            })?;
-        let mut user_stage = StageRepository::get_user_stage(db, user_id, course_slug, stage_slug)
-            .await
-            .map_err(|e| {
-                if let sqlx::Error::RowNotFound = e {
-                    ApiError::StageNotFound
-                } else {
-                    e.into()
-                }
-            })?;
+        let user_course = CourseRepository::get_user_course(db, user_id, course_slug).await?;
+        let mut user_stage =
+            StageRepository::get_user_stage(db, user_id, course_slug, stage_slug).await?;
 
         //  Validate the stage can be completed.
         if user_stage.status == "completed" {

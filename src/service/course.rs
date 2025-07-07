@@ -267,14 +267,7 @@ impl CourseService {
         let mut tx = ctx.database.pool().begin().await?;
 
         // Fetch the course by slug
-        let course =
-            CourseRepository::get_by_slug(&ctx.database, &req.course_slug).await.map_err(|e| {
-                if let sqlx::Error::RowNotFound = e {
-                    ApiError::CourseNotFound
-                } else {
-                    e.into()
-                }
-            })?;
+        let course = CourseRepository::get_by_slug(&ctx.database, &req.course_slug).await?;
 
         // Create a new user course enrollment
         let user_course = UserCourseModel::new(user_id, &course.id)
@@ -307,15 +300,8 @@ impl CourseService {
         user_id: &str,
         course_slug: &str,
     ) -> Result<UserCourseResponse> {
-        let user_course = CourseRepository::get_user_course(&ctx.database, user_id, course_slug)
-            .await
-            .map_err(|e| {
-                if let sqlx::Error::RowNotFound = e {
-                    ApiError::CourseNotFound
-                } else {
-                    e.into()
-                }
-            })?;
+        let user_course =
+            CourseRepository::get_user_course(&ctx.database, user_id, course_slug).await?;
 
         let endpoint = &ctx.config.git_server_endpoint;
         Ok(UserCourseResponse::from((endpoint, user_course)))
@@ -329,15 +315,7 @@ impl CourseService {
         req: &UpdateUserCourseRequest,
     ) -> Result<()> {
         let mut user_course =
-            CourseRepository::get_user_course(&ctx.database, user_id, course_slug).await.map_err(
-                |e| {
-                    if let sqlx::Error::RowNotFound = e {
-                        ApiError::CourseNotFound
-                    } else {
-                        e.into()
-                    }
-                },
-            )?;
+            CourseRepository::get_user_course(&ctx.database, user_id, course_slug).await?;
         user_course.proficiency = req.proficiency.clone();
         user_course.cadence = req.cadence.clone();
         user_course.accountability = req.accountability;

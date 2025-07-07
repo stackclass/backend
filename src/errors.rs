@@ -49,7 +49,7 @@ pub enum ApiError {
     SchemaParserError(#[from] schema::ParseError),
 
     #[error("Database error: {0}")]
-    DatabaseError(#[from] sqlx::Error),
+    DatabaseError(sqlx::Error),
 
     #[error("Migrate error: {0}")]
     MigrateError(#[from] sqlx::migrate::MigrateError),
@@ -63,17 +63,18 @@ pub enum ApiError {
     #[error("Cannot complete a stage out of order")]
     StageOutOfOrder,
 
-    #[error("User is not enrolled in the course")]
-    UserNotEnrolled,
-
-    #[error("Course not found")]
-    CourseNotFound,
-
-    #[error("Stage not found")]
-    StageNotFound,
-
     #[error("Conflict: {0}")]
     Conflict(String),
+}
+
+impl From<sqlx::Error> for ApiError {
+    fn from(e: sqlx::Error) -> Self {
+        if let sqlx::Error::RowNotFound = e {
+            ApiError::NotFound
+        } else {
+            ApiError::DatabaseError(e)
+        }
+    }
 }
 
 impl From<&ApiError> for StatusCode {
@@ -91,9 +92,6 @@ impl From<&ApiError> for StatusCode {
             ApiError::StageAlreadyCompleted => StatusCode::BAD_REQUEST,
             ApiError::StageNotInProgress => StatusCode::BAD_REQUEST,
             ApiError::StageOutOfOrder => StatusCode::BAD_REQUEST,
-            ApiError::UserNotEnrolled => StatusCode::BAD_REQUEST,
-            ApiError::CourseNotFound => StatusCode::NOT_FOUND,
-            ApiError::StageNotFound => StatusCode::NOT_FOUND,
             ApiError::Conflict(_) => StatusCode::CONFLICT,
         }
     }
