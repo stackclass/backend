@@ -49,6 +49,9 @@ pub struct StageModel {
     /// A markdown description for this stage.
     pub instruction: String,
 
+    /// Detailed description of the solution approach and logic, if available.
+    pub solution: Option<String>,
+
     /// Sorting weight (default: 0)
     pub weight: i32,
 
@@ -93,6 +96,7 @@ impl From<Stage> for StageModel {
             difficulty: stage.difficulty.to_string(),
             description: stage.description,
             instruction: stage.instruction,
+            solution: stage.solution,
             weight: 0,
             created_at: Utc::now(),
             updated_at: Utc::now(),

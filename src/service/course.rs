@@ -21,8 +21,8 @@ use crate::{
     context::Context,
     database::Transaction,
     errors::{ApiError, Result},
-    model::{CourseModel, ExtensionModel, SolutionModel, StageModel, UserCourseModel},
-    repository::{CourseRepository, ExtensionRepository, SolutionRepository, StageRepository},
+    model::{CourseModel, ExtensionModel, StageModel, UserCourseModel},
+    repository::{CourseRepository, ExtensionRepository, StageRepository},
     request::{CreateUserCourseRequest, UpdateUserCourseRequest},
     response::{CourseDetailResponse, CourseResponse, UserCourseResponse},
     schema::{self, Course, Stage},
@@ -98,7 +98,7 @@ impl CourseService {
         Ok(course_model)
     }
 
-    /// Create stage and optionally its solution
+    /// Create stage
     async fn create_stage(
         tx: &mut Transaction<'_>,
         stage: &Stage,
@@ -113,12 +113,7 @@ impl CourseService {
             stage_model = stage_model.with_extension(extension_id);
         }
 
-        let stage_model = StageRepository::create(tx, &stage_model).await?;
-
-        if let Some(sol) = &stage.solution {
-            let solution_model = SolutionModel::from(sol.clone()).with_stage(stage_model.id);
-            SolutionRepository::create(tx, &solution_model).await?;
-        }
+        let _ = StageRepository::create(tx, &stage_model).await?;
 
         Ok(())
     }
@@ -240,16 +235,7 @@ impl CourseService {
             stage_model = stage_model.with_extension(extension_id);
         }
 
-        let stage_model = StageRepository::upsert(tx, &stage_model).await?;
-
-        // Upsert solutions
-        if let Some(sol) = &stage.solution {
-            let solution_model = SolutionModel::from(sol.clone()).with_stage(stage_model.id);
-            SolutionRepository::upsert(tx, &stage.slug, &solution_model).await?;
-        } else {
-            // Delete solution if it exists but stage no longer has one
-            SolutionRepository::delete(tx, &stage.slug).await?;
-        }
+        let _ = StageRepository::upsert(tx, &stage_model).await?;
 
         Ok(())
     }

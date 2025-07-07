@@ -41,10 +41,7 @@ fn test_parse_course() {
 
     // test stage solution
     let solution = stage.solution.as_ref().unwrap();
-    assert!(solution.explanation.starts_with("The entry"));
-    assert_eq!(solution.patches.len(), 1);
-    assert_eq!(solution.patches[0].0, "src/main.rs");
-    assert!(solution.patches[0].1.starts_with("@@ -1,37 +1,33 @@"));
+    assert!(solution.starts_with("Since this is the first stage"));
 
     // test extensions
     let extensions = course.extensions;

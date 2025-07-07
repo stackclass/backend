@@ -14,14 +14,12 @@
 
 mod course;
 mod extension;
-mod solution;
 mod stage;
 mod user;
 
 // Re-exports
 pub use course::*;
 pub use extension::*;
-pub use solution::*;
 pub use stage::*;
 pub use user::*;
 

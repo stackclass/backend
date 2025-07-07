@@ -34,8 +34,8 @@ impl StageRepository {
             r#"
             WITH inserted_stage AS (
                 INSERT INTO stages (
-                    id, course_id, extension_id, slug, name, difficulty, description, instruction, weight, created_at, updated_at
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                    id, course_id, extension_id, slug, name, difficulty, description, instruction, solution, weight, created_at, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                 RETURNING *
             )
             SELECT s.*, e.slug as extension_slug
@@ -51,6 +51,7 @@ impl StageRepository {
         .bind(&stage.difficulty)
         .bind(&stage.description)
         .bind(&stage.instruction)
+        .bind(&stage.solution)
         .bind(stage.weight)
         .bind(stage.created_at)
         .bind(stage.updated_at)
@@ -213,7 +214,7 @@ impl StageRepository {
             r#"
             WITH updated_stage AS (
                 UPDATE stages
-                SET course_id = $2, extension_id = $3, name = $4, difficulty = $5, description = $6, instruction = $7, weight = $8, updated_at = $9
+                SET course_id = $2, extension_id = $3, name = $4, difficulty = $5, description = $6, instruction = $7, solution = $8, weight = $9, updated_at = $10
                 WHERE slug = $1
                 RETURNING *
             )
@@ -229,6 +230,7 @@ impl StageRepository {
         .bind(&stage.difficulty)
         .bind(&stage.description)
         .bind(&stage.instruction)
+        .bind(&stage.solution)
         .bind(stage.weight)
         .bind(stage.updated_at)
         .fetch_one(&mut **tx)

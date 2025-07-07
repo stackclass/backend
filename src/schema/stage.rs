@@ -37,9 +37,9 @@ pub struct Stage {
     #[serde(skip)]
     pub instruction: String,
 
-    /// The solution to this stage, if available.
+    /// Detailed description of the solution approach and logic, if available.
     #[serde(skip)]
-    pub solution: Option<Solution>,
+    pub solution: Option<String>,
 }
 
 impl Hash for Stage {
@@ -75,30 +75,6 @@ impl fmt::Display for Difficulty {
             Difficulty::Medium => write!(f, "medium"),
             Difficulty::Hard => write!(f, "hard"),
         }
-    }
-}
-
-/// Represents a solution to a coding problem or task.
-/// Contains an explanation of the solution and a collection of code patches.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Solution {
-    /// Detailed description of the solution approach and logic
-    pub explanation: String,
-
-    /// Collection of file changes needed to implement this solution
-    /// Stored as tuples of (file_path, patch_content)
-    pub patches: Vec<(String, String)>,
-}
-
-impl Solution {
-    /// Creates a new Solution with the given explanation and empty patches
-    pub fn new(explanation: String) -> Self {
-        Solution { explanation, patches: Vec::new() }
-    }
-
-    /// Adds a code patch for a specific file to the solution
-    pub fn add_patch(&mut self, path: String, content: String) {
-        self.patches.push((path, content));
     }
 }
 

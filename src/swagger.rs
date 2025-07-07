@@ -55,7 +55,6 @@ use crate::{handler, request, response};
 
             response::StageResponse,
             response::StageDetailResponse,
-            response::SolutionResponse,
 
             request::CreateUserCourseRequest,
             request::UpdateUserCourseRequest,

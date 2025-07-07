@@ -15,9 +15,8 @@
 use indexmap::IndexMap;
 use std::{fs, path::Path, str::FromStr};
 use thiserror::Error;
-use walkdir::WalkDir;
 
-use crate::schema::{Course, ExtensionMap, ExtensionSet, Solution, Stage};
+use crate::schema::{Course, ExtensionMap, ExtensionSet, Stage};
 
 /// Errors that can occur during course parsing
 #[derive(Debug, Error)]
@@ -86,42 +85,13 @@ fn parse_stage(stage_dir: &Path) -> Result<Stage, ParseError> {
     let mut stage = Stage::from_str(&meta_content)?;
 
     stage.instruction = fs::read_to_string(stage_dir.join("instruction.md"))?;
-    stage.solution = parse_solution(&stage_dir.join("solution"))?;
+
+    let sln_path = stage_dir.join("solution.md");
+    if sln_path.exists() {
+        stage.solution.replace(fs::read_to_string(sln_path)?);
+    }
 
     Ok(stage)
-}
-
-/// Parse solution including explanation and patches
-fn parse_solution(sln_dir: &Path) -> Result<Option<Solution>, ParseError> {
-    if !sln_dir.exists() {
-        return Ok(None);
-    }
-
-    let explanation_path = sln_dir.join("explanation.md");
-    if !explanation_path.exists() {
-        return Ok(None);
-    }
-
-    let explanation = fs::read_to_string(explanation_path)?;
-    let mut solution = Solution::new(explanation);
-
-    // Process patch files if patches directory exists
-    let patches_dir = sln_dir.join("patches");
-    if !patches_dir.exists() {
-        return Ok(Some(solution));
-    }
-
-    for entry in WalkDir::new(&patches_dir).into_iter().filter_map(|e| e.ok()) {
-        let patch_path = entry.path();
-
-        if patch_path.is_file() {
-            let content = fs::read_to_string(patch_path)?;
-            let file_name = extract_file_name(patch_path, &patches_dir)?;
-            solution.add_patch(file_name, content);
-        }
-    }
-
-    Ok(Some(solution))
 }
 
 /// Parse extensions including their stages
@@ -149,19 +119,4 @@ fn parse_extensions(path: &Path) -> Result<Option<ExtensionMap>, ParseError> {
     }
 
     Ok(Some(extensions))
-}
-
-/// Extract normalized patch file name from path
-fn extract_file_name(path: &Path, parent: &Path) -> Result<String, ParseError> {
-    let stripped_path = path
-        .strip_prefix(parent)
-        .map_err(|_| ParseError::Structure("Failed to strip patch directory prefix".into()))?;
-    let path_str = stripped_path
-        .to_str()
-        .ok_or_else(|| ParseError::Structure("Invalid patch file path".into()))?;
-
-    let trimmed = path_str.trim_end_matches(".diff");
-    let replaced = trimmed.to_string().replace('\\', "/");
-
-    Ok(replaced)
 }

@@ -87,7 +87,7 @@ impl CourseRepository {
         let row = sqlx::query_as::<_, CourseModel>(
             r#"
             UPDATE courses
-            SET name = $2, short_name = $3, release_status = $4, description = $5, summary = $6, repository = $7, stage_count = $8, updated_at = $9
+            SET name = $2, short_name = $3, release_status = $4, description = $5, summary = $6, stage_count = $7, updated_at = $8
             WHERE slug = $1
             RETURNING *
             "#,
@@ -98,7 +98,6 @@ impl CourseRepository {
         .bind(&course.release_status)
         .bind(&course.description)
         .bind(&course.summary)
-        .bind(&course.repository)
         .bind(course.stage_count)
         .bind(course.updated_at)
         .fetch_one(&mut **tx)

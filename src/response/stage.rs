@@ -14,10 +14,9 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use utoipa::ToSchema;
 
-use crate::model::{SolutionModel, StageModel, UserStageModel};
+use crate::model::{StageModel, UserStageModel};
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct StageResponse {
@@ -81,7 +80,7 @@ pub struct StageDetailResponse {
 
     /// The solution to this stage, if available.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub solution: Option<SolutionResponse>,
+    pub solution: Option<String>,
 
     /// Creation timestamp
     pub created_at: DateTime<Utc>,
@@ -99,44 +98,10 @@ impl From<StageModel> for StageDetailResponse {
             difficulty: model.difficulty,
             description: model.description,
             instruction: model.instruction,
-            solution: None,
+            solution: model.solution,
             created_at: model.created_at,
             updated_at: model.updated_at,
         }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct SolutionResponse {
-    /// Detailed description of the solution approach and logic
-    pub explanation: String,
-
-    /// Collection of file changes needed to implement this solution
-    /// Stored as tuples of (file_path, patch_content)
-    pub patches: Vec<(String, String)>,
-}
-
-impl From<SolutionModel> for SolutionResponse {
-    fn from(model: SolutionModel) -> Self {
-        fn parse_patch_entry(value: &Value) -> Option<(String, String)> {
-            value.as_array().and_then(|pair| {
-                if pair.len() == 2 {
-                    Some((pair[0].as_str()?.to_owned(), pair[1].as_str()?.to_owned()))
-                } else {
-                    None
-                }
-            })
-        }
-
-        let SolutionModel { explanation, patches, .. } = model;
-
-        let patches = patches
-            .as_ref()
-            .and_then(|v| v.as_array())
-            .map(|arr| arr.iter().filter_map(parse_patch_entry).collect())
-            .unwrap_or_default();
-
-        Self { explanation, patches }
     }
 }
 

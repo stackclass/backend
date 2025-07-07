@@ -19,7 +19,7 @@ use crate::{
     database::{Database, Transaction},
     errors::{ApiError, Result},
     model::{UserCourseModel, UserStageModel},
-    repository::{CourseRepository, SolutionRepository, StageRepository},
+    repository::{CourseRepository, StageRepository},
     response::{StageDetailResponse, StageResponse, UserStageResponse},
 };
 
@@ -51,15 +51,8 @@ impl StageService {
         course_slug: &str,
         stage_slug: &str,
     ) -> Result<StageDetailResponse> {
-        // Load stage and solution
         let stage = StageRepository::get_by_slug(&ctx.database, course_slug, stage_slug).await?;
-        let solution = SolutionRepository::get_by_stage(&ctx.database, stage_slug).await.ok();
-
-        // Build response
-        let mut response: StageDetailResponse = stage.into();
-        response.solution = solution.map(|s| s.into());
-
-        Ok(response)
+        Ok(stage.into())
     }
 
     /// Fetch user stages for the user.
