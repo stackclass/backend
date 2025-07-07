@@ -206,6 +206,26 @@ impl StageRepository {
         Ok(stage)
     }
 
+    /// Get the first stage (ordered by weight)
+    pub async fn first(db: &Database, course_slug: &str) -> Result<Option<StageModel>> {
+        let stage = sqlx::query_as::<_, StageModel>(
+            r#"
+            SELECT s.*, e.slug as extension_slug
+            FROM stages s
+            JOIN courses c ON s.course_id = c.id
+            LEFT JOIN extensions e ON s.extension_id = e.id
+            WHERE c.slug = $1
+            ORDER BY s.weight ASC
+            LIMIT 1
+            "#,
+        )
+        .bind(course_slug)
+        .fetch_optional(db.pool())
+        .await?;
+
+        Ok(stage)
+    }
+
     /// Update a stage in the database.
     pub async fn update(tx: &mut Transaction<'_>, stage: &StageModel) -> Result<StageModel> {
         debug!("Updating stage with slug: {}", stage.slug);
@@ -361,7 +381,7 @@ impl StageRepository {
                 UPDATE user_stages
                 SET
                     status = $2,
-                    completed_at = $4,
+                    completed_at = $3
                 WHERE id = $1
                 RETURNING *
             )

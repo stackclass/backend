@@ -12,15 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
 use tokio::process::Command;
 use tracing::debug;
+use uuid::Uuid;
 
 use crate::{
     config::Config,
     context::Context,
     errors::ApiError,
-    service::{StorageError, StorageService},
+    repository::CourseRepository,
+    service::{CourseService, StageService, StorageError, StorageService},
 };
 
 #[allow(dead_code)]
@@ -126,6 +128,32 @@ impl RepoService {
 
     pub async fn handle_push_event(&self, repo: &str) -> Result<(), ApiError> {
         debug!("Handling push event for repository: {}", repo);
+
+        let mut user_course = CourseRepository::get_user_course_by_id(
+            &self.ctx.database,
+            Uuid::from_str(repo).unwrap(),
+        )
+        .await
+        .map_err(|e| {
+            if let sqlx::Error::RowNotFound = e {
+                ApiError::CourseNotFound
+            } else {
+                e.into()
+            }
+        })?;
+
+        match &user_course.current_stage_slug {
+            None => CourseService::activate(self.ctx.clone(), &mut user_course).await?,
+            Some(stage_slug) => {
+                StageService::complete(
+                    self.ctx.clone(),
+                    &user_course.user_id,
+                    &user_course.course_slug,
+                    stage_slug,
+                )
+                .await?;
+            }
+        };
 
         Ok(())
     }

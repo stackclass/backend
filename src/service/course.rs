@@ -21,7 +21,7 @@ use crate::{
     context::Context,
     database::Transaction,
     errors::{ApiError, Result},
-    model::{CourseModel, ExtensionModel, StageModel, UserCourseModel},
+    model::{CourseModel, ExtensionModel, StageModel, UserCourseModel, UserStageModel},
     repository::{CourseRepository, ExtensionRepository, StageRepository},
     request::{CreateUserCourseRequest, UpdateUserCourseRequest},
     response::{CourseDetailResponse, CourseResponse, UserCourseResponse},
@@ -344,6 +344,31 @@ impl CourseService {
 
         let mut tx = ctx.database.pool().begin().await?;
         CourseRepository::update_user_course(&mut tx, &user_course).await?;
+        tx.commit().await?;
+
+        Ok(())
+    }
+
+    /// Activates a user course by setting activated flag and creating first stage
+    pub async fn activate(
+        ctx: Arc<Context>,
+        user_course: &mut UserCourseModel,
+    ) -> Result<(), ApiError> {
+        let mut tx = ctx.database.pool().begin().await?;
+
+        user_course.activated = true;
+
+        // Find first stage by weight
+        if let Some(stage) = StageRepository::first(&ctx.database, &user_course.course_slug).await?
+        {
+            // Create user stage
+            let user_stage = UserStageModel::new(user_course.id, stage.id);
+            StageRepository::create_user_stage(&mut tx, &user_stage).await?;
+
+            user_course.current_stage_id = Some(stage.id);
+        }
+
+        CourseRepository::update_user_course(&mut tx, user_course).await?;
         tx.commit().await?;
 
         Ok(())

@@ -160,6 +160,27 @@ impl CourseRepository {
         Ok(row)
     }
 
+    /// Find the course detail by its internal ID.
+    pub async fn get_user_course_by_id(db: &Database, id: Uuid) -> Result<UserCourseModel> {
+        let row = sqlx::query_as::<_, UserCourseModel>(
+            r#"
+            SELECT
+                uc.*,
+                c.slug AS course_slug,
+                s.slug AS current_stage_slug
+            FROM user_courses uc
+            LEFT JOIN courses c ON uc.course_id = c.id
+            LEFT JOIN stages s ON uc.current_stage_id = s.id
+            WHERE uc.id = $1
+            "#,
+        )
+        .bind(id)
+        .fetch_one(db.pool())
+        .await?;
+
+        Ok(row)
+    }
+
     /// Create a new user course enrollment.
     pub async fn create_user_course(
         tx: &mut Transaction<'_>,

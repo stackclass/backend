@@ -86,7 +86,7 @@ impl StageService {
     }
 
     /// Mark a stage as completed for a user.
-    pub async fn complete_stage(
+    pub async fn complete(
         ctx: Arc<Context>,
         user_id: &str,
         course_slug: &str,

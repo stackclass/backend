@@ -190,6 +190,6 @@ pub async fn complete_stage(
     Path(slug): Path<String>,
     Json(req): Json<CompleteStageRequest>,
 ) -> Result<impl IntoResponse> {
-    let res = StageService::complete_stage(ctx, &claims.id, &slug, &req.slug).await?;
+    let res = StageService::complete(ctx, &claims.id, &slug, &req.slug).await?;
     Ok((StatusCode::OK, Json(res)))
 }
