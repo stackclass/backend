@@ -101,7 +101,7 @@ pub async fn receive_pack(
     let data = git_service.receive_pack(&repo, body.to_vec()).await?;
 
     // Handle push event after receiving pack
-    let repo_service = RepoService::new(&ctx.config.repo_dir);
+    let repo_service = RepoService::new(ctx);
     repo_service.handle_push_event(&repo).await?;
 
     Ok(Response::builder()

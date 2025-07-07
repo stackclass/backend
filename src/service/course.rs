@@ -29,6 +29,8 @@ use crate::{
     service::storage::StorageService,
 };
 
+use super::RepoService;
+
 /// Service for managing courses and related entities
 pub struct CourseService;
 
@@ -290,6 +292,10 @@ impl CourseService {
                 e.into()
             })?;
         tx.commit().await?;
+
+        // Initialize Git repository from course template
+        let repo_service = RepoService::new(ctx.clone());
+        repo_service.create(&course.repository, &user_course.id.to_string()).await?;
 
         let endpoint = &ctx.config.git_server_endpoint;
         Ok(UserCourseResponse::from((endpoint, user_course)))

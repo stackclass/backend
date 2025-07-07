@@ -60,6 +60,15 @@ pub enum StorageError {
 
     #[error("Failed to unpack tarball")]
     UnpackTarball(#[source] std::io::Error),
+
+    #[error("Failed to copy files: {0}")]
+    CopyFiles(String),
+
+    #[error("Git command failed: {0}")]
+    GitCommand(String),
+
+    #[error("Template directory is missing")]
+    MissingTemplate,
 }
 
 // Service for downloading and caching GitHub repositories
