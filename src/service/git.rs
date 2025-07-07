@@ -14,11 +14,8 @@
 
 use crate::errors::{ApiError, Result};
 
-use std::{
-    path::{Path, PathBuf},
-    process::Command,
-};
-use tokio::fs;
+use std::path::{Path, PathBuf};
+use tokio::{fs, io::AsyncWriteExt, process::Command};
 use tracing::debug;
 
 pub struct GitService {
@@ -43,6 +40,7 @@ impl GitService {
             .arg("--advertise-refs")
             .arg(self.root.join(repo))
             .output()
+            .await
             .map_err(|e| ApiError::GitCommandFailed(e.to_string()))?;
 
         if !output.status.success() {
@@ -66,12 +64,13 @@ impl GitService {
             .map_err(|e| ApiError::GitCommandFailed(e.to_string()))?;
 
         if let Some(mut stdin) = child.stdin.take() {
-            use std::io::Write;
-            stdin.write_all(&body).map_err(|e| ApiError::GitCommandFailed(e.to_string()))?;
+            stdin.write_all(&body).await.map_err(|e| ApiError::GitCommandFailed(e.to_string()))?;
         }
 
-        let output =
-            child.wait_with_output().map_err(|e| ApiError::GitCommandFailed(e.to_string()))?;
+        let output = child
+            .wait_with_output()
+            .await
+            .map_err(|e| ApiError::GitCommandFailed(e.to_string()))?;
 
         if !output.status.success() {
             return Err(ApiError::GitCommandFailed(format!(
@@ -94,12 +93,13 @@ impl GitService {
             .map_err(|e| ApiError::GitCommandFailed(e.to_string()))?;
 
         if let Some(mut stdin) = child.stdin.take() {
-            use std::io::Write;
-            stdin.write_all(&body).map_err(|e| ApiError::GitCommandFailed(e.to_string()))?;
+            stdin.write_all(&body).await.map_err(|e| ApiError::GitCommandFailed(e.to_string()))?;
         }
 
-        let output =
-            child.wait_with_output().map_err(|e| ApiError::GitCommandFailed(e.to_string()))?;
+        let output = child
+            .wait_with_output()
+            .await
+            .map_err(|e| ApiError::GitCommandFailed(e.to_string()))?;
 
         if !output.status.success() {
             return Err(ApiError::GitCommandFailed(format!(
