@@ -12,17 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod course;
-mod extension;
-mod git;
-mod repository;
-mod stage;
-mod storage;
+use std::path::{Path, PathBuf};
+use tracing::debug;
 
-// Re-exports
-pub use course::CourseService;
-pub use extension::ExtensionService;
-pub use git::GitService;
-pub use repository::*;
-pub use stage::StageService;
-pub use storage::*;
+use crate::errors::Result;
+
+#[allow(dead_code)]
+pub struct RepoService {
+    root: PathBuf,
+}
+
+impl RepoService {
+    pub fn new(root: &Path) -> Self {
+        RepoService { root: root.to_path_buf() }
+    }
+
+    pub async fn handle_push_event(&self, repo: &str) -> Result<()> {
+        debug!("Handling push event for repository: {}", repo);
+
+        Ok(())
+    }
+}

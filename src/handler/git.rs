@@ -15,7 +15,7 @@
 use crate::{
     context::Context,
     errors::{ApiError, Result},
-    service::GitService,
+    service::{GitService, RepoService},
 };
 use axum::{
     body::Bytes,
@@ -92,13 +92,17 @@ pub async fn receive_pack(
 ) -> Result<impl IntoResponse> {
     debug!("git::receive_pack({}) #{:?}", repo, body);
 
-    let service = GitService::new(&ctx.config.repo_dir);
-
-    if !service.exists(&repo).await {
+    let git_service = GitService::new(&ctx.config.repo_dir);
+    if !git_service.exists(&repo).await {
         return Err(ApiError::NotFound);
     }
 
-    let data = service.receive_pack(&repo, body.to_vec()).await?;
+    // Process git receive-pack data
+    let data = git_service.receive_pack(&repo, body.to_vec()).await?;
+
+    // Handle push event after receiving pack
+    let repo_service = RepoService::new(&ctx.config.repo_dir);
+    repo_service.handle_push_event(&repo).await?;
 
     Ok(Response::builder()
         .status(StatusCode::OK)
