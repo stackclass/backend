@@ -77,7 +77,7 @@ impl StageService {
                 .await
                 .map_err(|e| {
                     if let sqlx::Error::RowNotFound = e {
-                        ApiError::CourseNotFound
+                        ApiError::StageNotFound
                     } else {
                         e.into()
                     }
