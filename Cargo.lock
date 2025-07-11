@@ -222,6 +222,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "backend"
+version = "0.18.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "axum-extra",
+ "chrono",
+ "clap",
+ "dotenv",
+ "flate2",
+ "fs_extra",
+ "ghrepo",
+ "http-body-util",
+ "indexmap",
+ "jsonwebtoken",
+ "octocrab",
+ "serde",
+ "serde_json",
+ "serde_yml",
+ "sqlx",
+ "tar",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "utoipa",
+ "utoipa-swagger-ui",
+ "uuid",
+ "walkdir",
+]
+
+[[package]]
 name = "backtrace"
 version = "0.3.75"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -359,40 +393,6 @@ name = "clap_lex"
 version = "0.7.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b94f61472cee1439c0b966b47e3aca9ae07e45d070759512cd390ea2bebc6675"
-
-[[package]]
-name = "codecraft-server"
-version = "0.17.0"
-dependencies = [
- "anyhow",
- "axum",
- "axum-extra",
- "chrono",
- "clap",
- "dotenv",
- "flate2",
- "fs_extra",
- "ghrepo",
- "http-body-util",
- "indexmap",
- "jsonwebtoken",
- "octocrab",
- "serde",
- "serde_json",
- "serde_yml",
- "sqlx",
- "tar",
- "tempfile",
- "thiserror",
- "tokio",
- "tower-http",
- "tracing",
- "tracing-subscriber",
- "utoipa",
- "utoipa-swagger-ui",
- "uuid",
- "walkdir",
-]
 
 [[package]]
 name = "colorchoice"

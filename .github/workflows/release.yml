@@ -50,8 +50,8 @@ jobs:
           target: ${{ matrix.target }}
       - uses: taiki-e/upload-rust-binary-action@v1
         with:
-          bin: codecraft-server
-          archive: codecraft-server-${{ matrix.platform }}
+          bin: stackclass-server
+          archive: stackclass-server-${{ matrix.platform }}
           target: ${{ matrix.target }}
           token: ${{ secrets.GITHUB_TOKEN }}
           include: LICENSE,README.md

@@ -45,4 +45,4 @@ all:
 
 # Run the main program
 run:
-    cargo run --bin codecraft-server
+    cargo run --bin stackclass-server

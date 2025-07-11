@@ -1,4 +1,4 @@
--- Initial database schema for CodeCraft platform
+-- Initial database schema for StackClass platform
 -- Compatible with all model definitions and changed files
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

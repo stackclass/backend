@@ -1,4 +1,4 @@
-// Copyright (c) wangeguo. All rights reserved.
+// Copyright (c) The StackClass Authors. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 use std::sync::Arc;
 
 use clap::Parser;
-use codecraft::{app, config::Config, context::Context, logger};
+use stackclass::{app, config::Config, context::Context, logger};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

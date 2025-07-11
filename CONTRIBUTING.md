@@ -8,7 +8,7 @@ Before submitting your contribution, please take a moment to read the following 
 ### Reporting Issues
 
 If you find a bug or have a feature request, please first check the
-[issue tracker](https://github.com/wangeguo/codecraft-server/issues)
+[issue tracker](https://github.com/stackclass/backend/issues)
 to see if the issue already exists. If it doesn't, please create a new issue
 and provide as much detail as possible, including:
 
@@ -25,8 +25,8 @@ and provide as much detail as possible, including:
 2. **Clone the Repository**: Clone the forked repository to your local machine.
 
    ```bash
-   git clone https://github.com/wangeguo/codecraft-server.git
-   cd codecraft-server
+   git clone https://github.com/stackclass/backend.git
+   cd backend
    ```
 
 3. **Create a Branch**: Create a new branch for your changes.

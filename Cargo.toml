@@ -1,20 +1,20 @@
 [package]
-name = "codecraft-server"
-description = "CodeCraft Backend Server"
-version = "0.17.0"
+name = "backend"
+description = "Backend API and services for StackClass"
+version = "0.18.0"
 edition = "2021"
 
-default-run = "codecraft-server"
+default-run = "stackclass-server"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
-name = "codecraft"
+name = "stackclass"
 path = "src/lib.rs"
 
 [[bin]]
-name = "codecraft-server"
-path = "src/bin/codecraft-server.rs"
+name = "stackclass-server"
+path = "src/bin/stackclass-server.rs"
 
 [[bin]]
 name = "openapi-generator"

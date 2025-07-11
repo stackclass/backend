@@ -1,4 +1,4 @@
-// Copyright (c) wangeguo. All rights reserved.
+// Copyright (c) The StackClass Authors. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -128,8 +128,8 @@ impl FromRequestParts<Arc<Context>> for Claims {
 /// Validates a JWT token using the provided `DecodingKey`.
 fn validate_token(token: &str, decoding_key: &DecodingKey) -> Result<Claims, ClaimsError> {
     let mut validation = Validation::new(Algorithm::RS256);
-    validation.set_issuer(&["codecraft"]);
-    validation.set_audience(&["codecraft"]);
+    validation.set_issuer(&["StackClass"]);
+    validation.set_audience(&["StackClass"]);
 
     let token_data = decode::<Claims>(token, decoding_key, &validation).map_err(|e| {
         debug!("Failed to decode token: {}", e);

@@ -38,7 +38,7 @@ RUN cargo chef cook --release --recipe-path recipe.json
 # all layers should be cached.
 
 COPY . .
-RUN cargo build --release --bin codecraft-server
+RUN cargo build --release --bin stackclass-server
 
 ################################################################################
 # Create a final stage for running your application.
@@ -54,10 +54,10 @@ FROM gcr.io/distroless/cc-debian12:nonroot AS runtime
 # Copy the executable from the "building" stage.
 COPY --from=builder \
     --chown=nonroot:nonroot \
-    /app/target/release/codecraft-server \
+    /app/target/release/stackclass-server \
     /usr/local/bin/
 
 EXPOSE 8080
 
 # What the container should run when it is started
-ENTRYPOINT ["/usr/local/bin/codecraft-server"]
+ENTRYPOINT ["/usr/local/bin/stackclass-server"]

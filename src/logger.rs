@@ -1,4 +1,4 @@
-// Copyright (c) wangeguo. All rights reserved.
+// Copyright (c) The StackClass Authors. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ use tracing_subscriber::EnvFilter;
 pub fn setup() {
     let filter = EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| EnvFilter::new("info"))
-        .add_directive("codecraft=debug".parse().unwrap())
-        .add_directive("codecraft_server=debug".parse().unwrap());
+        .add_directive("stackclass=debug".parse().unwrap())
+        .add_directive("stackclass_server=debug".parse().unwrap());
 
     tracing_subscriber::fmt().with_env_filter(filter).init();
 }

@@ -1,4 +1,4 @@
-// Copyright (c) wangeguo. All rights reserved.
+// Copyright (c) The StackClass Authors. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@ use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 
-/// Schema for the codecraft.yml file.
+/// Schema for the stackclass.yml file.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Manifest {
     /// Set this to true if you want debug logs.
