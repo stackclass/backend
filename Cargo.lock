@@ -808,9 +808,9 @@ dependencies = [
 
 [[package]]
 name = "ghrepo"
-version = "0.7.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "baf04654ce2e303f24a3c4b88b1c616a108302130889894a1e66c1f79d964ccc"
+checksum = "0e2508da0b48f2f45c3f9dea89d149d04a5f74a76c42401373fde6976be6e4ca"
 
 [[package]]
 name = "gimli"
