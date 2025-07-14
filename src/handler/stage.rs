@@ -13,10 +13,10 @@
 // limitations under the License.
 
 use axum::{
+    Json,
     extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
-    Json,
 };
 use std::sync::Arc;
 

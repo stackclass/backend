@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use crate::errors::Result;
-use sqlx::{pool::PoolOptions, Pool, Postgres};
+use sqlx::{Pool, Postgres, pool::PoolOptions};
 
 pub type Transaction<'a> = sqlx::Transaction<'a, Postgres>;
 

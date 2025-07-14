@@ -15,19 +15,18 @@
 use std::{collections::HashMap, fmt::Display, sync::Arc};
 
 use axum::{
-    extract::FromRequestParts,
-    http::{request::Parts, StatusCode},
-    response::{IntoResponse, Response},
     RequestPartsExt,
+    extract::FromRequestParts,
+    http::{StatusCode, request::Parts},
+    response::{IntoResponse, Response},
 };
 use axum_extra::{
-    headers::{authorization::Bearer, Authorization},
     TypedHeader,
+    headers::{Authorization, authorization::Bearer},
 };
 use jsonwebtoken::{
-    decode,
+    Algorithm, DecodingKey, Validation, decode,
     jwk::{AlgorithmParameters, Jwk},
-    Algorithm, DecodingKey, Validation,
 };
 use serde::{Deserialize, Serialize};
 use thiserror::Error;

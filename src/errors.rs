@@ -13,9 +13,9 @@
 // limitations under the License.
 
 use axum::{
+    Json,
     http::{self, StatusCode},
     response::{IntoResponse, Response},
-    Json,
 };
 use serde_json::json;
 use thiserror::Error;

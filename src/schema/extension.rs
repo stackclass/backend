@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use indexmap::{set::Iter, IndexMap, IndexSet};
+use indexmap::{IndexMap, IndexSet, set::Iter};
 use serde::{Deserialize, Serialize};
 use std::{hash::Hash, str::FromStr};
 

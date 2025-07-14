@@ -15,8 +15,8 @@
 use std::sync::Arc;
 
 use axum::{
-    routing::{delete, get, patch, post},
     Router,
+    routing::{delete, get, patch, post},
 };
 
 use crate::{

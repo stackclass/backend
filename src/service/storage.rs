@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use axum::body::{to_bytes, Body};
+use axum::body::{Body, to_bytes};
 use flate2::read::GzDecoder;
 use ghrepo::GHRepo;
 use http_body_util::BodyExt;
 use octocrab::{
+    Octocrab,
     models::repos::Object,
     params::repos::{Commitish, Reference},
-    Octocrab,
 };
 use std::{
     path::{Path, PathBuf},

@@ -13,8 +13,8 @@
 // limitations under the License.
 
 use utoipa::{
-    openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
     Modify, OpenApi,
+    openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
 };
 use utoipa_swagger_ui::SwaggerUi;
 
