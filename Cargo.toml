@@ -29,7 +29,7 @@ clap = { version = "4.5.41", features = ["derive", "env"] }
 dotenv = "0.15.0"
 flate2 = "1.1.2"
 fs_extra = "1.3.0"
-ghrepo = "0.7.0"
+ghrepo = "0.7.1"
 http-body-util = "0.1.3"
 indexmap = {version = "2.9.0", features = ["serde"] }
 jsonwebtoken = "9.3.1"
