@@ -6,18 +6,7 @@
 
 ################################################################################
 # Base image as the foundation for the other build stages in this file.
-FROM rust:slim AS chef
-
-# Set the environment variables for the build.
-ENV CARGO_UNSTABLE_SPARSE_REGISTRY=true
-ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
-
-# We only pay the installation cost once,
-# it will be cached from the second build onwards
-RUN rustup default stable
-RUN rustup component add cargo rust-std rustc
-RUN cargo install cargo-chef
-
+FROM lukemathwalker/cargo-chef:latest-rust-1-slim-bookworm AS chef
 WORKDIR /app
 
 ################################################################################
@@ -49,11 +38,20 @@ RUN cargo build --release --bin stackclass-server
 # the smallest image possible. This often means using a different and smaller
 # image than the one used for building the application, but for illustrative
 # purposes the "base" image is used here.
-FROM gcr.io/distroless/cc-debian12:nonroot AS runtime
+FROM debian:bookworm-slim AS runtime
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN addgroup --system --gid 1001 axum
+RUN adduser --system --uid 1001 axum
+USER axum
 
 # Copy the executable from the "building" stage.
 COPY --from=builder \
-    --chown=nonroot:nonroot \
     /app/target/release/stackclass-server \
     /usr/local/bin/
 
