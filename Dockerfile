@@ -46,6 +46,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+RUN git config --global user.name "StackClass"
+RUN git config --global user.email "hello@stackclass.dev"
+
 RUN addgroup --system --gid 1001 axum
 RUN adduser --system --uid 1001 axum
 USER axum
