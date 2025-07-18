@@ -46,12 +46,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN adduser --uid 1001 --home /home/axum axum \
-    && chown axum:axum /home/axum
+RUN addgroup --system --gid 1001 axum
+RUN adduser --system --uid 1001 axum
 USER axum
 
-RUN git config --global user.name "StackClass" && \
-    git config --global user.email "hello@stackclass.dev"
+ENV GIT_AUTHOR_NAME="StackClass"
+ENV GIT_AUTHOR_EMAIL="hello@stackclass.dev"
+ENV GIT_COMMITTER_NAME="StackClass"
+ENV GIT_COMMITTER_EMAIL="hello@stackclass.dev"
 
 # Copy the executable from the "building" stage.
 COPY --from=builder \
