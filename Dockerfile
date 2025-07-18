@@ -42,7 +42,7 @@ FROM debian:bookworm-slim AS runtime
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
+    ca-certificates git \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
