@@ -43,6 +43,7 @@ use crate::{handler, request, response};
         handler::course::create_user_course,
         handler::course::get_user_course,
         handler::course::update_user_course,
+        handler::course::stream_user_course_status,
 
         handler::stage::find_user_stages,
         handler::stage::complete_stage,

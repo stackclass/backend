@@ -742,6 +742,43 @@
           }
         ]
       }
+    },
+    "/v1/user/courses/{slug}/status": {
+      "get": {
+        "tags": [
+          "User",
+          "Course"
+        ],
+        "summary": "Stream the status of a specific course for the current user.",
+        "operationId": "stream_user_course_status",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "The slug of course",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully started streaming course status updates"
+          },
+          "404": {
+            "description": "Course or stage not found"
+          },
+          "500": {
+            "description": "Failed to stream course status"
+          }
+        },
+        "security": [
+          {
+            "JWTBearerAuth": []
+          }
+        ]
+      }
     }
   },
   "components": {

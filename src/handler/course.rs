@@ -12,14 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::sync::Arc;
+use std::{convert::Infallible, sync::Arc};
 
 use axum::{
     Json,
     extract::{Path, State},
     http::StatusCode,
-    response::IntoResponse,
+    response::{
+        IntoResponse, Sse,
+        sse::{Event, KeepAlive},
+    },
 };
+use futures::{Stream, StreamExt};
+use tokio_stream::wrappers::ReceiverStream;
+use tracing::{error, info};
 
 use crate::{
     context::Context,
@@ -226,4 +232,55 @@ pub async fn update_user_course(
 ) -> Result<impl IntoResponse> {
     CourseService::update_user_course(ctx, &claims.id, &slug, &req).await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// Stream the status of a specific course for the current user.
+#[utoipa::path(
+    operation_id = "stream_user_course_status",
+    get, path = "/v1/user/courses/{slug}/status",
+    params(
+        ("slug" = String, description = "The slug of course")
+    ),
+    responses(
+        (status = 200, description = "Successfully started streaming course status updates"),
+        (status = 404, description = "Course or stage not found"),
+        (status = 500, description = "Failed to stream course status")
+    ),
+    security(("JWTBearerAuth" = [])),
+    tags = ["User", "Course"]
+)]
+pub async fn stream_user_course_status(
+    claims: Claims,
+    State(ctx): State<Arc<Context>>,
+    Path(slug): Path<String>,
+) -> Sse<impl Stream<Item = axum::response::Result<Event, Infallible>>> {
+    info!("Starting to stream status updates for course {} for user {}...", slug, claims.id);
+
+    // Create a channel for sending status updates.
+    let (sender, receiver) = tokio::sync::mpsc::channel(100);
+
+    // Spawn a background task to fetch and send status updates.
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(std::time::Duration::from_secs(5));
+        loop {
+            interval.tick().await;
+            let status = CourseService::get_user_course(ctx.clone(), &claims.id, &slug).await;
+            if let Ok(status) = status {
+                let event = Event::default().json_data(status).unwrap_or_else(|e| {
+                    error!("Failed to serialize status update: {}", e);
+                    Event::default().data("status update error")
+                });
+                if sender.send(event).await.is_err() {
+                    break;
+                }
+            }
+        }
+    });
+
+    // Convert the receiver into a stream.
+    let stream = ReceiverStream::new(receiver);
+    let stream = stream.map(Ok);
+
+    // Return the SSE stream with keep-alive.
+    Sse::new(stream).keep_alive(KeepAlive::default())
 }
