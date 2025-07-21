@@ -47,6 +47,7 @@ use crate::{handler, request, response};
         handler::stage::find_user_stages,
         handler::stage::complete_stage,
         handler::stage::get_user_stage,
+        handler::stage::stream_user_stage_status
     ),
     components(
         schemas(
@@ -63,6 +64,7 @@ use crate::{handler, request, response};
             request::UpdateUserCourseRequest,
             response::UserCourseResponse,
             response::UserStageResponse,
+            response::UserStageStatusResponse,
         )
     ),
     tags(

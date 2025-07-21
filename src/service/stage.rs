@@ -20,7 +20,7 @@ use crate::{
     errors::{ApiError, Result},
     model::{UserCourseModel, UserStageModel},
     repository::{CourseRepository, StageRepository},
-    response::{StageDetailResponse, StageResponse, UserStageResponse},
+    response::{StageDetailResponse, StageResponse, UserStageResponse, UserStageStatusResponse},
 };
 
 /// Service for managing stages
@@ -152,5 +152,20 @@ impl StageService {
         CourseRepository::update_user_course(tx, &updated_user_course).await?;
 
         Ok(())
+    }
+
+    /// Get the current status of a stage for the user.
+    pub async fn get_user_stage_status(
+        ctx: &Arc<Context>,
+        user_id: &str,
+        course_slug: &str,
+        stage_slug: &str,
+    ) -> Result<UserStageStatusResponse> {
+        // Fetch the user's stage record from the database.
+        let user_stage =
+            StageRepository::get_user_stage(&ctx.database, user_id, course_slug, stage_slug)
+                .await?;
+
+        Ok(UserStageStatusResponse { status: user_stage.status, test: "failed".into() })
     }
 }

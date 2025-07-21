@@ -696,6 +696,52 @@
           }
         ]
       }
+    },
+    "/v1/user/courses/{slug}/stages/{stage_slug}/status": {
+      "get": {
+        "tags": [
+          "User",
+          "Stage"
+        ],
+        "summary": "Stream the status of a specific stage for the current user.",
+        "operationId": "stream_user_stage_status",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "The slug of course",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stage_slug",
+            "in": "path",
+            "description": "The slug of stage",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully started streaming stage status updates"
+          },
+          "404": {
+            "description": "Course or stage not found"
+          },
+          "500": {
+            "description": "Failed to stream stage status"
+          }
+        },
+        "security": [
+          {
+            "JWTBearerAuth": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -1105,6 +1151,23 @@
           "status": {
             "type": "string",
             "description": "Current progress status (in_progress, completed)"
+          }
+        }
+      },
+      "UserStageStatusResponse": {
+        "type": "object",
+        "required": [
+          "status",
+          "test"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Current progress status (in_progress, completed)"
+          },
+          "test": {
+            "type": "string",
+            "description": "Test result status (passed, failed)"
           }
         }
       }

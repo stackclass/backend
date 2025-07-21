@@ -134,3 +134,12 @@ impl From<UserStageModel> for UserStageResponse {
         }
     }
 }
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct UserStageStatusResponse {
+    /// Current progress status (in_progress, completed)
+    pub status: String,
+
+    /// Test result status (passed, failed)
+    pub test: String,
+}

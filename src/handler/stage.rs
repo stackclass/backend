@@ -16,9 +16,15 @@ use axum::{
     Json,
     extract::{Path, State},
     http::StatusCode,
-    response::IntoResponse,
+    response::{
+        IntoResponse, Sse,
+        sse::{Event, KeepAlive},
+    },
 };
-use std::sync::Arc;
+use futures::{Stream, StreamExt};
+use std::{convert::Infallible, sync::Arc};
+use tokio_stream::wrappers::ReceiverStream;
+use tracing::{error, info};
 
 use crate::{
     context::Context,
@@ -192,4 +198,60 @@ pub async fn complete_stage(
 ) -> Result<impl IntoResponse> {
     let res = StageService::complete(ctx, &claims.id, &slug, &req.slug).await?;
     Ok((StatusCode::OK, Json(res)))
+}
+
+/// Stream the status of a specific stage for the current user.
+#[utoipa::path(
+    operation_id = "stream_user_stage_status",
+    get, path = "/v1/user/courses/{slug}/stages/{stage_slug}/status",
+    params(
+        ("slug" = String, description = "The slug of course"),
+        ("stage_slug" = String, description = "The slug of stage"),
+    ),
+    responses(
+        (status = 200, description = "Successfully started streaming stage status updates"),
+        (status = 404, description = "Course or stage not found"),
+        (status = 500, description = "Failed to stream stage status")
+    ),
+    security(("JWTBearerAuth" = [])),
+    tags = ["User", "Stage"]
+)]
+pub async fn stream_user_stage_status(
+    claims: Claims,
+    State(ctx): State<Arc<Context>>,
+    Path((slug, stage_slug)): Path<(String, String)>,
+) -> Sse<impl Stream<Item = axum::response::Result<Event, Infallible>>> {
+    info!(
+        "Starting to stream status updates for stage {} in course {} for user {}...",
+        stage_slug, slug, claims.id
+    );
+
+    // Create a channel for sending status updates.
+    let (sender, receiver) = tokio::sync::mpsc::channel(100);
+
+    // Spawn a background task to fetch and send status updates.
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(std::time::Duration::from_secs(5));
+        loop {
+            interval.tick().await;
+            let status =
+                StageService::get_user_stage_status(&ctx, &claims.id, &slug, &stage_slug).await;
+            if let Ok(status) = status {
+                let event = Event::default().json_data(status).unwrap_or_else(|e| {
+                    error!("Failed to serialize status update: {}", e);
+                    Event::default().data("status update error")
+                });
+                if sender.send(event).await.is_err() {
+                    break;
+                }
+            }
+        }
+    });
+
+    // Convert the receiver into a stream.
+    let stream = ReceiverStream::new(receiver);
+    let stream = stream.map(Ok);
+
+    // Return the SSE stream with keep-alive.
+    Sse::new(stream).keep_alive(KeepAlive::default())
 }
