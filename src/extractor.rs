@@ -16,7 +16,7 @@ use std::{collections::HashMap, fmt::Display, sync::Arc};
 
 use axum::{
     RequestPartsExt,
-    extract::FromRequestParts,
+    extract::{FromRequestParts, Query},
     http::{StatusCode, request::Parts},
     response::{IntoResponse, Response},
 };
@@ -98,26 +98,34 @@ impl FromRequestParts<Arc<Context>> for Claims {
         parts: &mut Parts,
         ctx: &Arc<Context>,
     ) -> Result<Self, Self::Rejection> {
-        let TypedHeader(Authorization(bearer)) = parts
-            .extract::<TypedHeader<Authorization<Bearer>>>()
-            .await
-            .map_err(|_| ClaimsError::TokenNotFound)?;
+        // Try to extract the token from the Authorization header first
+        let token = match parts.extract::<TypedHeader<Authorization<Bearer>>>().await {
+            Ok(TypedHeader(Authorization(bearer))) => bearer.token().to_string(),
+            Err(_) => {
+                // Fall back to the URL query parameter if the header is missing
+                let query = parts
+                    .extract::<Query<HashMap<String, String>>>()
+                    .await
+                    .map_err(|_| ClaimsError::TokenNotFound)?;
+                query.get("token").cloned().ok_or(ClaimsError::TokenNotFound)?
+            }
+        };
 
-        let header = jsonwebtoken::decode_header(bearer.token())
-            .map_err(|_| ClaimsError::TokenParseError)?;
+        let header =
+            jsonwebtoken::decode_header(&token).map_err(|_| ClaimsError::TokenParseError)?;
         let kid = header.kid.ok_or(ClaimsError::MissingKeyId)?;
 
         // First attempt with cached keys
         let keys = get_keys().await;
         if let Some(decoding_key) = keys.read().await.get(&kid) {
-            return validate_token(bearer.token(), decoding_key);
+            return validate_token(&token, decoding_key);
         }
 
         // If kid not found, refresh keys and try again
         refresh_keys(ctx.clone()).await.map_err(|_| ClaimsError::KeyRefreshFailed)?;
 
         if let Some(decoding_key) = keys.read().await.get(&kid) {
-            return validate_token(bearer.token(), decoding_key);
+            return validate_token(&token, decoding_key);
         }
 
         Err(ClaimsError::KeyNotFound(kid))
