@@ -24,7 +24,7 @@ use crate::{
     model::{CourseModel, ExtensionModel, StageModel, UserCourseModel, UserStageModel},
     repository::{CourseRepository, ExtensionRepository, StageRepository},
     request::{CreateUserCourseRequest, UpdateUserCourseRequest},
-    response::{CourseDetailResponse, CourseResponse, UserCourseResponse},
+    response::{AttemptResponse, CourseDetailResponse, CourseResponse, UserCourseResponse},
     schema::{self, Course, Stage},
     service::storage::StorageService,
 };
@@ -350,6 +350,12 @@ impl CourseService {
         tx.commit().await?;
 
         Ok(())
+    }
+
+    /// Fetch all attempts for a course.
+    pub async fn find_attempts(ctx: Arc<Context>, slug: &str) -> Result<Vec<AttemptResponse>> {
+        let attempts = CourseRepository::find_attempts(&ctx.database, slug).await?;
+        Ok(attempts.into_iter().map(Into::into).collect())
     }
 }
 

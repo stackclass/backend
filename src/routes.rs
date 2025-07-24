@@ -31,7 +31,8 @@ pub fn build() -> Router<Arc<Context>> {
         .route("/v1/courses/{slug}", get(course::get))
         .route("/v1/courses/{slug}", delete(course::delete))
         .route("/v1/courses/{slug}", patch(course::update))
-        // Extension
+        //
+        .route("/v1/courses/{slug}/attempts", get(course::find_attempts))
         .route("/v1/courses/{slug}/extensions", get(extension::find))
         // git-http-backend
         .route("/git/{repo}/HEAD", get(git::head))

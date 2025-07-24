@@ -6,7 +6,7 @@
     "license": {
       "name": ""
     },
-    "version": "0.26.0"
+    "version": "0.27.0"
   },
   "paths": {
     "/v1/courses": {
@@ -158,6 +158,47 @@
           },
           "500": {
             "description": "Failed to update course"
+          }
+        }
+      }
+    },
+    "/v1/courses/{slug}/attempts": {
+      "get": {
+        "tags": [
+          "Course"
+        ],
+        "summary": "Find all attempts for a course.",
+        "operationId": "find-course-attempts",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "The slug of the course",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attempts retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttemptResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Course not found"
+          },
+          "500": {
+            "description": "Failed to fetch attempts"
           }
         }
       }
@@ -783,6 +824,40 @@
   },
   "components": {
     "schemas": {
+      "AttemptResponse": {
+        "type": "object",
+        "required": [
+          "user_id",
+          "avatar",
+          "username",
+          "completed",
+          "total"
+        ],
+        "properties": {
+          "avatar": {
+            "type": "string",
+            "description": "URL of the user's avatar image"
+          },
+          "completed": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of tasks completed by the user"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Total number of tasks available"
+          },
+          "user_id": {
+            "type": "string",
+            "description": "The unique identifier of the user"
+          },
+          "username": {
+            "type": "string",
+            "description": "The display name of the user"
+          }
+        }
+      },
       "CourseDetailResponse": {
         "type": "object",
         "required": [

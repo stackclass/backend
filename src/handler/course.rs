@@ -32,7 +32,7 @@ use crate::{
     errors::Result,
     extractor::Claims,
     request::{CreateCourseRequest, CreateUserCourseRequest, UpdateUserCourseRequest},
-    response::{CourseDetailResponse, CourseResponse, UserCourseResponse},
+    response::{AttemptResponse, CourseDetailResponse, CourseResponse, UserCourseResponse},
     service::CourseService,
 };
 
@@ -283,4 +283,25 @@ pub async fn stream_user_course_status(
 
     // Return the SSE stream with keep-alive.
     Sse::new(stream).keep_alive(KeepAlive::default())
+}
+
+/// Find all attempts for a course.
+#[utoipa::path(
+    operation_id = "find-course-attempts",
+    get, path = "/v1/courses/{slug}/attempts",
+    params(
+        ("slug" = String, description = "The slug of the course"),
+    ),
+    responses(
+        (status = 200, description = "Attempts retrieved successfully", body = Vec<AttemptResponse>),
+        (status = 404, description = "Course not found"),
+        (status = 500, description = "Failed to fetch attempts"),
+    ),
+    tag = "Course"
+)]
+pub async fn find_attempts(
+    State(ctx): State<Arc<Context>>,
+    Path(slug): Path<String>,
+) -> Result<impl IntoResponse> {
+    Ok((StatusCode::OK, Json(CourseService::find_attempts(ctx, &slug).await?)))
 }

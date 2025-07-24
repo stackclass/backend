@@ -17,7 +17,7 @@ use uuid::Uuid;
 
 use crate::{
     database::{Database, Transaction},
-    model::{CourseModel, UserCourseModel},
+    model::{AttemptModel, CourseModel, UserCourseModel},
     repository::Result,
 };
 
@@ -263,5 +263,32 @@ impl CourseRepository {
         .await?;
 
         Ok(row)
+    }
+
+    /// Find all attempts for a course.
+    pub async fn find_attempts(db: &Database, slug: &str) -> Result<Vec<AttemptModel>> {
+        let rows = sqlx::query_as::<_, AttemptModel>(
+            r#"
+            SELECT
+                u.id AS user_id,
+                u.image AS avatar,
+                u.name AS username,
+                uc.completed_stage_count AS completed,
+                c.stage_count AS total
+            FROM user_courses uc
+            JOIN users u ON uc.user_id = u.id
+            JOIN courses c ON uc.course_id = c.id
+            WHERE c.slug = $1
+            ORDER BY
+                uc.completed_stage_count DESC,
+                uc.started_at DESC
+            LIMIT 10
+            "#,
+        )
+        .bind(slug)
+        .fetch_all(db.pool())
+        .await?;
+
+        Ok(rows)
     }
 }

@@ -12,13 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod attempt;
-mod course;
-mod extension;
-mod stage;
+use sqlx::FromRow;
 
-// Re-exports
-pub use attempt::*;
-pub use course::*;
-pub use extension::*;
-pub use stage::*;
+/// Database model representing a user's attempt in a course
+#[derive(Debug, FromRow)]
+pub struct AttemptModel {
+    /// Unique identifier of the user
+    pub user_id: String,
+
+    /// URL of the user's avatar image
+    pub avatar: String,
+
+    /// The display name of the user
+    pub username: String,
+
+    /// Number of tasks completed by the user
+    pub completed: i32,
+
+    /// Total number of tasks available
+    pub total: i32,
+}

@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+mod attempt;
 mod course;
 mod extension;
 mod stage;
 mod user;
 
 // Re-exports
+pub use attempt::*;
 pub use course::*;
 pub use extension::*;
 pub use stage::*;

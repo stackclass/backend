@@ -32,6 +32,7 @@ use crate::{handler, request, response};
         handler::course::delete,
         handler::course::update,
 
+        handler::course::find_attempts,
         handler::extension::find,
 
         handler::stage::find_all_stages,
@@ -56,6 +57,7 @@ use crate::{handler, request, response};
             response::CourseResponse,
             response::CourseDetailResponse,
 
+            response::AttemptResponse,
             response::ExtensionResponse,
 
             response::StageResponse,
