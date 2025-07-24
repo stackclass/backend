@@ -343,8 +343,8 @@ impl StageRepository {
             r#"
             WITH inserted AS (
                 INSERT INTO user_stages (
-                    id, user_course_id, stage_id, status, started_at
-                ) VALUES ($1, $2, $3, $4, $5)
+                    id, user_course_id, stage_id, status, test, started_at
+                ) VALUES ($1, $2, $3, $4, $5, $6)
                 RETURNING *
             )
             SELECT
@@ -361,6 +361,7 @@ impl StageRepository {
         .bind(user_stage.user_course_id)
         .bind(user_stage.stage_id)
         .bind(&user_stage.status)
+        .bind(&user_stage.test)
         .bind(user_stage.started_at)
         .fetch_one(&mut **tx)
         .await?;
@@ -381,7 +382,8 @@ impl StageRepository {
                 UPDATE user_stages
                 SET
                     status = $2,
-                    completed_at = $3
+                    test = $3,
+                    completed_at = $4
                 WHERE id = $1
                 RETURNING *
             )
@@ -397,6 +399,7 @@ impl StageRepository {
         )
         .bind(user_stage.id)
         .bind(&user_stage.status)
+        .bind(&user_stage.test)
         .bind(user_stage.completed_at)
         .fetch_one(&mut **tx)
         .await?;

@@ -116,6 +116,9 @@ pub struct UserStageResponse {
     /// Current progress status (in_progress, completed)
     pub status: String,
 
+    /// Test result status (passed, failed)
+    pub test: String,
+
     /// Timestamp when the stage was started
     pub started_at: DateTime<Utc>,
 
@@ -129,6 +132,7 @@ impl From<UserStageModel> for UserStageResponse {
             course_slug: model.course_slug,
             stage_slug: model.stage_slug,
             status: model.status,
+            test: model.test,
             started_at: model.started_at,
             completed_at: model.completed_at,
         }

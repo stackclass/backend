@@ -1161,6 +1161,7 @@
           "course_slug",
           "stage_slug",
           "status",
+          "test",
           "started_at"
         ],
         "properties": {
@@ -1188,6 +1189,10 @@
           "status": {
             "type": "string",
             "description": "Current progress status (in_progress, completed)"
+          },
+          "test": {
+            "type": "string",
+            "description": "Test result status (passed, failed)"
           }
         }
       },

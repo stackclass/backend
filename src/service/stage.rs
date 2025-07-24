@@ -107,7 +107,7 @@ impl StageService {
         let mut tx = ctx.database.pool().begin().await?;
 
         // Mark the stage as completed.
-        user_stage = user_stage.complete();
+        user_stage = user_stage.passed().complete();
         let completed_stage = StageRepository::update_user_stage(&mut tx, &user_stage).await?;
 
         // Update user course and create next stage if needed.
@@ -166,6 +166,6 @@ impl StageService {
             StageRepository::get_user_stage(&ctx.database, user_id, course_slug, stage_slug)
                 .await?;
 
-        Ok(UserStageStatusResponse { status: user_stage.status, test: "failed".into() })
+        Ok(UserStageStatusResponse { status: user_stage.status, test: user_stage.test })
     }
 }

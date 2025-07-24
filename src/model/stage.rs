@@ -125,6 +125,9 @@ pub struct UserStageModel {
     /// Current progress status (in_progress, completed)
     pub status: String,
 
+    /// Test result status (passed, failed)
+    pub test: String,
+
     /// Timestamp when the stage was started
     pub started_at: DateTime<Utc>,
 
@@ -142,9 +145,16 @@ impl UserStageModel {
             stage_id,
             stage_slug: String::new(),
             status: "in_progress".to_string(),
+            test: "failed".to_string(),
             started_at: Utc::now(),
             completed_at: None,
         }
+    }
+
+    /// Marks the stage as test passed
+    pub fn passed(mut self) -> Self {
+        self.test = "passed".to_string();
+        self
     }
 
     /// Marks the stage as completed with current timestamp
