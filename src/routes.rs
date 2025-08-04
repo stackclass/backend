@@ -21,7 +21,7 @@ use axum::{
 
 use crate::{
     context::Context,
-    handler::{course, extension, git, stage, webhook},
+    handler::{course, extension, stage, webhook},
 };
 
 pub fn build() -> Router<Arc<Context>> {
@@ -34,15 +34,6 @@ pub fn build() -> Router<Arc<Context>> {
         //
         .route("/v1/courses/{slug}/attempts", get(course::find_attempts))
         .route("/v1/courses/{slug}/extensions", get(extension::find))
-        // git-http-backend
-        .route("/git/{repo}/HEAD", get(git::head))
-        .route("/git/{repo}/info/refs", get(git::info_refs))
-        .route("/git/{repo}/git-upload-pack", post(git::upload_pack))
-        .route("/git/{repo}/git-receive-pack", post(git::receive_pack))
-        .route("/git/{repo}/objects/info/packs", get(git::info_packs))
-        .route("/git/{repo}/objects/pack/{file}", get(git::pack_file))
-        .route("/git/{repo}/objects/info/{file}", get(git::text_file))
-        .route("/git/{repo}/objects/{two}/{thirtyeight}", get(git::loose_object))
         // Stage
         .route("/v1/courses/{slug}/stages", get(stage::find_all_stages))
         .route("/v1/courses/{slug}/stages/base", get(stage::find_base_stages))

@@ -14,7 +14,6 @@
 
 mod course;
 mod extension;
-mod git;
 mod repository;
 mod stage;
 mod storage;
@@ -22,7 +21,6 @@ mod storage;
 // Re-exports
 pub use course::CourseService;
 pub use extension::ExtensionService;
-pub use git::GitService;
 pub use repository::*;
 pub use stage::StageService;
 pub use storage::*;
