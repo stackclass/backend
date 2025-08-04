@@ -83,3 +83,42 @@ pub struct User {
     /// Website URL of the user.
     pub website: String,
 }
+
+/// Request body for creating a user.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateUserRequest {
+    /// For explicitly setting the user creation timestamp. Useful when users
+    /// are migrated from other systems. When omitted, the user's creation
+    /// timestamp will be set to "now".
+    pub created_at: Option<String>,
+
+    /// Email address of the user.
+    pub email: String,
+
+    /// Full name of the user.
+    pub full_name: Option<String>,
+
+    /// Login name of the user.
+    pub login_name: Option<String>,
+
+    /// Whether the user must change their password on first login.
+    pub must_change_password: Option<bool>,
+
+    /// Password for the user account.
+    pub password: Option<String>,
+
+    /// Whether the user is restricted.
+    pub restricted: Option<bool>,
+
+    /// Whether to send notification email to the user.
+    pub send_notify: Option<bool>,
+
+    /// Source ID of the user.
+    pub source_id: Option<i64>,
+
+    /// Username of the user.
+    pub username: String,
+
+    /// Visibility setting of the user.
+    pub visibility: Option<String>,
+}

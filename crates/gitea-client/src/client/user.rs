@@ -12,14 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::{client::GiteaClient, error::ClientError, types::User};
+use reqwest::StatusCode;
+
+use crate::{
+    client::GiteaClient,
+    error::ClientError,
+    types::{CreateUserRequest, User},
+};
 
 impl GiteaClient {
-    /// Fetches a user by username.
+    /// Get a user by username.
     ///
     /// https://docs.gitea.com/zh-cn/api/1.24/#tag/user/operation/userGet
     pub async fn get_user(&self, username: &str) -> Result<User, ClientError> {
         let response = self.get(&format!("users/{username}")).await?;
-        response.json::<User>().await.map_err(ClientError::from)
+
+        match response.status() {
+            StatusCode::OK => Ok(response.json::<User>().await?),
+            _ => Err(ClientError::from_response(response).await),
+        }
+    }
+
+    /// Creates a new user.
+    ///
+    /// https://docs.gitea.com/zh-cn/api/1.24/#tag/admin/operation/adminCreateUser
+    pub async fn create_user(&self, request: CreateUserRequest) -> Result<User, ClientError> {
+        let response = self.post("admin/users", &request).await?;
+
+        match response.status() {
+            StatusCode::CREATED => Ok(response.json::<User>().await?),
+            _ => Err(ClientError::from_response(response).await),
+        }
     }
 }

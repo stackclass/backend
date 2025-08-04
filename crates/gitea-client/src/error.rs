@@ -12,10 +12,54 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use reqwest::{Response, StatusCode};
+use serde_json::Value;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ClientError {
     #[error("Network error: {0}")]
     Network(#[from] reqwest::Error),
+
+    #[error("Bad request: {0}")]
+    BadRequest(String),
+
+    #[error("Forbidden: {0}")]
+    Forbidden(String),
+
+    #[error("Validation error: {0}")]
+    ValidationError(String),
+
+    #[error("Not found")]
+    NotFound,
+
+    #[error("Unexpected status code: {0}")]
+    UnexpectedStatusCode(StatusCode),
+}
+
+impl ClientError {
+    /// Constructs a `ClientError` from a `reqwest::Response`.
+    pub async fn from_response(response: Response) -> Self {
+        let status = response.status();
+
+        // Define a closure to extract the error message from the response
+        let message = || async {
+            response
+                .json::<Value>()
+                .await
+                .unwrap_or_default()
+                .get("message")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_string()
+        };
+
+        match status {
+            StatusCode::BAD_REQUEST => ClientError::BadRequest(message().await),
+            StatusCode::FORBIDDEN => ClientError::Forbidden(message().await),
+            StatusCode::UNPROCESSABLE_ENTITY => ClientError::ValidationError(message().await),
+            StatusCode::NOT_FOUND => ClientError::NotFound,
+            _ => ClientError::UnexpectedStatusCode(status),
+        }
+    }
 }
