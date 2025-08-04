@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::{client::GiteaClient, types::user::User};
-use reqwest::Error;
+use crate::{client::GiteaClient, error::ClientError, types::User};
 
 impl GiteaClient {
     /// Fetches a user by username.
     ///
     /// https://docs.gitea.com/zh-cn/api/1.24/#tag/user/operation/userGet
-    pub async fn get_user(&self, username: &str) -> Result<User, Error> {
+    pub async fn get_user(&self, username: &str) -> Result<User, ClientError> {
         let response = self.get(&format!("users/{username}")).await?;
-        response.json::<User>().await
+        response.json::<User>().await.map_err(ClientError::from)
     }
 }

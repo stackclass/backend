@@ -14,6 +14,10 @@
 
 #![allow(dead_code)]
 
-pub mod client;
-pub mod error;
+mod client;
+mod error;
 pub mod types;
+
+// Re-exports
+pub use client::*;
+pub use error::ClientError;
