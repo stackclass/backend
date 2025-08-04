@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+mod hook;
 mod organization;
 mod repository;
 mod team;
 mod user;
 
 // Re-exports
+pub use hook::*;
 pub use organization::*;
 pub use repository::*;
 pub use team::*;
