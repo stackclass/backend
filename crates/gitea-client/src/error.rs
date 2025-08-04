@@ -27,14 +27,14 @@ pub enum ClientError {
     #[error("Forbidden: {0}")]
     Forbidden(String),
 
-    #[error("Validation error: {0}")]
-    ValidationError(String),
-
     #[error("Not found")]
     NotFound,
 
     #[error("Conflict: {0}")]
     Conflict(String),
+
+    #[error("Validation error: {0}")]
+    ValidationError(String),
 
     #[error("Unexpected status code: {0}")]
     UnexpectedStatusCode(StatusCode),
@@ -60,9 +60,10 @@ impl ClientError {
         match status {
             StatusCode::BAD_REQUEST => ClientError::BadRequest(message().await),
             StatusCode::FORBIDDEN => ClientError::Forbidden(message().await),
-            StatusCode::UNPROCESSABLE_ENTITY => ClientError::ValidationError(message().await),
             StatusCode::NOT_FOUND => ClientError::NotFound,
             StatusCode::CONFLICT => ClientError::Conflict(message().await),
+            StatusCode::UNPROCESSABLE_ENTITY => ClientError::ValidationError(message().await),
+
             _ => ClientError::UnexpectedStatusCode(status),
         }
     }

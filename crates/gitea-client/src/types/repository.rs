@@ -309,3 +309,43 @@ pub struct RepoTransfer {
     /// Teams involved in the transfer.
     pub teams: Vec<Team>,
 }
+
+/// Request body for generating a repository from a template.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GenerateRepositoryRequest {
+    /// Whether to include the avatar from the template.
+    pub avatar: Option<bool>,
+
+    /// The default branch name for the new repository.
+    pub default_branch: Option<String>,
+
+    /// A description of the new repository.
+    pub description: Option<String>,
+
+    /// Whether to include the git content from the template.
+    pub git_content: Option<bool>,
+
+    /// Whether to include the git hooks from the template.
+    pub git_hooks: Option<bool>,
+
+    /// Whether to include the labels from the template.
+    pub labels: Option<bool>,
+
+    /// The name of the new repository.
+    pub name: String,
+
+    /// The organization or person who will own the new repository
+    pub owner: String,
+
+    /// Whether the new repository should be private.
+    pub private: Option<bool>,
+
+    /// Whether to include the protected branches from the template.
+    pub protected_branch: Option<bool>,
+
+    /// Whether to include the topics from the template.
+    pub topics: Option<bool>,
+
+    /// Whether to include the webhooks from the template.
+    pub webhooks: Option<bool>,
+}

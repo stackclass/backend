@@ -17,7 +17,7 @@ use reqwest::StatusCode;
 use crate::{
     client::GiteaClient,
     error::ClientError,
-    types::{CreateRepositoryRequest, Repository},
+    types::{CreateRepositoryRequest, GenerateRepositoryRequest, Repository},
 };
 
 impl GiteaClient {
@@ -38,6 +38,31 @@ impl GiteaClient {
         request: CreateRepositoryRequest,
     ) -> Result<Repository, ClientError> {
         let endpoint = format!("admin/users/{username}/repos");
+        let response = self.post(&endpoint, &request).await?;
+
+        match response.status() {
+            StatusCode::CREATED => Ok(response.json::<Repository>().await?),
+            _ => Err(ClientError::from_response(response).await),
+        }
+    }
+
+    /// Creates a new repository using a template.
+    ///
+    /// # Possible Responses
+    /// - 201: Repository created successfully (returns `Repository`).
+    /// - 403: Forbidden (not an admin or insufficient permissions).
+    /// - 404: Template repository not found.
+    /// - 409: Repository with the same name already exists.
+    /// - 422: Input validation failed.
+    ///
+    /// https://docs.gitea.com/api/1.24/#tag/repository/operation/generateRepo
+    pub async fn generate_repository(
+        &self,
+        template_owner: &str,
+        template_repo: &str,
+        request: GenerateRepositoryRequest,
+    ) -> Result<Repository, ClientError> {
+        let endpoint = format!("repos/{template_owner}/{template_repo}/generate");
         let response = self.post(&endpoint, &request).await?;
 
         match response.status() {
