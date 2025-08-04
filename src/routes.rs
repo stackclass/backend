@@ -21,7 +21,7 @@ use axum::{
 
 use crate::{
     context::Context,
-    handler::{course, extension, git, stage},
+    handler::{course, extension, git, stage, webhook},
 };
 
 pub fn build() -> Router<Arc<Context>> {
@@ -62,4 +62,6 @@ pub fn build() -> Router<Arc<Context>> {
             "/v1/user/courses/{slug}/stages/{stage_slug}/status",
             get(stage::stream_user_stage_status),
         )
+        // Webhooks
+        .route("/v1/webhooks/gitea", post(webhook::handle_gitea_webhook))
 }

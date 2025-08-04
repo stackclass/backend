@@ -16,3 +16,4 @@ pub mod course;
 pub mod extension;
 pub mod git;
 pub mod stage;
+pub mod webhook;
