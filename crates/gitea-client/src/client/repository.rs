@@ -21,6 +21,23 @@ use crate::{
 };
 
 impl GiteaClient {
+    /// Gets a repository by owner and repository name.
+    ///
+    /// # Possible Responses
+    /// - 200: Repository found (returns `Repository`).
+    /// - 404: Repository not found.
+    ///
+    /// https://docs.gitea.com/api/1.24/#tag/repository/operation/repoGet
+    pub async fn get_repository(&self, owner: &str, repo: &str) -> Result<Repository, ClientError> {
+        let endpoint = format!("repos/{owner}/{repo}");
+        let response = self.get(&endpoint).await?;
+
+        match response.status() {
+            StatusCode::OK => Ok(response.json::<Repository>().await?),
+            _ => Err(ClientError::from_response(response).await),
+        }
+    }
+
     /// Creates a new repository on behalf of a user (admin endpoint).
     ///
     /// # Possible Responses
