@@ -52,7 +52,7 @@ pub struct Hook {
 }
 
 /// Request body for creating a hook.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct CreateHookRequest {
     /// Indicates whether the hook is active.
     pub active: bool,

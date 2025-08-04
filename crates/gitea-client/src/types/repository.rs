@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 use super::{PartialUser, Team, User};
 
 /// Request body for creating a repository.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct CreateRepositoryRequest {
     /// Whether the repository should be auto-initialized?
     pub auto_init: Option<bool>,
@@ -312,7 +312,7 @@ pub struct RepoTransfer {
 }
 
 /// Request body for generating a repository from a template.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct GenerateRepositoryRequest {
     /// Whether to include the avatar from the template.
     pub avatar: Option<bool>,
