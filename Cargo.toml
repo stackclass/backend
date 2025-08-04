@@ -1,3 +1,9 @@
+[workspace]
+members = [
+    "crates/gitea-client",
+]
+resolver = "2"
+
 [package]
 name = "backend"
 description = "Backend API and services for StackClass"
@@ -21,6 +27,9 @@ name = "openapi-generator"
 path = "src/bin/openapi-generator.rs"
 
 [dependencies]
+# internal crates
+gitea-client = { path = "crates/gitea-client" }
+
 anyhow = "1.0.98"
 axum = { version = "0.8.4" }
 axum-extra = {version = "0.10.1", features = ["typed-header"] }

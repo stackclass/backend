@@ -235,6 +235,7 @@ dependencies = [
  "fs_extra",
  "futures",
  "ghrepo",
+ "gitea-client",
  "http-body-util",
  "indexmap",
  "jsonwebtoken",
@@ -819,6 +820,16 @@ name = "gimli"
 version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "07e28edb80900c19c28f1072f2e8aeca7fa06b23cd4169cefe1af5aa3260783f"
+
+[[package]]
+name = "gitea-client"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "chrono",
+ "reqwest",
+ "serde",
+]
 
 [[package]]
 name = "hashbrown"
