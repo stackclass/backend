@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use super::{Team, User};
+use super::{PartialUser, Team, User};
 
 /// Request body for creating a repository.
 #[derive(Debug, Serialize, Deserialize)]
@@ -83,7 +84,7 @@ pub struct Repository {
     pub archived: bool,
 
     /// Timestamp when the repository was archived.
-    pub archived_at: Option<String>,
+    pub archived_at: Option<DateTime<Utc>>,
 
     /// URL to the repository's avatar.
     pub avatar_url: String,
@@ -92,7 +93,7 @@ pub struct Repository {
     pub clone_url: String,
 
     /// Timestamp when the repository was created.
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 
     /// Whether maintainers are allowed to edit the repository by default.
     pub default_allow_maintainer_edit: bool,
@@ -236,7 +237,7 @@ pub struct Repository {
     pub topics: Vec<String>,
 
     /// Timestamp when the repository was last updated.
-    pub updated_at: String,
+    pub updated_at: DateTime<Utc>,
 
     /// URL of the repository.
     pub url: String,
@@ -348,4 +349,63 @@ pub struct GenerateRepositoryRequest {
 
     /// Whether to include the webhooks from the template.
     pub webhooks: Option<bool>,
+}
+
+/// A partial representation of a repository,
+/// containing only the most essential fields.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PartialRepository {
+    /// Unique identifier for the repository.
+    pub id: u64,
+
+    /// Owner of the repository.
+    pub owner: PartialUser,
+
+    /// Name of the repository.
+    pub name: String,
+
+    /// Full name of the repository (e.g., "owner/repo").
+    pub full_name: String,
+
+    /// Description of the repository.
+    pub description: String,
+
+    /// Whether the repository is private.
+    pub private: bool,
+
+    /// Whether the repository is a fork.
+    pub fork: bool,
+
+    /// URL to the repository's HTML page.
+    pub html_url: String,
+
+    /// SSH URL to clone the repository.
+    pub ssh_url: String,
+
+    /// URL to clone the repository.
+    pub clone_url: String,
+
+    /// Website URL of the repository.
+    pub website: String,
+
+    /// Number of stars on the repository.
+    pub stars_count: u64,
+
+    /// Number of forks of the repository.
+    pub forks_count: u64,
+
+    /// Number of watchers of the repository.
+    pub watchers_count: u64,
+
+    /// Number of open issues in the repository.
+    pub open_issues_count: u64,
+
+    /// Default branch of the repository.
+    pub default_branch: String,
+
+    /// Timestamp when the repository was created.
+    pub created_at: DateTime<Utc>,
+
+    /// Timestamp when the repository was last updated.
+    pub updated_at: DateTime<Utc>,
 }

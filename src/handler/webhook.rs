@@ -13,25 +13,27 @@
 // limitations under the License.
 
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
+use gitea_client::types::Event;
 use std::sync::Arc;
 
 use tracing::info;
 
-use crate::{context::Context, errors::Result, request::gitea, service::RepoService};
+use crate::{context::Context, errors::Result, service::RepoService};
 
 /// Handle Gitea Webhook Event.
 pub async fn handle_gitea_webhook(
     State(ctx): State<Arc<Context>>,
-    Json(event): Json<gitea::Event>,
+    Json(event): Json<Event>,
 ) -> Result<impl IntoResponse> {
-    info!(
-        "Received push event for repository: {}, ref: {}",
-        event.repository.full_name, event.reference
-    );
+    let Event { reference, repository, .. } = &event;
+    info!("Received push event for repository: {}, ref: {}", repository.full_name, reference);
 
-    let repo = &event.repository.name;
+    if repository.owner.username.eq("templates") || reference.ne("refs/heads/main") {
+        return Ok(StatusCode::OK);
+    }
+
     let repo_service = RepoService::new(ctx);
-    repo_service.handle_push_event(repo).await?;
+    repo_service.handle_push_event(&repository.name).await?;
 
     Ok(StatusCode::OK)
 }

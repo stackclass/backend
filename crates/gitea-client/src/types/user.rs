@@ -90,7 +90,7 @@ pub struct CreateUserRequest {
     /// For explicitly setting the user creation timestamp. Useful when users
     /// are migrated from other systems. When omitted, the user's creation
     /// timestamp will be set to "now".
-    pub created_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
 
     /// Email address of the user.
     pub email: String,
@@ -121,4 +121,27 @@ pub struct CreateUserRequest {
 
     /// Visibility setting of the user.
     pub visibility: Option<String>,
+}
+
+/// A partial representation of a user,
+/// containing only the most essential fields.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PartialUser {
+    /// Unique identifier for the user.
+    pub id: u64,
+
+    /// Username of the user.
+    pub login: String,
+
+    /// Full name of the user.
+    pub full_name: String,
+
+    /// Email address of the user.
+    pub email: String,
+
+    /// URL to the user's avatar.
+    pub avatar_url: String,
+
+    /// Login name of the user.
+    pub username: String,
 }

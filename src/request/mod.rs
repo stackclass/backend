@@ -13,7 +13,6 @@
 // limitations under the License.
 
 mod course;
-pub mod gitea;
 mod stage;
 
 // Re-exports

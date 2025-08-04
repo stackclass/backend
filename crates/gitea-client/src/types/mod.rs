@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+mod commit;
+mod event;
 mod hook;
 mod organization;
 mod repository;
@@ -19,6 +21,8 @@ mod team;
 mod user;
 
 // Re-exports
+pub use commit::*;
+pub use event::*;
 pub use hook::*;
 pub use organization::*;
 pub use repository::*;
