@@ -33,6 +33,9 @@ pub enum ClientError {
     #[error("Not found")]
     NotFound,
 
+    #[error("Conflict: {0}")]
+    Conflict(String),
+
     #[error("Unexpected status code: {0}")]
     UnexpectedStatusCode(StatusCode),
 }
@@ -59,6 +62,7 @@ impl ClientError {
             StatusCode::FORBIDDEN => ClientError::Forbidden(message().await),
             StatusCode::UNPROCESSABLE_ENTITY => ClientError::ValidationError(message().await),
             StatusCode::NOT_FOUND => ClientError::NotFound,
+            StatusCode::CONFLICT => ClientError::Conflict(message().await),
             _ => ClientError::UnexpectedStatusCode(status),
         }
     }

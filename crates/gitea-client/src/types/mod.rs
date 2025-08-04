@@ -12,7 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+mod organization;
+mod repository;
+mod team;
 mod user;
 
 // Re-exports
+pub use organization::*;
+pub use repository::*;
+pub use team::*;
 pub use user::*;

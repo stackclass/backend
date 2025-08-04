@@ -17,40 +17,31 @@ use reqwest::StatusCode;
 use crate::{
     client::GiteaClient,
     error::ClientError,
-    types::{CreateUserRequest, User},
+    types::{CreateRepositoryRequest, Repository},
 };
 
 impl GiteaClient {
-    /// Get a user by username.
+    /// Creates a new repository on behalf of a user (admin endpoint).
     ///
     /// # Possible Responses
-    /// - 201: User created successfully (returns `User`).
-    /// - 404: User not found.
-    ///
-    /// https://docs.gitea.com/api/1.24/#tag/user/operation/userGet
-    pub async fn get_user(&self, username: &str) -> Result<User, ClientError> {
-        let response = self.get(&format!("users/{username}")).await?;
-
-        match response.status() {
-            StatusCode::OK => Ok(response.json::<User>().await?),
-            _ => Err(ClientError::from_response(response).await),
-        }
-    }
-
-    /// Creates a new user.
-    ///
-    /// # Possible Responses
-    /// - 201: User created successfully (returns `User`).
+    /// - 201: Repository created successfully (returns `Repository`).
     /// - 400: Bad request (invalid input format).
     /// - 403: Forbidden (not an admin).
+    /// - 404: User not found.
+    /// - 409: Repository with the same name already exists.
     /// - 422: Input validation failed.
     ///
-    /// https://docs.gitea.com/api/1.24/#tag/admin/operation/adminCreateUser
-    pub async fn create_user(&self, request: CreateUserRequest) -> Result<User, ClientError> {
-        let response = self.post("admin/users", &request).await?;
+    /// https://docs.gitea.com/api/1.24/#tag/repository/operation/adminCreateRepo
+    pub async fn create_repository_for_user(
+        &self,
+        username: &str,
+        request: CreateRepositoryRequest,
+    ) -> Result<Repository, ClientError> {
+        let endpoint = format!("admin/users/{username}/repos");
+        let response = self.post(&endpoint, &request).await?;
 
         match response.status() {
-            StatusCode::CREATED => Ok(response.json::<User>().await?),
+            StatusCode::CREATED => Ok(response.json::<Repository>().await?),
             _ => Err(ClientError::from_response(response).await),
         }
     }
