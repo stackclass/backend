@@ -69,4 +69,8 @@ pub struct Config {
     /// Webhook handler endpoint.
     #[clap(long, env)]
     pub webhook_endpoint: String,
+
+    /// Email
+    #[clap(long, env)]
+    pub email: String,
 }

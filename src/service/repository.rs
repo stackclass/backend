@@ -139,17 +139,16 @@ impl RepoService {
         )
         .await?;
 
-        match &user_course.current_stage_slug {
-            None => CourseService::activate(self.ctx.clone(), &mut user_course).await?,
-            Some(stage_slug) => {
-                StageService::complete(
-                    self.ctx.clone(),
-                    &user_course.user_id,
-                    &user_course.course_slug,
-                    stage_slug,
-                )
-                .await?;
-            }
+        if let Some(stage_slug) = &user_course.current_stage_slug {
+            StageService::complete(
+                self.ctx.clone(),
+                &user_course.user_id,
+                &user_course.course_slug,
+                stage_slug,
+            )
+            .await?;
+        } else {
+            CourseService::activate(self.ctx.clone(), &mut user_course).await?
         };
 
         Ok(())
@@ -161,8 +160,7 @@ impl RepoService {
         self.fetch_user(
             TEMPLATE_OWNER,
             CreateUserRequest {
-                // @TODO: Make email a configuration item in config.rs instead of hardcoding
-                email: "hello@stackclass.dev".to_string(),
+                email: self.ctx.config.email.clone(),
                 username: TEMPLATE_OWNER.to_string(),
                 ..Default::default()
             },
