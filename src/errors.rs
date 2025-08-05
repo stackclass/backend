@@ -65,6 +65,9 @@ pub enum ApiError {
 
     #[error("Conflict: {0}")]
     Conflict(String),
+
+    #[error("Gitea client error: {0}")]
+    GiteaClientError(#[from] gitea_client::ClientError),
 }
 
 impl From<sqlx::Error> for ApiError {
@@ -93,6 +96,7 @@ impl From<&ApiError> for StatusCode {
             ApiError::StageNotInProgress => StatusCode::BAD_REQUEST,
             ApiError::StageOutOfOrder => StatusCode::BAD_REQUEST,
             ApiError::Conflict(_) => StatusCode::CONFLICT,
+            ApiError::GiteaClientError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }

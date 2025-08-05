@@ -85,7 +85,7 @@ pub struct User {
 }
 
 /// Request body for creating a user.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct CreateUserRequest {
     /// For explicitly setting the user creation timestamp. Useful when users
     /// are migrated from other systems. When omitted, the user's creation

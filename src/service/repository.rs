@@ -12,15 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{str::FromStr, sync::Arc};
+use std::{collections::HashMap, str::FromStr, sync::Arc};
+
+use gitea_client::{ClientError, types::*};
 use tokio::process::Command;
 use tracing::debug;
 use uuid::Uuid;
 
 use crate::{
     config::Config,
+    constant::TEMPLATE_OWNER,
     context::Context,
-    errors::ApiError,
+    errors::{ApiError, Result},
+    model::UserModel,
     repository::CourseRepository,
     service::{CourseService, StageService, StorageError, StorageService},
 };
@@ -149,5 +153,94 @@ impl RepoService {
         };
 
         Ok(())
+    }
+
+    /// Gets a template repository by name,
+    /// or creates the repository if it doesn't exist.
+    pub async fn fetch_template(&self, repo: &str) -> Result<Repository> {
+        self.fetch_user(
+            TEMPLATE_OWNER,
+            CreateUserRequest {
+                // @TODO: Make email a configuration item in config.rs instead of hardcoding
+                email: "hello@stackclass.dev".to_string(),
+                username: TEMPLATE_OWNER.to_string(),
+                ..Default::default()
+            },
+        )
+        .await?;
+
+        match self.ctx.git.get_repository(TEMPLATE_OWNER, repo).await {
+            Ok(repo) => Ok(repo),
+            Err(ClientError::NotFound) => {
+                let req = CreateRepositoryRequest {
+                    name: repo.to_string(),
+                    template: Some(true),
+                    ..Default::default()
+                };
+                Ok(self.ctx.git.create_repository_for_user(TEMPLATE_OWNER, req).await?)
+            }
+            Err(e) => Err(e.into()),
+        }
+    }
+
+    /// Gets a repository by username and template name,
+    /// or generates a new repository from a template if it doesn't exist.
+    pub async fn fetch_repository(&self, user: &UserModel, template: &str) -> Result<Repository> {
+        // @TODO: Currently using display name temporarily,
+        // will use GitHub username in the future.
+        let username = user.name.to_ascii_lowercase().replace(" ", "");
+
+        self.fetch_user(
+            &username,
+            CreateUserRequest {
+                email: user.email.clone(),
+                username: username.clone(),
+                ..Default::default()
+            },
+        )
+        .await?;
+
+        match self.ctx.git.get_repository(&username, template).await {
+            Ok(repo) => Ok(repo),
+            Err(ClientError::NotFound) => {
+                let req = GenerateRepositoryRequest {
+                    git_content: Some(true),
+                    git_hooks: Some(true),
+                    name: template.to_string(),
+                    owner: username.to_string(),
+                    webhooks: Some(true),
+                    ..Default::default()
+                };
+                Ok(self.ctx.git.generate_repository(TEMPLATE_OWNER, template, req).await?)
+            }
+            Err(e) => Err(e.into()),
+        }
+    }
+
+    /// Creates a new admin hook.
+    pub async fn setup_hook(&self) -> Result<Hook> {
+        let url = format!("{}/v1/webhooks/gitea", self.ctx.config.webhook_endpoint);
+        let req = CreateHookRequest {
+            active: true,
+            branch_filter: Some("main".to_string()),
+            config: HashMap::from([
+                ("content_type".to_string(), "application/json".to_string()),
+                ("url".to_string(), url),
+            ]),
+            events: vec!["push".to_string()],
+            kind: "gitea".to_string(),
+            ..Default::default()
+        };
+
+        Ok(self.ctx.git.create_admin_hook(req).await?)
+    }
+
+    /// Gets a user by username, or creates the user if they don't exist.
+    async fn fetch_user(&self, username: &str, req: CreateUserRequest) -> Result<User> {
+        match self.ctx.git.get_user(username).await {
+            Ok(user) => Ok(user),
+            Err(ClientError::NotFound) => Ok(self.ctx.git.create_user(req).await?),
+            Err(e) => Err(e.into()),
+        }
     }
 }
