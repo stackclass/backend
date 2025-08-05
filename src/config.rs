@@ -57,4 +57,16 @@ pub struct Config {
     /// Git server endpoint.
     #[clap(long, env)]
     pub git_server_endpoint: String,
+
+    /// Username for authenticating with the git server.
+    #[clap(long, env)]
+    pub git_server_username: String,
+
+    /// Password for authenticating with the git server.
+    #[clap(long, env)]
+    pub git_server_password: String,
+
+    /// Webhook handler endpoint.
+    #[clap(long, env)]
+    pub webhook_endpoint: String,
 }

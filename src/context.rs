@@ -12,17 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use gitea_client::GiteaClient;
+
 use crate::{config::Config, database::Database, errors::Result};
 
 /// The core type through which handler functions can access common API state.
 pub struct Context {
     pub config: Config,
     pub database: Database,
+    pub git: GiteaClient,
 }
 
 impl Context {
     pub async fn new(config: Config) -> Result<Context> {
         let database = Database::new(&config.database_url).await?;
-        Ok(Context { config, database })
+        let git = GiteaClient::new(
+            config.git_server_endpoint.clone(),
+            config.git_server_username.clone(),
+            config.git_server_password.clone(),
+        );
+
+        Ok(Context { config, database, git })
     }
 }

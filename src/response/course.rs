@@ -146,6 +146,7 @@ pub struct UserCourseResponse {
 
 impl From<(&String, UserCourseModel)> for UserCourseResponse {
     fn from((endpoint, model): (&String, UserCourseModel)) -> Self {
+        // TODO: Move repository URL construction outside this conversion
         let repository = format!("{}/{}", endpoint, model.id);
 
         Self {
