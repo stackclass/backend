@@ -54,9 +54,7 @@ impl RepoService {
     }
 
     async fn commit(&self, template_url: &str, repo_name: &str) -> Result<(), StorageError> {
-        debug!("Creating repo {} from template {}", repo_name, template_url);
-
-        let Config { cache_dir, github_token, repo_dir, .. } = &self.ctx.config;
+        let Config { cache_dir, github_token, .. } = &self.ctx.config;
 
         // Fetch and validate the template directory
         let storage = StorageService::new(cache_dir, github_token)?;
@@ -122,25 +120,45 @@ impl RepoService {
             )));
         }
 
-        // Clone as a bare repository to the target path
-        let bare_repo_path = repo_dir.join(repo_name);
-        let clone_output = Command::new("git")
-            .arg("clone")
-            .arg("--bare")
-            .arg(temp_dir.path().to_str().unwrap())
-            .arg(&bare_repo_path)
+        // Add remote and push to Gitea
+        let remote_url =
+            format!("{}/{}/{}", self.ctx.config.git_server_endpoint, TEMPLATE_OWNER, repo_name);
+
+        let remote_add_output = Command::new("git")
+            .arg("remote")
+            .arg("add")
+            .arg("origin")
+            .arg(&remote_url)
+            .current_dir(temp_dir.path())
             .output()
             .await
             .map_err(|e| StorageError::GitCommand(e.to_string()))?;
 
-        if !clone_output.status.success() {
+        if !remote_add_output.status.success() {
             return Err(StorageError::GitCommand(format!(
-                "git clone --bare failed: {}",
-                String::from_utf8_lossy(&clone_output.stderr)
+                "git remote add failed: {}",
+                String::from_utf8_lossy(&remote_add_output.stderr)
             )));
         }
 
-        debug!("Repo {} created as bare repository from template", repo_name);
+        let push_output = Command::new("git")
+            .arg("push")
+            .arg("--force")
+            .arg("origin")
+            .arg("master")
+            .current_dir(temp_dir.path())
+            .output()
+            .await
+            .map_err(|e| StorageError::GitCommand(e.to_string()))?;
+
+        if !push_output.status.success() {
+            return Err(StorageError::GitCommand(format!(
+                "git push --force failed: {}",
+                String::from_utf8_lossy(&push_output.stderr)
+            )));
+        }
+
+        debug!("Repo {} pushed to SCM successfully", repo_name);
         Ok(())
     }
 
