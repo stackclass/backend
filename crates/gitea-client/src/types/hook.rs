@@ -51,6 +51,15 @@ pub struct Hook {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Checks if a hook matches the configuration of a create request.
+/// This is used to avoid duplicate hooks with the same settings.
+pub fn matching(hook: &Hook, req: &CreateHookRequest) -> bool {
+    hook.kind == req.kind &&
+        hook.config == req.config &&
+        hook.branch_filter == req.branch_filter &&
+        hook.events == req.events
+}
+
 /// Request body for creating a hook.
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct CreateHookRequest {

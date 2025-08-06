@@ -32,6 +32,17 @@ impl GiteaClient {
         self.create_hook("admin/hooks", request).await
     }
 
+    /// Lists all system hooks (admin endpoint).
+    ///
+    /// # Possible Responses
+    /// - 200: List of hooks returned successfully (returns `Vec<Hook>`).
+    ///
+    /// https://docs.gitea.com/api/1.24/#tag/admin/operation/adminListHooks
+    #[inline]
+    pub async fn list_system_hooks(&self) -> Result<Vec<Hook>, ClientError> {
+        self.list_hooks("admin/hooks").await
+    }
+
     /// Creates a new hook at the specified path.
     ///
     /// This is an internal helper function used by both admin and repository hook creation.
@@ -51,6 +62,28 @@ impl GiteaClient {
 
         match response.status() {
             StatusCode::CREATED => Ok(response.json::<Hook>().await?),
+            _ => Err(ClientError::from_response(response).await),
+        }
+    }
+
+    /// Lists hooks at the specified path.
+    ///
+    /// This is an internal helper function used by both admin and repository hook listing.
+    ///
+    /// # Arguments
+    /// * `path` - The API endpoint path (e.g. "admin/hooks" or "repos/{owner}/{repo}/hooks")
+    ///
+    /// # Possible Responses
+    /// - 200: List of hooks returned successfully (returns `Vec<Hook>`)
+    /// - Other: Returns appropriate `ClientError`
+    ///
+    /// # Notes
+    /// This is not meant to be called directly - use the appropriate public method instead.
+    async fn list_hooks(&self, path: &str) -> Result<Vec<Hook>, ClientError> {
+        let response = self.get(path).await?;
+
+        match response.status() {
+            StatusCode::OK => Ok(response.json::<Vec<Hook>>().await?),
             _ => Err(ClientError::from_response(response).await),
         }
     }
