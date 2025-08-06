@@ -14,7 +14,11 @@
 
 use tracing::debug;
 
-use crate::{database::Database, model::JsonWebKey, repository::Result};
+use crate::{
+    database::Database,
+    model::{JsonWebKey, UserModel},
+    repository::Result,
+};
 
 /// Repository for managing user-related operations in the database.
 pub struct UserRepository;
@@ -26,5 +30,15 @@ impl UserRepository {
         let keys =
             sqlx::query_as::<_, JsonWebKey>("SELECT * FROM jwks").fetch_all(db.pool()).await?;
         Ok(keys)
+    }
+
+    /// Fetch a user by their ID.
+    pub async fn get_by_id(db: &Database, id: &str) -> Result<UserModel> {
+        let row = sqlx::query_as::<_, UserModel>(r#"SELECT * FROM users WHERE id = $1"#)
+            .bind(id)
+            .fetch_one(db.pool())
+            .await?;
+
+        Ok(row)
     }
 }
