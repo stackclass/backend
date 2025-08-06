@@ -56,8 +56,13 @@ impl CourseService {
             return Ok(model.into());
         }
 
-        let model = Self::create_course(ctx, course, repository).await?;
+        let model = Self::create_course(ctx.clone(), course, repository).await?;
         info!("Successfully created course: {:?}", model.name);
+
+        // Fetch or create the template repository in SCM
+        let repo_service = RepoService::new(ctx);
+        repo_service.fetch_template(&model.slug).await?;
+        info!("Successfully fetched template repository: {:?}", model.slug);
 
         Ok(model.into())
     }
