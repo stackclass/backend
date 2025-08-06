@@ -22,7 +22,7 @@ use crate::{
     database::Transaction,
     errors::{ApiError, Result},
     model::{CourseModel, ExtensionModel, StageModel, UserCourseModel, UserStageModel},
-    repository::{CourseRepository, ExtensionRepository, StageRepository},
+    repository::{CourseRepository, ExtensionRepository, StageRepository, UserRepository},
     request::{CreateUserCourseRequest, UpdateUserCourseRequest},
     response::{AttemptResponse, CourseDetailResponse, CourseResponse, UserCourseResponse},
     schema::{self, Course, Stage},
@@ -271,7 +271,8 @@ impl CourseService {
     ) -> Result<UserCourseResponse> {
         let mut tx = ctx.database.pool().begin().await?;
 
-        // Fetch the course by slug
+        // Fetch the user and course
+        let user = UserRepository::get_by_id(&ctx.database, user_id).await?;
         let course = CourseRepository::get_by_slug(&ctx.database, &req.course_slug).await?;
 
         // Create a new user course enrollment
@@ -291,9 +292,9 @@ impl CourseService {
             })?;
         tx.commit().await?;
 
-        // Initialize Git repository from course template
+        // Generate Git repository from course template
         let repo_service = RepoService::new(ctx.clone());
-        repo_service.create(&course.repository, &user_course.id.to_string()).await?;
+        repo_service.fetch_repository(&user, &course.slug).await?;
 
         let endpoint = &ctx.config.git_server_endpoint;
         Ok(UserCourseResponse::from((endpoint, user_course)))
