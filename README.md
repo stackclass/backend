@@ -14,8 +14,8 @@ you need [Rust and cargo](https://www.rust-lang.org/tools/install) to build it.
 ### Install from source:
 
 1. Clone the repository with `git clone https://github.com/stackclass/backend.git`
-2. From the `stackclass-server` directory, run `cargo build --release` to
-   build the application in release mode.
+2. From the project directory, run `cargo build --release` to build the
+   application in release mode.
 3. After a successful compilation, launch the executable with:
    `target/release/stackclass-server`.
 
@@ -35,25 +35,20 @@ Cargo's global binary directory (`~/.cargo/bin/` by default).
 ## Usage
 
 ```text
-Usage: stackclass-server [OPTIONS] --repo-dir <REPO_DIR> --cache-dir <CACHE_DIR> --database-url <DATABASE_URL> --git-server-endpoint <GIT_SERVER_ENDPOINT>
+Usage: stackclass-server [OPTIONS]
 
 Options:
-      --port <PORT>
-          The Server port [env: PORT=8080] [default: 8080]
-      --repo-dir <REPO_DIR>
-          The path to git repositories [env: REPO_DIR=/tmp/stackclass/repos/]
-      --cache-dir <CACHE_DIR>
-          Base directory for storing cached repositories [env: CACHE_DIR=/tmp/stackclass/caches]
-      --github-token <GITHUB_TOKEN>
-          A personal token to use for authentication [env: GITHUB_TOKEN=]
-      --database-url <DATABASE_URL>
-          Database connection URL [env: DATABASE_URL=postgresql://stackclass:123456@localhost/stackclass]
-      --allowed-origin <ALLOWED_ORIGIN>
-          Allowed CORS origin [env: ALLOWED_ORIGIN=*]
-      --git-server-endpoint <GIT_SERVER_ENDPOINT>
-          Git server endpoint [env: GIT_SERVER_ENDPOINT=http://localhost:8080/git]
-  -h, --help
-          Print help
+  --port                The Server port
+  --cache-dir           Base directory for storing cached repositories
+  --github-token        A personal token to use for authentication
+  --database-url        Database connection URL
+  --allowed-origin      Allowed CORS origin
+  --git-server-endpoint Git server endpoint
+  --git-server-username Username for authenticating with the git server
+  --git-server-password Password for authenticating with the git server
+  --webhook-endpoint    Webhook handler endpoint
+  --email               Email
+  --help                Print help
 ```
 
 ## Development
