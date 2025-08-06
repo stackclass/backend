@@ -56,25 +56,24 @@ impl CourseService {
             return Ok(model.into());
         }
 
-        let model = Self::create_course(ctx.clone(), course, repository).await?;
-        info!("Successfully created course: {:?}", model.name);
+        let model = Self::create_course(ctx.clone(), &course, repository).await?;
+        info!("Successfully created course: {:?}", course.name);
 
-        // Fetch or create the template repository in SCM
-        let repo_service = RepoService::new(ctx);
-        repo_service.fetch_template(&model.slug).await?;
-        info!("Successfully fetched template repository: {:?}", model.slug);
+        let repo_service = RepoService::new(ctx.clone());
+        repo_service.init(&course.slug, repository).await?;
+        info!("Successfully initialized template repository for course: {:?}", course.name);
 
         Ok(model.into())
     }
 
     /// Create course with all related entities in transaction
-    async fn create_course(ctx: Arc<Context>, course: Course, url: &str) -> Result<CourseModel> {
+    async fn create_course(ctx: Arc<Context>, course: &Course, url: &str) -> Result<CourseModel> {
         let mut tx = ctx.database.pool().begin().await?;
 
         // Persist the course
-        let course_model = CourseModel::from(&course)
+        let course_model = CourseModel::from(course)
             .with_repository(url)
-            .with_stage_count(calculate_total_stages(&course));
+            .with_stage_count(calculate_total_stages(course));
         let course_model = CourseRepository::create(&mut tx, &course_model).await?;
 
         // Persist stages and their solutions with weight
@@ -83,7 +82,7 @@ impl CourseService {
         }
 
         // Persist extensions and their stages with weight
-        if let Some(extensions) = course.extensions {
+        if let Some(extensions) = &course.extensions {
             for (index, (_, ext)) in extensions.iter().enumerate() {
                 let ext_model = ExtensionModel::from(ext.clone())
                     .with_course(course_model.id)
@@ -294,7 +293,7 @@ impl CourseService {
 
         // Generate Git repository from course template
         let repo_service = RepoService::new(ctx.clone());
-        repo_service.fetch_repository(&user, &course.slug).await?;
+        repo_service.generate(&user, &course.slug).await?;
 
         let endpoint = &ctx.config.git_server_endpoint;
         Ok(UserCourseResponse::from((endpoint, user_course)))

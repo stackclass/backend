@@ -39,7 +39,21 @@ impl RepoService {
         RepoService { ctx }
     }
 
-    pub async fn create(&self, template_url: &str, repo_name: &str) -> Result<(), StorageError> {
+    /// Initializes a template repository in the Source Code Management system
+    /// for this course. The repository will contain the course's template
+    /// source code.
+    pub async fn init(&self, template: &str, repository: &str) -> Result<()> {
+        // Fetch or create the template repository in SCM
+        self.fetch_template(template).await?;
+        debug!("Successfully created template repository in SCM: {:?}", template);
+
+        // Commit the course's template source code to the template repository
+        self.commit(repository, &format!("{TEMPLATE_OWNER}/{template}")).await?;
+
+        Ok(())
+    }
+
+    async fn commit(&self, template_url: &str, repo_name: &str) -> Result<(), StorageError> {
         debug!("Creating repo {} from template {}", repo_name, template_url);
 
         let Config { cache_dir, github_token, repo_dir, .. } = &self.ctx.config;
@@ -156,7 +170,7 @@ impl RepoService {
 
     /// Gets a template repository by name,
     /// or creates the repository if it doesn't exist.
-    pub async fn fetch_template(&self, repo: &str) -> Result<Repository> {
+    async fn fetch_template(&self, repo: &str) -> Result<Repository> {
         self.fetch_user(
             TEMPLATE_OWNER,
             CreateUserRequest {
@@ -183,7 +197,7 @@ impl RepoService {
 
     /// Gets a repository by username and template name,
     /// or generates a new repository from a template if it doesn't exist.
-    pub async fn fetch_repository(&self, user: &UserModel, template: &str) -> Result<Repository> {
+    pub async fn generate(&self, user: &UserModel, template: &str) -> Result<Repository> {
         // @TODO: Currently using display name temporarily,
         // will use GitHub username in the future.
         let username = user.name.to_ascii_lowercase().replace(" ", "");
