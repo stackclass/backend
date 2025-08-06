@@ -18,7 +18,7 @@ use axum::http::header::{self, HeaderValue};
 use tower_http::cors::{Any, CorsLayer};
 use tracing::{error, info};
 
-use crate::{context::Context, extractor, routes, swagger};
+use crate::{context::Context, extractor, routes, service::RepoService, swagger};
 
 pub async fn run(ctx: Arc<Context>) {
     let port = ctx.config.port;
@@ -32,6 +32,12 @@ pub async fn run(ctx: Arc<Context>) {
     // Refresh keys from database and update cache
     if let Err(e) = extractor::refresh_keys(ctx.clone()).await {
         error!("Failed to initialize keys: {}", e);
+        std::process::exit(1);
+    }
+
+    // Setup webhook for repository events
+    if let Err(e) = RepoService::new(ctx.clone()).setup_webhook().await {
+        error!("Failed to setup webhook: {}", e);
         std::process::exit(1);
     }
 

@@ -15,7 +15,7 @@
 use std::{collections::HashMap, str::FromStr, sync::Arc};
 
 use gitea_client::{ClientError, types::*};
-use tracing::debug;
+use tracing::{debug, info};
 use uuid::Uuid;
 
 use crate::{
@@ -173,22 +173,31 @@ impl RepoService {
         }
     }
 
-    /// Creates a new admin hook.
-    pub async fn setup_hook(&self) -> Result<Hook> {
+    /// Creates a new admin hook if it doesn't already exist.
+    pub async fn setup_webhook(&self) -> Result<()> {
         let url = format!("{}/v1/webhooks/gitea", self.ctx.config.webhook_endpoint);
         let req = CreateHookRequest {
             active: true,
             branch_filter: Some("main".to_string()),
             config: HashMap::from([
                 ("content_type".to_string(), "application/json".to_string()),
-                ("url".to_string(), url),
+                ("url".to_string(), url.clone()),
             ]),
             events: vec!["push".to_string()],
             kind: "gitea".to_string(),
             ..Default::default()
         };
 
-        Ok(self.ctx.git.create_admin_hook(req).await?)
+        // List all existing hooks
+        let hooks = self.ctx.git.list_system_hooks().await?;
+
+        // Check if a hook with the same configuration already exists
+        if !hooks.iter().any(|hook| matching(hook, &req)) {
+            info!("Setting up the global webhook in SCM...");
+            self.ctx.git.create_admin_hook(req).await?;
+        }
+
+        Ok(())
     }
 
     /// Gets a user by username, or creates the user if they don't exist.

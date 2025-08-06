@@ -32,8 +32,7 @@ pub async fn handle_gitea_webhook(
         return Ok(StatusCode::OK);
     }
 
-    let repo_service = RepoService::new(ctx);
-    repo_service.handle_push_event(&repository.name).await?;
+    RepoService::new(ctx).handle_push_event(&repository.name).await?;
 
     Ok(StatusCode::OK)
 }

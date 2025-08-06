@@ -59,8 +59,7 @@ impl CourseService {
         let model = Self::create_course(ctx.clone(), &course, repository).await?;
         info!("Successfully created course: {:?}", course.name);
 
-        let repo_service = RepoService::new(ctx.clone());
-        repo_service.init(&course.slug, repository).await?;
+        RepoService::new(ctx.clone()).init(&course.slug, repository).await?;
         info!("Successfully initialized template repository for course: {:?}", course.name);
 
         Ok(model.into())
@@ -292,8 +291,7 @@ impl CourseService {
         tx.commit().await?;
 
         // Generate Git repository from course template
-        let repo_service = RepoService::new(ctx.clone());
-        repo_service.generate(&user, &course.slug).await?;
+        RepoService::new(ctx.clone()).generate(&user, &course.slug).await?;
 
         let endpoint = &ctx.config.git_server_endpoint;
         Ok(UserCourseResponse::from((endpoint, user_course)))
