@@ -15,7 +15,6 @@
 use std::{collections::HashMap, str::FromStr, sync::Arc};
 
 use gitea_client::{ClientError, types::*};
-use tokio::process::Command;
 use tracing::debug;
 use uuid::Uuid;
 
@@ -27,6 +26,7 @@ use crate::{
     model::UserModel,
     repository::CourseRepository,
     service::{CourseService, StageService, StorageError, StorageService},
+    utils::git,
 };
 
 #[allow(dead_code)]
@@ -47,118 +47,44 @@ impl RepoService {
         self.fetch_template(template).await?;
         debug!("Successfully created template repository in SCM: {:?}", template);
 
-        // Commit the course's template source code to the template repository
-        self.commit(repository, &format!("{TEMPLATE_OWNER}/{template}")).await?;
+        // Commits the template source code to the template repository
+        self.commit(repository, TEMPLATE_OWNER, template).await?;
 
         Ok(())
     }
 
-    async fn commit(&self, template_url: &str, repo_name: &str) -> Result<(), StorageError> {
-        let Config { cache_dir, github_token, .. } = &self.ctx.config;
+    /// Commits the template source code to a specified repository.
+    async fn commit(&self, template_url: &str, owner: &str, repo: &str) -> Result<()> {
+        let Config { cache_dir, github_token, git_server_endpoint, .. } = &self.ctx.config;
 
         // Fetch and validate the template directory
         let storage = StorageService::new(cache_dir, github_token)?;
         let dir = storage.fetch(template_url).await?;
         let template_dir = cache_dir.join(dir).join("template");
         if !template_dir.exists() {
-            return Err(StorageError::MissingTemplate);
+            return Err(StorageError::MissingTemplate.into());
         }
 
         // Create a temporary directory for staging
         let temp_dir = tempfile::tempdir().map_err(StorageError::CreateDir)?;
+        let workspace = temp_dir.path();
 
-        // Copy template contents to the temporary directory
+        // Copy template contents to the workspace directory
         let copy_options = fs_extra::dir::CopyOptions::new().content_only(true).copy_inside(true);
-        fs_extra::dir::copy(&template_dir, temp_dir.path(), &copy_options)
+        fs_extra::dir::copy(&template_dir, workspace, &copy_options)
             .map_err(|e| StorageError::CopyFiles(e.to_string()))?;
 
-        // Initialize Git repository
-        let init_output = Command::new("git")
-            .arg("init")
-            .current_dir(temp_dir.path())
-            .output()
-            .await
-            .map_err(|e| StorageError::GitCommand(e.to_string()))?;
+        // Perform Git operations to commit the source code
+        git::init(workspace).await?;
+        git::stage(workspace).await?;
+        git::commit(workspace, "Initial commit from template").await?;
 
-        if !init_output.status.success() {
-            return Err(StorageError::GitCommand(format!(
-                "git init failed: {}",
-                String::from_utf8_lossy(&init_output.stderr)
-            )));
-        }
+        // ... and push to the remote repository
+        let remote_url = format!("{git_server_endpoint}/{owner}/{repo}");
+        git::add_remote(workspace, "origin", &remote_url).await?;
+        git::push(workspace, "origin", "main").await?;
 
-        // Stage all files
-        let add_output = Command::new("git")
-            .arg("add")
-            .arg(".")
-            .current_dir(temp_dir.path())
-            .output()
-            .await
-            .map_err(|e| StorageError::GitCommand(e.to_string()))?;
-
-        if !add_output.status.success() {
-            return Err(StorageError::GitCommand(format!(
-                "git add failed: {}",
-                String::from_utf8_lossy(&add_output.stderr)
-            )));
-        }
-
-        // Commit the staged files
-        let commit_output = Command::new("git")
-            .arg("commit")
-            .arg("-m")
-            .arg("Initial commit from template")
-            .current_dir(temp_dir.path())
-            .output()
-            .await
-            .map_err(|e| StorageError::GitCommand(e.to_string()))?;
-
-        if !commit_output.status.success() {
-            return Err(StorageError::GitCommand(format!(
-                "git commit failed: {}",
-                String::from_utf8_lossy(&commit_output.stderr)
-            )));
-        }
-
-        // Add remote and push to Gitea
-        let remote_url =
-            format!("{}/{}/{}", self.ctx.config.git_server_endpoint, TEMPLATE_OWNER, repo_name);
-
-        let remote_add_output = Command::new("git")
-            .arg("remote")
-            .arg("add")
-            .arg("origin")
-            .arg(&remote_url)
-            .current_dir(temp_dir.path())
-            .output()
-            .await
-            .map_err(|e| StorageError::GitCommand(e.to_string()))?;
-
-        if !remote_add_output.status.success() {
-            return Err(StorageError::GitCommand(format!(
-                "git remote add failed: {}",
-                String::from_utf8_lossy(&remote_add_output.stderr)
-            )));
-        }
-
-        let push_output = Command::new("git")
-            .arg("push")
-            .arg("--force")
-            .arg("origin")
-            .arg("master")
-            .current_dir(temp_dir.path())
-            .output()
-            .await
-            .map_err(|e| StorageError::GitCommand(e.to_string()))?;
-
-        if !push_output.status.success() {
-            return Err(StorageError::GitCommand(format!(
-                "git push --force failed: {}",
-                String::from_utf8_lossy(&push_output.stderr)
-            )));
-        }
-
-        debug!("Repo {} pushed to SCM successfully", repo_name);
+        debug!("Successfully pushed template contents to repository: {}", remote_url);
         Ok(())
     }
 

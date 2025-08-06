@@ -34,10 +34,6 @@ pub struct Config {
     #[clap(long, env, default_value = "8080")]
     pub port: u16,
 
-    /// The path to git repositories.
-    #[clap(long, env)]
-    pub repo_dir: PathBuf,
-
     /// Base directory for storing cached repositories.
     #[clap(long, env)]
     pub cache_dir: PathBuf,

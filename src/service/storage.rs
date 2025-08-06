@@ -64,9 +64,6 @@ pub enum StorageError {
     #[error("Failed to copy files: {0}")]
     CopyFiles(String),
 
-    #[error("Git command failed: {0}")]
-    GitCommand(String),
-
     #[error("Template directory is missing")]
     MissingTemplate,
 }

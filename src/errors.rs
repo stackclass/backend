@@ -21,7 +21,7 @@ use serde_json::json;
 use thiserror::Error;
 use tracing::{debug, error};
 
-use crate::{schema, service::StorageError};
+use crate::{schema, service::StorageError, utils::git::GitError};
 
 pub type Result<T, E = ApiError> = std::result::Result<T, E>;
 
@@ -38,9 +38,6 @@ pub enum ApiError {
 
     #[error("HTTP error: {0}")]
     HTTPError(#[from] http::Error),
-
-    #[error("Git command failed: {0}")]
-    GitCommandFailed(String),
 
     #[error("Storage service error: {0}")]
     StorageError(#[from] StorageError),
@@ -68,6 +65,9 @@ pub enum ApiError {
 
     #[error("Gitea client error: {0}")]
     GiteaClientError(#[from] gitea_client::ClientError),
+
+    #[error("Git error: {0}")]
+    GitError(#[from] GitError),
 }
 
 impl From<sqlx::Error> for ApiError {
@@ -87,7 +87,6 @@ impl From<&ApiError> for StatusCode {
             ApiError::NotFound => StatusCode::NOT_FOUND,
             ApiError::BadRequest(_) => StatusCode::BAD_REQUEST,
             ApiError::HTTPError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            ApiError::GitCommandFailed(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::StorageError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::SchemaParserError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
@@ -97,6 +96,7 @@ impl From<&ApiError> for StatusCode {
             ApiError::StageOutOfOrder => StatusCode::BAD_REQUEST,
             ApiError::Conflict(_) => StatusCode::CONFLICT,
             ApiError::GiteaClientError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::GitError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }

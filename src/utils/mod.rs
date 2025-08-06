@@ -12,21 +12,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod app;
-pub mod config;
-pub mod constant;
-pub mod context;
-pub mod database;
-pub mod errors;
-pub mod extractor;
-pub mod handler;
-pub mod logger;
-pub mod model;
-pub mod repository;
-pub mod request;
-pub mod response;
-pub mod routes;
-pub mod schema;
-pub mod service;
-pub mod swagger;
-pub mod utils;
+pub mod git;
