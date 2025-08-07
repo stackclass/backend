@@ -30,7 +30,7 @@ use std::path::PathBuf;
 
 #[derive(Clone, clap::Parser)]
 pub struct Config {
-    /// The Server port.
+    /// The server port.
     #[clap(long, env, default_value = "8080")]
     pub port: u16,
 

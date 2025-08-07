@@ -38,7 +38,7 @@ Cargo's global binary directory (`~/.cargo/bin/` by default).
 Usage: stackclass-server [OPTIONS]
 
 Options:
-  --port                The Server port
+  --port                The server port
   --cache-dir           Base directory for storing cached repositories
   --github-token        A personal token to use for authentication
   --database-url        Database connection URL
