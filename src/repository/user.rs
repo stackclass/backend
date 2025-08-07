@@ -41,4 +41,14 @@ impl UserRepository {
 
         Ok(row)
     }
+
+    /// Fetch a user by their email.
+    pub async fn get_by_email(db: &Database, email: &str) -> Result<UserModel> {
+        let row = sqlx::query_as::<_, UserModel>(r#"SELECT * FROM users WHERE email = $1"#)
+            .bind(email)
+            .fetch_one(db.pool())
+            .await?;
+
+        Ok(row)
+    }
 }
