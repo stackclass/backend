@@ -21,6 +21,7 @@ pub struct Context {
     pub config: Config,
     pub database: Database,
     pub git: GiteaClient,
+    pub k8s: kube::Client,
 }
 
 impl Context {
@@ -31,7 +32,8 @@ impl Context {
             config.git_server_username.clone(),
             config.git_server_password.clone(),
         );
+        let k8s = kube::Client::try_default().await?;
 
-        Ok(Context { config, database, git })
+        Ok(Context { config, database, git, k8s })
     }
 }

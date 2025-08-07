@@ -68,6 +68,9 @@ pub enum ApiError {
 
     #[error("Git error: {0}")]
     GitError(#[from] GitError),
+
+    #[error("Kubernetes Error: {0}")]
+    KubernetesError(#[from] kube::Error),
 }
 
 impl From<sqlx::Error> for ApiError {
@@ -97,6 +100,7 @@ impl From<&ApiError> for StatusCode {
             ApiError::Conflict(_) => StatusCode::CONFLICT,
             ApiError::GiteaClientError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::GitError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::KubernetesError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }
