@@ -12,20 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{collections::HashMap, str::FromStr, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 use gitea_client::{ClientError, types::*};
 use tracing::{debug, info};
-use uuid::Uuid;
 
 use crate::{
     config::Config,
     constant::TEMPLATE_OWNER,
     context::Context,
-    errors::{ApiError, Result},
+    errors::Result,
     model::UserModel,
-    repository::CourseRepository,
-    service::{CourseService, StageService, StorageError, StorageService},
+    repository::{CourseRepository, UserRepository},
+    service::{CourseService, PipelineService, StageService, StorageError, StorageService},
     utils::git,
 };
 
@@ -99,26 +98,48 @@ impl RepoService {
         Ok(())
     }
 
-    pub async fn handle_push_event(&self, repo: &str) -> Result<(), ApiError> {
+    /// Processes a repository push event by managing the associated course workflow.
+    ///
+    /// This function handles the following logic:
+    /// - If the course has no active stage, it activates the course.
+    /// - Otherwise, it triggers the pipeline for the current stage and monitors completion.
+    /// - On success, marks the stage as complete.
+    pub async fn process(&self, event: &Event) -> Result<()> {
+        let owner = &event.repository.owner.username;
+        let email = &event.repository.owner.email;
+        let repo = &event.repository.name;
+
         debug!("Handling push event for repository: {}", repo);
 
-        let mut user_course = CourseRepository::get_user_course_by_id(
-            &self.ctx.database,
-            Uuid::from_str(repo).unwrap(),
-        )
-        .await?;
+        let db = &self.ctx.database;
+        let user = UserRepository::get_by_email(db, email).await?;
+        let mut course = CourseRepository::get_user_course(db, &user.id, repo).await?;
 
-        if let Some(stage_slug) = &user_course.current_stage_slug {
+        if course.current_stage_slug.is_none() {
+            CourseService::activate(self.ctx.clone(), &mut course).await?;
+            return Ok(());
+        }
+
+        let pipeline = PipelineService::new(self.ctx.clone());
+
+        // Trigger the pipeline run
+        pipeline.trigger(owner, repo).await?;
+
+        // Define a callback function that will be executed when the pipeline
+        // succeeds. This callback marks the current stage as complete in DB.
+        let ctx = self.ctx.clone();
+        let callback = || async move {
             StageService::complete(
-                self.ctx.clone(),
-                &user_course.user_id,
-                &user_course.course_slug,
-                stage_slug,
+                ctx,
+                &course.user_id,
+                &course.course_slug,
+                &course.current_stage_slug.unwrap(),
             )
-            .await?;
-        } else {
-            CourseService::activate(self.ctx.clone(), &mut user_course).await?
+            .await
         };
+
+        // Watch the pipeline and handle only success
+        pipeline.watch(owner, repo, callback).await?;
 
         Ok(())
     }

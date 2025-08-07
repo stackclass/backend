@@ -28,11 +28,14 @@ pub async fn handle_gitea_webhook(
     let Event { reference, repository, .. } = &event;
     info!("Received push event for repository: {}, ref: {}", repository.full_name, reference);
 
-    if repository.owner.username.eq(TEMPLATE_OWNER) || reference.ne("refs/heads/main") {
+    // Skip if the event is from the template repository or a non-main branch.
+    let owner = &repository.owner.username;
+    if owner.eq(TEMPLATE_OWNER) || reference.ne("refs/heads/main") {
         return Ok(StatusCode::OK);
     }
 
-    RepoService::new(ctx).handle_push_event(&repository.name).await?;
+    // Process the push event for the repository.
+    RepoService::new(ctx).process(&event).await?;
 
     Ok(StatusCode::OK)
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::Condition;
 use kube::{
@@ -20,6 +20,7 @@ use kube::{
     api::{ApiResource, DynamicObject, GroupVersionKind, PostParams},
 };
 use serde_json::json;
+use tokio::time::interval;
 use tracing::debug;
 
 use crate::{
@@ -49,11 +50,39 @@ impl PipelineService {
         Ok(())
     }
 
-    /// Checks the status of a PipelineRun.
-    pub async fn status(&self, pipeline_name: &str) -> Result<bool> {
-        debug!("Checking status for PipelineRun: {}", pipeline_name);
+    /// Watches a PipelineRun and invokes the callback only on success.
+    pub async fn watch<F, Fut, T>(&self, owner: &str, repo: &str, callback: F) -> Result<()>
+    where
+        F: FnOnce() -> Fut + Send + 'static,
+        Fut: Future<Output = Result<T, ApiError>> + Send + 'static,
+    {
+        let name = pipeline_name(owner, repo);
+        let api = self.api();
 
-        let resource = self.api().get(pipeline_name).await?;
+        tokio::spawn(async move {
+            let mut interval = interval(Duration::from_secs(10));
+            loop {
+                interval.tick().await;
+                match Self::status(&api, &name).await {
+                    Ok(true) => {
+                        // Pipeline succeeded; invoke the callback
+                        callback().await.ok();
+                        break;
+                    }
+                    Ok(false) => continue, // Pipeline still running
+                    Err(_) => break,       // Pipeline failed or error occurred
+                }
+            }
+        });
+
+        Ok(())
+    }
+
+    /// Checks the status of a PipelineRun.
+    async fn status(api: &Api<DynamicObject>, name: &str) -> Result<bool> {
+        debug!("Checking status for PipelineRun: {}", name);
+
+        let resource = api.get(name).await?;
 
         if let Some(conditions) = resource.data.pointer("/status/conditions") {
             let conditions: Vec<Condition> =
@@ -83,7 +112,7 @@ impl PipelineService {
         let Config { git_server_endpoint, docker_registry_endpoint, .. } = &self.ctx.config;
 
         // Define the pipeline run name
-        let name = format!("{owner}-{repo}-test-pipeline");
+        let name = pipeline_name(owner, repo);
 
         // Define params as a HashMap and then convert it to JSON value
         let params = HashMap::from([
@@ -139,4 +168,9 @@ impl PipelineService {
 
         serde_json::from_value(resource).map_err(ApiError::SerializationError)
     }
+}
+
+#[inline]
+fn pipeline_name(owner: &str, repo: &str) -> String {
+    format!("{owner}-{repo}-test-pipeline")
 }
