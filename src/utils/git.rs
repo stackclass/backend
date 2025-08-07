@@ -32,6 +32,9 @@ pub enum GitError {
 
     #[error("Failed to push changes: {0}")]
     PushChanges(String),
+
+    #[error("Failed to configure Git: {0}")]
+    ConfigError(String),
 }
 
 /// Initializes a new Git repository in the specified directory.
@@ -62,6 +65,12 @@ pub async fn add_remote(dir: &Path, remote_name: &str, remote_url: &str) -> Resu
 #[inline]
 pub async fn push(dir: &Path, remote_name: &str, branch: &str) -> Result<(), GitError> {
     git(dir, &["push", "--force", remote_name, branch]).await.map_err(GitError::PushChanges)
+}
+
+/// Configures Git settings for the repository.
+#[inline]
+pub async fn config(dir: &Path, key: &str, value: &str) -> Result<(), GitError> {
+    git(dir, &["config", key, value]).await.map_err(GitError::ConfigError)
 }
 
 /// Executes a Git command and returns a raw error message if failed.

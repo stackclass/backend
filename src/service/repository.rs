@@ -55,7 +55,14 @@ impl RepoService {
 
     /// Commits the template source code to a specified repository.
     async fn commit(&self, template_url: &str, owner: &str, repo: &str) -> Result<()> {
-        let Config { cache_dir, github_token, git_server_endpoint, .. } = &self.ctx.config;
+        let Config {
+            cache_dir,
+            github_token,
+            git_server_endpoint,
+            git_committer_name,
+            git_committer_email,
+            ..
+        } = &self.ctx.config;
 
         // Fetch and validate the template directory
         let storage = StorageService::new(cache_dir, github_token)?;
@@ -73,6 +80,10 @@ impl RepoService {
         let copy_options = fs_extra::dir::CopyOptions::new().content_only(true).copy_inside(true);
         fs_extra::dir::copy(&template_dir, workspace, &copy_options)
             .map_err(|e| StorageError::CopyFiles(e.to_string()))?;
+
+        // Configure Git user information
+        git::config(workspace, "user.name", git_committer_name).await?;
+        git::config(workspace, "user.email", git_committer_email).await?;
 
         // Perform Git operations to commit the source code
         git::init(workspace).await?;
@@ -115,10 +126,12 @@ impl RepoService {
     /// Gets a template repository by name,
     /// or creates the repository if it doesn't exist.
     async fn fetch_template(&self, repo: &str) -> Result<Repository> {
+        let Config { git_committer_email, .. } = &self.ctx.config;
+
         self.fetch_user(
             TEMPLATE_OWNER,
             CreateUserRequest {
-                email: self.ctx.config.email.clone(),
+                email: git_committer_email.clone(),
                 username: TEMPLATE_OWNER.to_string(),
                 ..Default::default()
             },

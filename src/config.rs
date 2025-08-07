@@ -66,7 +66,11 @@ pub struct Config {
     #[clap(long, env)]
     pub webhook_endpoint: String,
 
-    /// Email
-    #[clap(long, env)]
-    pub email: String,
+    /// Git committer name.
+    #[clap(long, env, default_value = "StackClass")]
+    pub git_committer_name: String,
+
+    /// Git committer email.
+    #[clap(long, env, default_value = "hello@stackclass.dev")]
+    pub git_committer_email: String,
 }

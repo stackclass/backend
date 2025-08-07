@@ -50,11 +50,6 @@ RUN addgroup --system --gid 1001 axum
 RUN adduser --system --uid 1001 axum
 USER axum
 
-ENV GIT_AUTHOR_NAME="StackClass"
-ENV GIT_AUTHOR_EMAIL="hello@stackclass.dev"
-ENV GIT_COMMITTER_NAME="StackClass"
-ENV GIT_COMMITTER_EMAIL="hello@stackclass.dev"
-
 # Copy the executable from the "building" stage.
 COPY --from=builder \
     /app/target/release/stackclass-server \

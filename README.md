@@ -47,7 +47,8 @@ Options:
   --git-server-username Username for authenticating with the git server
   --git-server-password Password for authenticating with the git server
   --webhook-endpoint    Webhook handler endpoint
-  --email               Email
+  --git-committer-name  Git committer name
+  --git-committer-email Git committer email
   --help                Print help
 ```
 
