@@ -144,14 +144,17 @@ impl CourseService {
         let course = schema::parse(&cache_dir.join(dir))?;
         debug!("Parsed course: {:?}", course.name);
 
-        Self::update_course(ctx, course).await?;
+        Self::update_course(ctx.clone(), &course).await?;
         info!("Successfully updated course: {:?}", model.name);
+
+        RepoService::new(ctx).init(&course.slug, &model.repository).await?;
+        info!("Template repository for course {:?} has been synced", course.name);
 
         Ok(true)
     }
 
     /// Update course and related entities with cleanup
-    async fn update_course(ctx: Arc<Context>, course: Course) -> Result<()> {
+    async fn update_course(ctx: Arc<Context>, course: &Course) -> Result<()> {
         let mut tx = ctx.database.pool().begin().await?;
 
         // Fetch existing stages and extensions
@@ -161,7 +164,7 @@ impl CourseService {
 
         // Update the course
         let course_model =
-            CourseModel::from(&course).with_stage_count(calculate_total_stages(&course));
+            CourseModel::from(course).with_stage_count(calculate_total_stages(course));
         let course_model = CourseRepository::update(&mut tx, &course_model).await?;
 
         // Track current slugs for cleanup
