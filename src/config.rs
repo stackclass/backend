@@ -73,4 +73,12 @@ pub struct Config {
     /// Git committer email.
     #[clap(long, env, default_value = "hello@stackclass.dev")]
     pub git_committer_email: String,
+
+    /// Kubernetes namespace where StackClass is running.
+    #[clap(long, env)]
+    pub namespace: String,
+
+    /// Docker registry endpoint.
+    #[clap(long, env)]
+    pub docker_registry_endpoint: String,
 }

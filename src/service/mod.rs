@@ -14,6 +14,7 @@
 
 mod course;
 mod extension;
+mod pipeline;
 mod repository;
 mod stage;
 mod storage;
@@ -21,6 +22,7 @@ mod storage;
 // Re-exports
 pub use course::CourseService;
 pub use extension::ExtensionService;
+pub use pipeline::*;
 pub use repository::*;
 pub use stage::StageService;
 pub use storage::*;

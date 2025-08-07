@@ -71,6 +71,9 @@ pub enum ApiError {
 
     #[error("Kubernetes Error: {0}")]
     KubernetesError(#[from] kube::Error),
+
+    #[error("Serialization Error: {0}")]
+    SerializationError(#[source] serde_json::Error),
 }
 
 impl From<sqlx::Error> for ApiError {
@@ -101,6 +104,7 @@ impl From<&ApiError> for StatusCode {
             ApiError::GiteaClientError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::GitError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::KubernetesError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::SerializationError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }
