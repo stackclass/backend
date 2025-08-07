@@ -21,7 +21,7 @@ use crate::{
     context::Context,
     database::Transaction,
     errors::{ApiError, Result},
-    model::{CourseModel, ExtensionModel, StageModel, UserCourseModel, UserStageModel},
+    model::{CourseModel, ExtensionModel, StageModel, UserCourseModel, UserModel, UserStageModel},
     repository::{CourseRepository, ExtensionRepository, StageRepository, UserRepository},
     request::{CreateUserCourseRequest, UpdateUserCourseRequest},
     response::{AttemptResponse, CourseDetailResponse, CourseResponse, UserCourseResponse},
@@ -258,10 +258,10 @@ impl CourseService {
         ctx: Arc<Context>,
         user_id: &str,
     ) -> Result<Vec<UserCourseResponse>> {
+        let user = UserRepository::get_by_id(&ctx.database, user_id).await?;
         let courses = CourseRepository::find_user_courses(&ctx.database, user_id).await?;
 
-        let endpoint = &ctx.config.git_server_endpoint;
-        Ok(courses.into_iter().map(|model| UserCourseResponse::from((endpoint, model))).collect())
+        Ok(courses.into_iter().map(|model| to_user_course_response(&ctx, &user, model)).collect())
     }
 
     /// Enroll a user in a course.
@@ -296,21 +296,19 @@ impl CourseService {
         // Generate Git repository from course template
         RepoService::new(ctx.clone()).generate(&user, &course.slug).await?;
 
-        let endpoint = &ctx.config.git_server_endpoint;
-        Ok(UserCourseResponse::from((endpoint, user_course)))
+        Ok(to_user_course_response(&ctx, &user, user_course))
     }
 
     /// Fetch the course detail for the user.
     pub async fn get_user_course(
         ctx: Arc<Context>,
         user_id: &str,
-        course_slug: &str,
+        slug: &str,
     ) -> Result<UserCourseResponse> {
-        let user_course =
-            CourseRepository::get_user_course(&ctx.database, user_id, course_slug).await?;
+        let user = UserRepository::get_by_id(&ctx.database, user_id).await?;
+        let user_course = CourseRepository::get_user_course(&ctx.database, user_id, slug).await?;
 
-        let endpoint = &ctx.config.git_server_endpoint;
-        Ok(UserCourseResponse::from((endpoint, user_course)))
+        Ok(to_user_course_response(&ctx, &user, user_course))
     }
 
     /// Update the user course for the user.
@@ -365,10 +363,28 @@ impl CourseService {
     }
 }
 
+/// Calculates the total number of stages in a course including extensions.
 fn calculate_total_stages(course: &Course) -> i32 {
     let mut total = course.stages.len() as i32;
     if let Some(extensions) = &course.extensions {
         total += extensions.iter().map(|(_, ext)| ext.stages.len() as i32).sum::<i32>();
     }
     total
+}
+
+/// Converts a user course model to a response with repository URL.
+#[inline]
+fn to_user_course_response(
+    ctx: &Context,
+    user: &UserModel,
+    user_course: UserCourseModel,
+) -> UserCourseResponse {
+    let repository = format!(
+        "{}/{}/{}",
+        ctx.config.git_server_endpoint,
+        user.username(),
+        user_course.course_slug
+    );
+
+    UserCourseResponse::from((user_course, repository))
 }

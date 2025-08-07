@@ -144,11 +144,8 @@ pub struct UserCourseResponse {
     pub repository: String,
 }
 
-impl From<(&String, UserCourseModel)> for UserCourseResponse {
-    fn from((endpoint, model): (&String, UserCourseModel)) -> Self {
-        // TODO: Move repository URL construction outside this conversion
-        let repository = format!("{}/{}", endpoint, model.id);
-
+impl<T: ToString> From<(UserCourseModel, T)> for UserCourseResponse {
+    fn from((model, repository): (UserCourseModel, T)) -> Self {
         Self {
             course_slug: model.course_slug,
             started_at: model.started_at,
@@ -158,7 +155,7 @@ impl From<(&String, UserCourseModel)> for UserCourseResponse {
             cadence: model.cadence,
             accountability: model.accountability,
             activated: model.activated,
-            repository,
+            repository: repository.to_string(),
         }
     }
 }

@@ -65,6 +65,14 @@ impl UserModel {
         self.image = Some(image);
         self
     }
+
+    /// Returns a normalized version of the user's display name for use as a
+    /// username. Currently converts to lowercase and removes spaces.
+    ///
+    /// @TODO: Use GitHub username in the future.
+    pub fn username(&self) -> String {
+        self.name.to_ascii_lowercase().replace(" ", "")
+    }
 }
 
 #[derive(Debug, FromRow)]

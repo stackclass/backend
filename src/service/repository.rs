@@ -155,10 +155,7 @@ impl RepoService {
     /// Gets a repository by username and template name,
     /// or generates a new repository from a template if it doesn't exist.
     pub async fn generate(&self, user: &UserModel, template: &str) -> Result<Repository> {
-        // @TODO: Currently using display name temporarily,
-        // will use GitHub username in the future.
-        let username = user.name.to_ascii_lowercase().replace(" ", "");
-
+        let username = user.username();
         self.fetch_user(
             &username,
             CreateUserRequest {
