@@ -122,7 +122,7 @@ impl RepoService {
         let pipeline = PipelineService::new(ctx.clone());
 
         // Trigger the pipeline run
-        pipeline.trigger(&owner.username, name).await?;
+        pipeline.trigger(&owner.username, name, &current_stage_slug).await?;
 
         // Define a callback function that will be executed when the pipeline
         // succeeds. This callback marks the current stage as complete in DB.

@@ -27,6 +27,7 @@ use crate::{
     config::Config,
     context::Context,
     errors::{ApiError, Result},
+    repository::StageRepository,
 };
 
 /// A service for managing Tekton PipelineRun resources.
@@ -41,10 +42,10 @@ impl PipelineService {
     }
 
     /// Triggers a Tekton PipelineRun for the given repository.
-    pub async fn trigger(&self, owner: &str, repo: &str) -> Result<()> {
+    pub async fn trigger(&self, owner: &str, repo: &str, current_stage_slug: &str) -> Result<()> {
         debug!("Triggering PipelineRun for repository: {owner}/{repo}");
 
-        let resource = self.generate(owner, repo)?;
+        let resource = self.generate(owner, repo, current_stage_slug).await?;
         self.api().create(&PostParams::default(), &resource).await?;
 
         Ok(())
@@ -107,12 +108,14 @@ impl PipelineService {
         )
     }
 
-    /// Generates a PipelineRun manifest for the given repository.
-    fn generate(&self, owner: &str, repo: &str) -> Result<DynamicObject> {
+    /// Generates a PipelineRun resource for the given repository.
+    async fn generate(&self, owner: &str, repo: &str, stage: &str) -> Result<DynamicObject> {
         let Config { git_server_endpoint, docker_registry_endpoint, .. } = &self.ctx.config;
 
-        // Build test cases JSON value based on current course stage
-        let cases = build_test_cases_json(&[]);
+        // Build test cases JSON value from all stages up to the current stage
+        let stages = StageRepository::find_stages_until(&self.ctx.database, repo, stage).await?;
+        let slugs: Vec<&str> = stages.iter().map(|stage| stage.slug.as_str()).collect();
+        let cases = build_test_cases_json(&slugs);
 
         // Define the pipeline run name
         let name = pipeline_name(owner, repo);
@@ -124,7 +127,7 @@ impl PipelineService {
             ("COURSE_IMAGE", format!("{docker_registry_endpoint}/{owner}/{repo}:latest")),
             ("TESTER_IMAGE", format!("ghcr.io/stackclass/{repo}-tester")),
             ("TEST_IMAGE", format!("{docker_registry_endpoint}/{owner}/{repo}-test:latest")),
-            ("COMMAND", "/app/interpreter-tester".to_string()),
+            ("COMMAND", format!("/app/{repo}-tester")),
             ("TEST_CASES_JSON", cases),
             ("DEBUG_MODE", "false".to_string()),
             ("TIMEOUT_SECONDS", "15".to_string()),
