@@ -105,41 +105,40 @@ impl RepoService {
     /// - Otherwise, it triggers the pipeline for the current stage and monitors completion.
     /// - On success, marks the stage as complete.
     pub async fn process(&self, event: &Event) -> Result<()> {
-        let owner = &event.repository.owner.username;
-        let email = &event.repository.owner.email;
-        let repo = &event.repository.name;
+        let PartialRepository { owner, name, .. } = &event.repository;
+        debug!("Handling push event for repository: {}", name);
 
-        debug!("Handling push event for repository: {}", repo);
+        let ctx = self.ctx.clone();
+        let user = UserRepository::get_by_email(&ctx.database, &owner.email).await?;
+        let mut course = CourseRepository::get_user_course(&ctx.database, &user.id, name).await?;
 
-        let db = &self.ctx.database;
-        let user = UserRepository::get_by_email(db, email).await?;
-        let mut course = CourseRepository::get_user_course(db, &user.id, repo).await?;
-
-        if course.current_stage_slug.is_none() {
-            CourseService::activate(self.ctx.clone(), &mut course).await?;
+        // If there's no current stage, this is the first setup of the course,
+        // so we just need to activate it without running any pipeline stages
+        let Some(current_stage_slug) = course.current_stage_slug else {
+            CourseService::activate(ctx, &mut course).await?;
             return Ok(());
-        }
+        };
 
-        let pipeline = PipelineService::new(self.ctx.clone());
+        let pipeline = PipelineService::new(ctx.clone());
 
         // Trigger the pipeline run
-        pipeline.trigger(owner, repo).await?;
+        pipeline.trigger(&owner.username, name).await?;
 
         // Define a callback function that will be executed when the pipeline
         // succeeds. This callback marks the current stage as complete in DB.
-        let ctx = self.ctx.clone();
+        #[rustfmt::skip]
         let callback = || async move {
             StageService::complete(
                 ctx,
                 &course.user_id,
                 &course.course_slug,
-                &course.current_stage_slug.unwrap(),
+                &current_stage_slug,
             )
             .await
         };
 
         // Watch the pipeline and handle only success
-        pipeline.watch(owner, repo, callback).await?;
+        pipeline.watch(&owner.username, name, callback).await?;
 
         Ok(())
     }
