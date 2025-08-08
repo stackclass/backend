@@ -38,18 +38,20 @@ Cargo's global binary directory (`~/.cargo/bin/` by default).
 Usage: stackclass-server [OPTIONS]
 
 Options:
-  --port                The server port
-  --cache-dir           Base directory for storing cached repositories
-  --github-token        A personal token to use for authentication
-  --database-url        Database connection URL
-  --allowed-origin      Allowed CORS origin
-  --git-server-endpoint Git server endpoint
-  --git-server-username Username for authenticating with the git server
-  --git-server-password Password for authenticating with the git server
-  --webhook-endpoint    Webhook handler endpoint
-  --git-committer-name  Git committer name
-  --git-committer-email Git committer email
-  --help                Print help
+  --port                      The server port
+  --cache-dir                 Base directory for storing cached repositories
+  --github-token              A personal token to use for authentication
+  --database-url              Database connection URL
+  --allowed-origin            Allowed CORS origin
+  --git-server-endpoint       Git server endpoint
+  --git-server-username       Username for authenticating with the git server
+  --git-server-password       Password for authenticating with the git server
+  --webhook-endpoint          Webhook handler endpoint
+  --git-committer-name        Git committer name
+  --git-committer-email       Git committer email
+  --namespace                 Kubernetes namespace where StackClass is running
+  --docker-registry-endpoint  Docker registry endpoint
+  --help                      Print help
 ```
 
 ## Development
