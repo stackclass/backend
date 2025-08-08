@@ -284,10 +284,10 @@ impl CourseService {
 
         let user_course =
             CourseRepository::create_user_course(&mut tx, &user_course).await.map_err(|e| {
-                if let sqlx::Error::Database(db_err) = &e {
-                    if db_err.is_unique_violation() {
-                        return ApiError::Conflict("User is already enrolled in this course".into());
-                    }
+                if let sqlx::Error::Database(db_err) = &e &&
+                    db_err.is_unique_violation()
+                {
+                    return ApiError::Conflict("User is already enrolled in this course".into());
                 }
                 e.into()
             })?;

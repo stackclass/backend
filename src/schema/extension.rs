@@ -35,7 +35,7 @@ impl ExtensionSet {
         self.0.is_empty()
     }
 
-    pub fn iter(&self) -> Iter<Extension> {
+    pub fn iter(&self) -> Iter<'_, Extension> {
         self.0.iter()
     }
 }
