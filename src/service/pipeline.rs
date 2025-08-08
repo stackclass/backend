@@ -111,6 +111,9 @@ impl PipelineService {
     fn generate(&self, owner: &str, repo: &str) -> Result<DynamicObject> {
         let Config { git_server_endpoint, docker_registry_endpoint, .. } = &self.ctx.config;
 
+        // Build test cases JSON value based on current course stage
+        let cases = build_test_cases_json(&[]);
+
         // Define the pipeline run name
         let name = pipeline_name(owner, repo);
 
@@ -122,7 +125,7 @@ impl PipelineService {
             ("TESTER_IMAGE", format!("ghcr.io/stackclass/{repo}-tester")),
             ("TEST_IMAGE", format!("{docker_registry_endpoint}/{owner}/{repo}-test:latest")),
             ("COMMAND", "/app/interpreter-tester".to_string()),
-            ("TEST_CASES_JSON", "{}".to_string()),
+            ("TEST_CASES_JSON", cases),
             ("DEBUG_MODE", "false".to_string()),
             ("TIMEOUT_SECONDS", "15".to_string()),
             ("SKIP_ANTI_CHEAT", "false".to_string()),
@@ -177,4 +180,17 @@ impl PipelineService {
 #[inline]
 fn pipeline_name(owner: &str, repo: &str) -> String {
     format!("{owner}-{repo}-test-pipeline")
+}
+
+/// Builds a JSON string representing test cases from a list of slugs.
+fn build_test_cases_json(slugs: &[&str]) -> String {
+    let mut test_cases = Vec::new();
+    for (index, slug) in slugs.iter().enumerate() {
+        test_cases.push(serde_json::json!({
+            "slug": slug,
+            "log_prefix": format!("test-{}", index + 1),
+            "title": format!("Stage #{}: {}", index + 1, slug),
+        }));
+    }
+    serde_json::to_string(&test_cases).unwrap()
 }
