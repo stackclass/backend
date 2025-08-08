@@ -176,8 +176,28 @@ impl StageRepository {
         Ok(rows)
     }
 
-    /// Find the next stage by current stage slug (ordered by weight)
-    pub async fn find_next_stage_by_slug(
+    /// Get the first stage (ordered by weight)
+    pub async fn first(db: &Database, course_slug: &str) -> Result<Option<StageModel>> {
+        let stage = sqlx::query_as::<_, StageModel>(
+            r#"
+            SELECT s.*, e.slug as extension_slug
+            FROM stages s
+            JOIN courses c ON s.course_id = c.id
+            LEFT JOIN extensions e ON s.extension_id = e.id
+            WHERE c.slug = $1
+            ORDER BY s.weight ASC
+            LIMIT 1
+            "#,
+        )
+        .bind(course_slug)
+        .fetch_optional(db.pool())
+        .await?;
+
+        Ok(stage)
+    }
+
+    /// Get the next stage by current stage slug (ordered by weight)
+    pub async fn next(
         db: &Database,
         course_slug: &str,
         stage_slug: &str,
@@ -200,26 +220,6 @@ impl StageRepository {
         )
         .bind(course_slug)
         .bind(stage_slug)
-        .fetch_optional(db.pool())
-        .await?;
-
-        Ok(stage)
-    }
-
-    /// Get the first stage (ordered by weight)
-    pub async fn first(db: &Database, course_slug: &str) -> Result<Option<StageModel>> {
-        let stage = sqlx::query_as::<_, StageModel>(
-            r#"
-            SELECT s.*, e.slug as extension_slug
-            FROM stages s
-            JOIN courses c ON s.course_id = c.id
-            LEFT JOIN extensions e ON s.extension_id = e.id
-            WHERE c.slug = $1
-            ORDER BY s.weight ASC
-            LIMIT 1
-            "#,
-        )
-        .bind(course_slug)
         .fetch_optional(db.pool())
         .await?;
 

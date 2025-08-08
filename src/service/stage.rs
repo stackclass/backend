@@ -130,8 +130,7 @@ impl StageService {
         let mut updated_user_course = user_course;
 
         // Find the next stage (if any) by current stage slug.
-        let next_stage =
-            StageRepository::find_next_stage_by_slug(db, course_slug, stage_slug).await?;
+        let next_stage = StageRepository::next(db, course_slug, stage_slug).await?;
 
         // If there is a next stage, create a new instance for it
         if let Some(next_stage) = next_stage {
