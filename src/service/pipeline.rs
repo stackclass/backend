@@ -122,6 +122,10 @@ impl PipelineService {
             ("TESTER_IMAGE", format!("ghcr.io/stackclass/{repo}-tester")),
             ("TEST_IMAGE", format!("{docker_registry_endpoint}/{owner}/{repo}-test:latest")),
             ("COMMAND", "/app/interpreter-tester".to_string()),
+            ("TEST_CASES_JSON", "{}".to_string()),
+            ("DEBUG_MODE", "false".to_string()),
+            ("TIMEOUT_SECONDS", "15".to_string()),
+            ("SKIP_ANTI_CHEAT", "false".to_string()),
         ]);
         let params: serde_json::Value =
             params.into_iter().map(|(name, value)| json!({"name": name, "value": value})).collect();
