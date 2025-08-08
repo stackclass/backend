@@ -130,11 +130,50 @@ impl PipelineService {
             ("TIMEOUT_SECONDS", "15".to_string()),
             ("SKIP_ANTI_CHEAT", "false".to_string()),
         ]);
-        let params: serde_json::Value =
-            params.into_iter().map(|(name, value)| json!({"name": name, "value": value})).collect();
 
-        // Define workspaces as a JSON value
-        let workspaces = json!([
+        // Render a PipelineRun resource using the provided name and parameters
+        resource(name, params).map_err(ApiError::SerializationError)
+    }
+}
+
+#[inline]
+fn pipeline_name(owner: &str, repo: &str) -> String {
+    format!("{owner}-{repo}-test-pipeline")
+}
+
+/// Builds a JSON string representing test cases from a list of slugs.
+fn build_test_cases_json(slugs: &[&str]) -> String {
+    let mut test_cases = Vec::new();
+    for (index, slug) in slugs.iter().enumerate() {
+        test_cases.push(serde_json::json!({
+            "slug": slug,
+            "log_prefix": format!("test-{}", index + 1),
+            "title": format!("Stage #{}: {}", index + 1, slug),
+        }));
+    }
+    serde_json::to_string(&test_cases).unwrap()
+}
+
+/// Creates a new DynamicObject representing a Tekton PipelineRun resource.
+fn resource(
+    name: String,
+    params: HashMap<&'static str, String>,
+) -> Result<DynamicObject, serde_json::Error> {
+    let params: serde_json::Value =
+        params.into_iter().map(|(name, value)| json!({"name": name, "value": value})).collect();
+
+    let resource = json!({
+      "apiVersion": "tekton.dev/v1",
+      "kind": "PipelineRun",
+      "metadata": {
+        "name": name
+      },
+      "spec": {
+        "pipelineRef": {
+          "name": "course-test-pipeline"
+        },
+        "params": params,
+        "workspaces": [
           {
             "name": "context",
             "volumeClaimTemplate": {
@@ -156,41 +195,9 @@ impl PipelineService {
               "secretName": "docker-config"
             }
           }
-        ]);
+        ]
+      }
+    });
 
-        let resource = json!({
-          "apiVersion": "tekton.dev/v1",
-          "kind": "PipelineRun",
-          "metadata": {
-            "name": name
-          },
-          "spec": {
-            "pipelineRef": {
-              "name": "course-test-pipeline"
-            },
-            "params": params,
-            "workspaces": workspaces
-          }
-        });
-
-        serde_json::from_value(resource).map_err(ApiError::SerializationError)
-    }
-}
-
-#[inline]
-fn pipeline_name(owner: &str, repo: &str) -> String {
-    format!("{owner}-{repo}-test-pipeline")
-}
-
-/// Builds a JSON string representing test cases from a list of slugs.
-fn build_test_cases_json(slugs: &[&str]) -> String {
-    let mut test_cases = Vec::new();
-    for (index, slug) in slugs.iter().enumerate() {
-        test_cases.push(serde_json::json!({
-            "slug": slug,
-            "log_prefix": format!("test-{}", index + 1),
-            "title": format!("Stage #{}: {}", index + 1, slug),
-        }));
-    }
-    serde_json::to_string(&test_cases).unwrap()
+    serde_json::from_value(resource)
 }
