@@ -5,6 +5,8 @@ on:
   push:
     paths-ignore:
       - .github/**
+      - CONTRIBUTING.md
+      - .env.example
       - README.md
 
 env:
