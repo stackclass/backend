@@ -176,6 +176,35 @@ impl StageRepository {
         Ok(rows)
     }
 
+    /// Find all stages from the first stage to the specified stage (ordered by weight).
+    pub async fn find_stages_until(
+        db: &Database,
+        course_slug: &str,
+        stage_slug: &str,
+    ) -> Result<Vec<StageModel>> {
+        let rows = sqlx::query_as::<_, StageModel>(
+            r#"
+            WITH target_stage AS (
+                SELECT weight FROM stages s
+                JOIN courses c ON s.course_id = c.id
+                WHERE c.slug = $1 AND s.slug = $2
+            )
+            SELECT s.*, e.slug as extension_slug
+            FROM stages s
+            JOIN courses c ON s.course_id = c.id
+            LEFT JOIN extensions e ON s.extension_id = e.id
+            WHERE c.slug = $1 AND s.weight <= (SELECT weight FROM target_stage)
+            ORDER BY s.weight ASC
+            "#,
+        )
+        .bind(course_slug)
+        .bind(stage_slug)
+        .fetch_all(db.pool())
+        .await?;
+
+        Ok(rows)
+    }
+
     /// Get the first stage (ordered by weight)
     pub async fn first(db: &Database, course_slug: &str) -> Result<Option<StageModel>> {
         let stage = sqlx::query_as::<_, StageModel>(
