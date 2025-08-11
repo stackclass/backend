@@ -210,7 +210,7 @@ impl RepoService {
             active: true,
             branch_filter: Some("main".to_string()),
             config: HashMap::from([
-                ("content_type".to_string(), "application/json".to_string()),
+                ("content_type".to_string(), "json".to_string()),
                 ("url".to_string(), url.clone()),
             ]),
             events: vec!["push".to_string()],
