@@ -19,7 +19,7 @@ pub mod user;
 use base64::Engine;
 use reqwest::{
     Client, Error, Response,
-    header::{AUTHORIZATION, HeaderMap, HeaderValue},
+    header::{AUTHORIZATION, HeaderMap},
 };
 use serde::Serialize;
 
@@ -33,8 +33,13 @@ pub struct GiteaClient {
 
 impl GiteaClient {
     /// Creates a new `GiteaClient` instance.
-    pub fn new(base_url: String, username: String, password: String) -> Self {
-        GiteaClient { client: Client::new(), base_url, username, password }
+    pub fn new(endpoint: String, username: String, password: String) -> Self {
+        GiteaClient {
+            client: Client::new(),
+            base_url: format!("{endpoint}/api/v1"),
+            username,
+            password,
+        }
     }
 
     /// Builds the headers with Basic Auth.
@@ -42,29 +47,25 @@ impl GiteaClient {
         let mut headers = HeaderMap::new();
         let engine = base64::engine::general_purpose::STANDARD;
         let encoded = engine.encode(format!("{}:{}", self.username, self.password));
-        headers.insert(AUTHORIZATION, HeaderValue::from_str(&format!("Basic {encoded}")).unwrap());
+        headers.insert(AUTHORIZATION, format!("Basic {encoded}").parse().unwrap());
         headers
     }
 
     /// Sends a GET request.
-    pub(crate) async fn get(&self, endpoint: &str) -> Result<Response, Error> {
-        let url = format!("{}/{}", self.base_url, endpoint);
+    pub(crate) async fn get(&self, path: &str) -> Result<Response, Error> {
+        let url = format!("{}/{}", self.base_url, path);
         self.client.get(&url).headers(self.build_headers()).send().await
     }
 
     /// Sends a POST request with a JSON body.
-    pub(crate) async fn post<T: Serialize>(
-        &self,
-        endpoint: &str,
-        body: &T,
-    ) -> Result<Response, Error> {
-        let url = format!("{}/{}", self.base_url, endpoint);
+    pub(crate) async fn post<T: Serialize>(&self, path: &str, body: &T) -> Result<Response, Error> {
+        let url = format!("{}/{}", self.base_url, path);
         self.client.post(&url).headers(self.build_headers()).json(body).send().await
     }
 
     /// Sends a DELETE request.
-    pub(crate) async fn delete(&self, endpoint: &str) -> Result<Response, Error> {
-        let url = format!("{}/{}", self.base_url, endpoint);
+    pub(crate) async fn delete(&self, path: &str) -> Result<Response, Error> {
+        let url = format!("{}/{}", self.base_url, path);
         self.client.delete(&url).headers(self.build_headers()).send().await
     }
 }
