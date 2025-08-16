@@ -231,10 +231,17 @@ impl RepoService {
     }
 
     /// Gets a user by username, or creates the user if they don't exist.
-    async fn fetch_user(&self, username: &str, req: CreateUserRequest) -> Result<User> {
+    async fn fetch_user(&self, username: &str, mut req: CreateUserRequest) -> Result<User> {
         match self.ctx.git.get_user(username).await {
             Ok(user) => Ok(user),
-            Err(ClientError::NotFound) => Ok(self.ctx.git.create_user(req).await?),
+            Err(ClientError::NotFound) => {
+                // Generate a password using email + auth_secret
+                let password = format!("{}{}", req.email, self.ctx.config.auth_secret);
+                let hashed_password = bcrypt::hash(password, bcrypt::DEFAULT_COST)?;
+                req.password = Some(hashed_password);
+
+                Ok(self.ctx.git.create_user(req).await?)
+            }
             Err(e) => Err(e.into()),
         }
     }

@@ -51,6 +51,7 @@ Options:
   --git-committer-email       Git committer email
   --namespace                 Kubernetes namespace where StackClass is running
   --docker-registry-endpoint  Docker registry endpoint
+  --auth-secret               Secret used for hashing user passwords
   --help                      Print help
 ```
 

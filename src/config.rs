@@ -81,4 +81,8 @@ pub struct Config {
     /// Docker registry endpoint.
     #[clap(long, env)]
     pub docker_registry_endpoint: String,
+
+    /// Secret used for hashing user passwords.
+    #[clap(long, env)]
+    pub auth_secret: String,
 }
