@@ -62,10 +62,28 @@ pub async fn add_remote(dir: &Path, remote_name: &str, remote_url: &str) -> Resu
     git(dir, &["remote", "add", remote_name, remote_url]).await.map_err(GitError::AddRemote)
 }
 
-/// Pushes changes to a remote repository.
+/// Pushes changes to a remote repository with authentication.
 #[inline]
-pub async fn push(dir: &Path, remote_name: &str, branch: &str) -> Result<(), GitError> {
-    git(dir, &["push", "--force", remote_name, branch]).await.map_err(GitError::PushChanges)
+pub async fn push(
+    dir: &Path,
+    remote: &str,
+    branch: &str,
+    username: &str,
+    password: &str,
+) -> Result<(), GitError> {
+    let output = Command::new("git")
+        .args(["push", "--force", remote, branch])
+        .current_dir(dir)
+        .env("GIT_USERNAME", username)
+        .env("GIT_PASSWORD", password)
+        .output()
+        .await
+        .map_err(|e| GitError::PushChanges(e.to_string()))?;
+
+    if !output.status.success() {
+        return Err(GitError::PushChanges(String::from_utf8_lossy(&output.stderr).to_string()));
+    }
+    Ok(())
 }
 
 /// Configures Git settings for the repository.

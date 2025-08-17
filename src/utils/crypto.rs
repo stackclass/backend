@@ -12,5 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod crypto;
-pub mod git;
+use sha2::{Digest, Sha256};
+
+/// Generates a deterministic SHA-256 hash of the password.
+pub fn password(input: &str, salt: &str) -> String {
+    let password = format!("{}{}", input, salt);
+
+    let mut hasher = Sha256::new();
+    hasher.update(password.as_bytes());
+    let result = hasher.finalize();
+
+    // Convert to hex string
+    format!("{:x}", result)
+}

@@ -7,7 +7,7 @@ resolver = "2"
 [package]
 name = "backend"
 description = "Backend API and services for StackClass"
-version = "0.32.3"
+version = "0.32.4"
 edition = "2024"
 
 default-run = "stackclass-server"
@@ -62,4 +62,4 @@ utoipa = { version = "5.4.0", features = ["axum_extras", "uuid", "chrono", "macr
 utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "reqwest"] }
 uuid = { version = "1.18.0", features = ["serde", "v4", "fast-rng", "macro-diagnostics"] }
 walkdir = "2.5.0"
-bcrypt = "0.17.0"
+sha2 = "0.10.9"

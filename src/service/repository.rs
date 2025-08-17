@@ -25,7 +25,7 @@ use crate::{
     model::UserModel,
     repository::{CourseRepository, UserRepository},
     service::{CourseService, PipelineService, StageService, StorageError, StorageService},
-    utils::git,
+    utils::{crypto, git},
 };
 
 #[allow(dead_code)]
@@ -60,6 +60,7 @@ impl RepoService {
             git_server_endpoint,
             git_committer_name,
             git_committer_email,
+            auth_secret,
             ..
         } = &self.ctx.config;
 
@@ -94,7 +95,10 @@ impl RepoService {
         // ... and push to the remote repository
         let remote_url = format!("{git_server_endpoint}/{owner}/{repo}.git");
         git::add_remote(workspace, "origin", &remote_url).await?;
-        git::push(workspace, "origin", "main").await?;
+
+        // Push with required credentials
+        let password = crypto::password(git_committer_email, auth_secret);
+        git::push(workspace, "origin", "main", TEMPLATE_OWNER, &password).await?;
 
         debug!("Successfully pushed template contents to repository: {}", remote_url);
         Ok(())
@@ -238,9 +242,9 @@ impl RepoService {
             Ok(user) => Ok(user),
             Err(ClientError::NotFound) => {
                 // Generate a password using email + auth_secret
-                let password = format!("{}{}", req.email, self.ctx.config.auth_secret);
-                let hashed_password = bcrypt::hash(password, bcrypt::DEFAULT_COST)?;
-                req.password = Some(hashed_password);
+                let salt = &self.ctx.config.auth_secret;
+                let password = crypto::password(&req.email, salt);
+                req.password = Some(password);
 
                 Ok(self.ctx.git.create_user(req).await?)
             }
