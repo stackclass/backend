@@ -7,7 +7,7 @@ resolver = "2"
 [package]
 name = "backend"
 description = "Backend API and services for StackClass"
-version = "0.32.4"
+version = "0.32.5"
 edition = "2024"
 
 default-run = "stackclass-server"
@@ -49,6 +49,7 @@ octocrab = "0.44.1"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.141"
 serde_yml = "0.0.12"
+sha2 = "0.10.9"
 sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "postgres", "macros", "migrate", "chrono", "uuid"] }
 tar = "0.4.44"
 tempfile = "3.20.0"
@@ -58,8 +59,8 @@ tokio-stream = "0.1.17"
 tower-http = { version = "0.6.6", features = ["cors"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+url = "2.5.4"
 utoipa = { version = "5.4.0", features = ["axum_extras", "uuid", "chrono", "macros"] }
 utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "reqwest"] }
 uuid = { version = "1.18.0", features = ["serde", "v4", "fast-rng", "macro-diagnostics"] }
 walkdir = "2.5.0"
-sha2 = "0.10.9"

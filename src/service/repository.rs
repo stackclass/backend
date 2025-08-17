@@ -25,7 +25,7 @@ use crate::{
     model::UserModel,
     repository::{CourseRepository, UserRepository},
     service::{CourseService, PipelineService, StageService, StorageError, StorageService},
-    utils::{crypto, git},
+    utils::{crypto, git, url},
 };
 
 #[allow(dead_code)]
@@ -94,11 +94,10 @@ impl RepoService {
 
         // ... and push to the remote repository
         let remote_url = format!("{git_server_endpoint}/{owner}/{repo}.git");
-        git::add_remote(workspace, "origin", &remote_url).await?;
-
-        // Push with required credentials
         let password = crypto::password(git_committer_email, auth_secret);
-        git::push(workspace, "origin", "main", TEMPLATE_OWNER, &password).await?;
+        let remote_url = url::authenticate(&remote_url, TEMPLATE_OWNER, &password)?;
+        git::add_remote(workspace, "origin", &remote_url).await?;
+        git::push(workspace, "origin", "main").await?;
 
         debug!("Successfully pushed template contents to repository: {}", remote_url);
         Ok(())

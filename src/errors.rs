@@ -74,6 +74,9 @@ pub enum ApiError {
 
     #[error("Serialization Error: {0}")]
     SerializationError(#[source] serde_json::Error),
+
+    #[error("Url Parser Error: {0}")]
+    UrlParseError(#[from] url::ParseError),
 }
 
 impl From<sqlx::Error> for ApiError {
@@ -105,6 +108,7 @@ impl From<&ApiError> for StatusCode {
             ApiError::GitError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::KubernetesError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::SerializationError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::UrlParseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }

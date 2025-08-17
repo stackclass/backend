@@ -12,6 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod crypto;
-pub mod git;
-pub mod url;
+use url::{ParseError, Url};
+
+/// Constructs an authenticated URL by embedding the username and password.
+pub fn authenticate(url: &str, username: &str, password: &str) -> Result<String, ParseError> {
+    let mut parsed_url = Url::parse(url)?;
+
+    let _ = parsed_url.set_username(username);
+    let _ = parsed_url.set_password(Some(password));
+
+    Ok(parsed_url.to_string())
+}
