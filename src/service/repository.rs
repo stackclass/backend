@@ -93,13 +93,13 @@ impl RepoService {
         git::commit(workspace, "Initial commit from template").await?;
 
         // ... and push to the remote repository
-        let remote_url = format!("{git_server_endpoint}/{owner}/{repo}.git");
+        let base_url = format!("{git_server_endpoint}/{owner}/{repo}.git");
         let password = crypto::password(git_committer_email, auth_secret);
-        let remote_url = url::authenticate(&remote_url, TEMPLATE_OWNER, &password)?;
+        let remote_url = url::authenticate(&base_url, owner, &password)?;
         git::add_remote(workspace, "origin", &remote_url).await?;
         git::push(workspace, "origin", "main").await?;
 
-        debug!("Successfully pushed template contents to repository: {}", remote_url);
+        debug!("Successfully pushed template contents to repository: {}", base_url);
         Ok(())
     }
 
