@@ -80,8 +80,8 @@ impl RepoService {
         fs_extra::dir::copy(&template_dir, workspace, &copy_options)
             .map_err(|e| StorageError::CopyFiles(e.to_string()))?;
 
-        // Initialize Git repository
-        git::init(workspace).await?;
+        // Initialize Git repository with the 'main' branch
+        git::init(workspace, "main").await?;
 
         // Configure Git user information
         git::config(workspace, "user.name", git_committer_name).await?;

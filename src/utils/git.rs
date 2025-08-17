@@ -37,10 +37,11 @@ pub enum GitError {
     ConfigError(String),
 }
 
-/// Initializes a new Git repository in the specified directory.
+/// Initializes a new Git repository in the specified directory
+/// with the given branch name.
 #[inline]
-pub async fn init(dir: &Path) -> Result<(), GitError> {
-    git(dir, &["init"]).await.map_err(GitError::InitRepo)
+pub async fn init(dir: &Path, branch: &str) -> Result<(), GitError> {
+    git(dir, &["init", "-b", branch]).await.map_err(GitError::InitRepo)
 }
 
 /// Stages all files in the working directory.
