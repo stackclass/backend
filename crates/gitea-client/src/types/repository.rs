@@ -114,10 +114,12 @@ pub struct Repository {
     pub empty: bool,
 
     /// External tracker configuration.
-    pub external_tracker: ExternalTracker,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub external_tracker: Option<ExternalTracker>,
 
     /// External wiki configuration.
-    pub external_wiki: ExternalWiki,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub external_wiki: Option<ExternalWiki>,
 
     /// Whether the repository is a fork.
     pub fork: bool,
@@ -129,13 +131,15 @@ pub struct Repository {
     pub full_name: String,
 
     /// Whether the repository has GitHub Actions enabled.
-    pub has_actions: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub has_actions: Option<bool>,
 
     /// Whether the repository has issues enabled.
     pub has_issues: bool,
 
     /// Whether the repository has packages enabled.
-    pub has_packages: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub has_packages: Option<bool>,
 
     /// Whether the repository has projects enabled.
     pub has_projects: bool,
@@ -144,7 +148,8 @@ pub struct Repository {
     pub has_pull_requests: bool,
 
     /// Whether the repository has releases enabled.
-    pub has_releases: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub has_releases: Option<bool>,
 
     /// Whether the repository has a wiki enabled.
     pub has_wiki: bool,
@@ -162,7 +167,8 @@ pub struct Repository {
     pub internal: bool,
 
     /// Internal tracker configuration.
-    pub internal_tracker: InternalTracker,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub internal_tracker: Option<InternalTracker>,
 
     /// Primary language of the repository.
     pub language: String,
@@ -183,7 +189,8 @@ pub struct Repository {
     pub mirror_interval: String,
 
     /// Timestamp when the mirror was last updated.
-    pub mirror_updated: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mirror_updated: Option<DateTime<Utc>>,
 
     /// Name of the repository.
     pub name: String,
@@ -207,7 +214,8 @@ pub struct Repository {
     pub parent: Option<Box<Repository>>,
 
     /// Permissions for the repository.
-    pub permissions: Permissions,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub permissions: Option<Permissions>,
 
     /// Whether the repository is private.
     pub private: bool,
