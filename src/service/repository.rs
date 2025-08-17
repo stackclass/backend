@@ -244,6 +244,7 @@ impl RepoService {
                 let salt = &self.ctx.config.auth_secret;
                 let password = crypto::password(&req.email, salt);
                 req.password = Some(password);
+                req.must_change_password = Some(false);
 
                 Ok(self.ctx.git.create_user(req).await?)
             }
