@@ -80,17 +80,19 @@ impl RepoService {
         fs_extra::dir::copy(&template_dir, workspace, &copy_options)
             .map_err(|e| StorageError::CopyFiles(e.to_string()))?;
 
+        // Initialize Git repository
+        git::init(workspace).await?;
+
         // Configure Git user information
         git::config(workspace, "user.name", git_committer_name).await?;
         git::config(workspace, "user.email", git_committer_email).await?;
 
         // Perform Git operations to commit the source code
-        git::init(workspace).await?;
         git::stage(workspace).await?;
         git::commit(workspace, "Initial commit from template").await?;
 
         // ... and push to the remote repository
-        let remote_url = format!("{git_server_endpoint}/{owner}/{repo}");
+        let remote_url = format!("{git_server_endpoint}/{owner}/{repo}.git");
         git::add_remote(workspace, "origin", &remote_url).await?;
         git::push(workspace, "origin", "main").await?;
 
