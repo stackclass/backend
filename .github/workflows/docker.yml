@@ -80,7 +80,7 @@ jobs:
         run: echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/stackclass-server" >> $GITHUB_ENV
 
       - name: Download digests
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: /tmp/digests
           pattern: digests-*
