@@ -77,6 +77,9 @@ pub struct User {
     /// Number of repositories starred by the user.
     pub starred_repos_count: u64,
 
+    /// Username of the user.
+    pub username: String,
+
     /// Visibility setting of the user.
     pub visibility: String,
 
@@ -127,21 +130,12 @@ pub struct CreateUserRequest {
 /// containing only the most essential fields.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PartialUser {
-    /// Unique identifier for the user.
-    pub id: u64,
-
-    /// Username of the user.
-    pub login: String,
-
     /// Full name of the user.
-    pub full_name: String,
+    pub name: String,
 
     /// Email address of the user.
     pub email: String,
 
-    /// URL to the user's avatar.
-    pub avatar_url: String,
-
-    /// Login name of the user.
+    /// Username of the user.
     pub username: String,
 }

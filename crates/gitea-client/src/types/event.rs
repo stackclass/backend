@@ -14,13 +14,15 @@
 
 use serde::{Deserialize, Serialize};
 
-use super::{PartialCommit, PartialRepository, PartialUser};
+use crate::types::{Repository, User};
+
+use super::PartialCommit;
 
 /// GitHub webhook event payload.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Event {
     /// Secret token for verifying the webhook origin.
-    pub secret: String,
+    pub secret: Option<String>,
 
     /// The full Git ref that was pushed.
     #[serde(rename = "ref")]
@@ -38,12 +40,18 @@ pub struct Event {
     /// List of commits included in the push.
     pub commits: Vec<PartialCommit>,
 
+    /// Total number of commits in the push event.
+    pub total_commits: u64,
+
+    /// The most recent commit in the push event.
+    pub head_commit: PartialCommit,
+
     /// Repository where the event occurred.
-    pub repository: PartialRepository,
+    pub repository: Repository,
 
     /// User who performed the push.
-    pub pusher: PartialUser,
+    pub pusher: User,
 
     /// User who triggered the event.
-    pub sender: PartialUser,
+    pub sender: User,
 }

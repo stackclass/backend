@@ -17,7 +17,7 @@ use reqwest::StatusCode;
 use crate::{
     client::GiteaClient,
     error::ClientError,
-    types::{CreateHookRequest, Hook},
+    types::{CreateHookRequest, Hook, HookType},
 };
 
 impl GiteaClient {
@@ -34,13 +34,16 @@ impl GiteaClient {
 
     /// Lists all system hooks (admin endpoint).
     ///
+    /// # Arguments
+    /// * `hook_type` - The type of hooks to list (defaults to `HookType::System`).
+    ///
     /// # Possible Responses
     /// - 200: List of hooks returned successfully (returns `Vec<Hook>`).
     ///
     /// https://docs.gitea.com/api/1.24/#tag/admin/operation/adminListHooks
     #[inline]
-    pub async fn list_system_hooks(&self) -> Result<Vec<Hook>, ClientError> {
-        self.list_hooks("admin/hooks").await
+    pub async fn list_system_hooks(&self, hook_type: HookType) -> Result<Vec<Hook>, ClientError> {
+        self.list_hooks(&format!("admin/hooks?type={hook_type}")).await
     }
 
     /// Creates a new hook at the specified path.

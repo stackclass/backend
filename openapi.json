@@ -6,7 +6,7 @@
     "license": {
       "name": ""
     },
-    "version": "0.32.8"
+    "version": "0.32.9"
   },
   "paths": {
     "/v1/courses": {

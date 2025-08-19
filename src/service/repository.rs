@@ -110,7 +110,7 @@ impl RepoService {
     /// - Otherwise, it triggers the pipeline for the current stage and monitors completion.
     /// - On success, marks the stage as complete.
     pub async fn process(&self, event: &Event) -> Result<()> {
-        let PartialRepository { owner, name, .. } = &event.repository;
+        let Repository { owner, name, .. } = &event.repository;
         debug!("Handling push event for repository: {}", name);
 
         let ctx = self.ctx.clone();
@@ -215,6 +215,7 @@ impl RepoService {
             active: true,
             branch_filter: Some("main".to_string()),
             config: HashMap::from([
+                ("is_system_webhook".to_string(), "true".to_string()),
                 ("content_type".to_string(), "json".to_string()),
                 ("url".to_string(), url.clone()),
             ]),
@@ -224,7 +225,7 @@ impl RepoService {
         };
 
         // List all existing hooks
-        let hooks = self.ctx.git.list_system_hooks().await?;
+        let hooks = self.ctx.git.list_system_hooks(HookType::System).await?;
 
         // Check if a hook with the same configuration already exists
         if !hooks.iter().any(|hook| matching(hook, &req)) {

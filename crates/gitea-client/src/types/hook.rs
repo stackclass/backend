@@ -55,9 +55,10 @@ pub struct Hook {
 /// This is used to avoid duplicate hooks with the same settings.
 pub fn matching(hook: &Hook, req: &CreateHookRequest) -> bool {
     hook.kind == req.kind &&
-        hook.config == req.config &&
         hook.branch_filter == req.branch_filter &&
-        hook.events == req.events
+        hook.events == req.events &&
+        hook.config.get("url") == req.config.get("url") &&
+        hook.config.get("content_type") == req.config.get("content_type")
 }
 
 /// Request body for creating a hook.
@@ -81,4 +82,27 @@ pub struct CreateHookRequest {
     /// Type of the hook.
     #[serde(rename = "type")]
     pub kind: String,
+}
+
+/// Represents the type of hooks to list.
+#[derive(Debug, Clone, Copy, Default)]
+pub enum HookType {
+    /// System hooks.
+    #[default]
+    System,
+    /// Default hooks.
+    Default,
+    /// Both system and default hooks.
+    All,
+}
+
+impl std::fmt::Display for HookType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            HookType::System => "system",
+            HookType::Default => "default",
+            HookType::All => "all",
+        };
+        write!(f, "{}", s)
+    }
 }
