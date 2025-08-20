@@ -194,7 +194,7 @@ fn resource(
                 ],
                 "resources": {
                   "requests": {
-                    "storage": "1Gi"
+                    "storage": "5Gi"
                   }
                 }
               }
