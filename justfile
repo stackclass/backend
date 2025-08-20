@@ -36,6 +36,14 @@ check:
 openapi:
     cargo run --bin openapi-generator > openapi.json
 
+# Initialize and update submodules (for first-time setup)
+init-submodules:
+    git submodule update --init --recursive
+
+# Update git submodules
+update-submodules:
+    git submodule update --remote --merge
+
 # Run all commend in the local environment
 all:
     just clean
