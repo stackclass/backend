@@ -124,9 +124,12 @@ impl PipelineService {
         let params = HashMap::from([
             ("REPO_URL", format!("{git_server_endpoint}/{owner}/{repo}.git")),
             ("REPO_REF", "main".to_string()),
-            ("COURSE_IMAGE", format!("{docker_registry_endpoint}/{owner}/{repo}:latest")),
+            ("COURSE_IMAGE", format!("{docker_registry_endpoint}/library/{owner}-{repo}:latest")),
             ("TESTER_IMAGE", format!("ghcr.io/stackclass/{repo}-tester")),
-            ("TEST_IMAGE", format!("{docker_registry_endpoint}/{owner}/{repo}-test:latest")),
+            (
+                "TEST_IMAGE",
+                format!("{docker_registry_endpoint}/library/{owner}-{repo}-test:latest"),
+            ),
             ("COMMAND", format!("/app/{repo}-tester")),
             ("TEST_CASES_JSON", cases),
             ("DEBUG_MODE", "false".to_string()),
@@ -178,7 +181,7 @@ fn resource(
         "params": params,
         "workspaces": [
           {
-            "name": "context",
+            "name": "shared-workspace",
             "volumeClaimTemplate": {
               "spec": {
                 "accessModes": [
