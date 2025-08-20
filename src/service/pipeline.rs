@@ -201,9 +201,9 @@ fn resource(
             }
           },
           {
-            "name": "docker-config",
+            "name": "docker-credentials",
             "secret": {
-              "secretName": "docker-config"
+              "secretName": "docker-credentials"
             }
           }
         ]
