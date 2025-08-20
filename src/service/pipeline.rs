@@ -178,6 +178,11 @@ fn resource(
         "pipelineRef": {
           "name": "course-test-pipeline"
         },
+        "podTemplate": {
+            "securityContext": {
+              "fsGroup": 65532
+            }
+        },
         "params": params,
         "workspaces": [
           {
