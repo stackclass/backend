@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use tracing::debug;
-
 use crate::{
     database::Database,
     model::{JsonWebKey, UserModel},
@@ -26,7 +24,6 @@ pub struct UserRepository;
 impl UserRepository {
     /// Fetch all JSON Web Keys (JWKS) from the database.
     pub async fn find_all_json_web_keys(db: &Database) -> Result<Vec<JsonWebKey>> {
-        debug!("Fetching all JSON Web Keys (JWKS) from the database");
         let keys =
             sqlx::query_as::<_, JsonWebKey>("SELECT * FROM jwks").fetch_all(db.pool()).await?;
         Ok(keys)

@@ -12,12 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use axum::body::Body;
 use gitea_client::GiteaClient;
-use hyper_util::{
-    client::legacy::{Client, connect::HttpConnector},
-    rt::TokioExecutor,
-};
+use reqwest::Client;
 
 use crate::{config::Config, database::Database, errors::Result};
 
@@ -36,7 +32,7 @@ pub struct Context {
     pub k8s: kube::Client,
 
     /// HTTP client for making external requests
-    pub http: Client<HttpConnector, Body>,
+    pub http: Client,
 }
 
 impl Context {
@@ -48,7 +44,7 @@ impl Context {
             config.git_server_password.clone(),
         );
         let k8s = kube::Client::try_default().await?;
-        let http = Client::builder(TokioExecutor::new()).build_http();
+        let http = Client::new();
 
         Ok(Context { config, database, git, k8s, http })
     }

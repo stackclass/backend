@@ -15,13 +15,12 @@
 use std::sync::Arc;
 
 use axum::{
-    body::Body,
+    body::{self, Body},
     extract::{Path, State},
     http::{Request, StatusCode, Uri, header},
-    response::IntoResponse,
+    response::{IntoResponse, Response},
 };
-use base64::{Engine, engine::general_purpose::STANDARD as Base64};
-use tracing::{debug, error, warn};
+use tracing::{error, info, trace, warn};
 use uuid::Uuid;
 
 use crate::{
@@ -36,11 +35,9 @@ use crate::{
 /// This function handles authentication and routing for Git operations.
 pub async fn proxy(
     State(ctx): State<Arc<Context>>,
-    Path((uuid, path)): Path<(Uuid, String)>,
-    mut req: Request<Body>,
+    Path((uuid, _)): Path<(Uuid, String)>,
+    req: Request<Body>,
 ) -> impl IntoResponse {
-    debug!(%uuid, %path, "Proxying Git request");
-
     // Look up repository information by UUID (user course ID)
     // Return NOT_FOUND if repository is invalid or doesn't exist
     let (owner, repo, email) = lookup(&ctx.database, &uuid).await.ok_or_else(|| {
@@ -51,24 +48,62 @@ pub async fn proxy(
     let Config { git_server_endpoint, auth_secret, .. } = &ctx.config;
 
     // Construct the URI for the Git server request to Gitea backend.
-    let sanitized_path = path.trim_start_matches('/');
-    let uri_str = format!("{git_server_endpoint}/{owner}/{repo}.git/{}", sanitized_path);
-    *req.uri_mut() = Uri::try_from(uri_str).map_err(|e| {
-        error!(error = %e, "Failed to construct URI for proxy destination");
+    let trimmed = strip_uuid_prefix(req.uri(), &uuid);
+    let url = format!("{git_server_endpoint}/{owner}/{repo}.git{trimmed}");
+    let url = reqwest::Url::parse(&url).map_err(|e| {
+        error!(error = %e, "Failed to parse URI for proxy destination");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+    info!(url = %url, "Forwarding to Git server");
+
+    // Convert axum Request to reqwest Request
+    let (mut parts, body) = req.into_parts();
+    let body_bytes = body::to_bytes(body, usize::MAX).await.map_err(|e| {
+        error!(error = %e, "Failed to read request body");
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
-    // Generate a password for the user's email using the auth secret and then
-    // construct the Basic Auth header value for the Git server request.
+    // Remove the original host header
+    parts.headers.remove(header::HOST);
     let password = crypto::password(&email, auth_secret);
-    let credentials = Base64.encode(format!("{owner}:{password}"));
-    let auth_header_value = format!("Basic {credentials}").parse().unwrap();
-    req.headers_mut().insert(header::AUTHORIZATION, auth_header_value);
 
-    debug!(uri = %req.uri(), "Forwarding to Git server");
-    ctx.http.request(req).await.map_err(|e| {
+    let request = ctx
+        .http
+        .request(parts.method, url)
+        .headers(parts.headers)
+        .basic_auth(owner, Some(password))
+        .body(body_bytes.to_vec())
+        .build()
+        .map_err(|e| {
+            error!(error = %e, "Failed to build reqwest request");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    trace!(?request, "Built client request for Git server");
+
+    // Execute the request
+    let response = ctx.http.execute(request).await.map_err(|e| {
         error!(error = %e, "Git server request failed");
         StatusCode::BAD_GATEWAY
+    })?;
+    trace!(?response, "Received response from Git server");
+
+    // Convert reqwest Response to axum Response
+    let status = response.status();
+    let headers = response.headers().clone();
+    let body = response.bytes().await.map_err(|e| {
+        error!(error = %e, "Failed to read response body");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+    trace!(body = ?String::from_utf8_lossy(&body), "Git server response");
+
+    let mut response_builder = Response::builder().status(status);
+    for (key, value) in headers.iter() {
+        response_builder = response_builder.header(key, value);
+    }
+
+    response_builder.body(Body::from(body)).map_err(|e| {
+        error!(error = %e, "Failed to build response");
+        StatusCode::INTERNAL_SERVER_ERROR
     })
 }
 
@@ -78,4 +113,14 @@ async fn lookup(db: &Database, uuid: &Uuid) -> Option<(String, String, String)> 
     let user = UserRepository::get_by_id(db, &course.user_id).await.ok()?;
 
     Some((user.username(), course.course_slug, user.email))
+}
+
+/// Strip the leading "/{uuid}" from a request URI and return the remaining path+query.
+/// For example:
+///   input:  "/5a0e.../info/refs?service=git-receive-pack"
+///   output: "/info/refs?service=git-receive-pack"
+fn strip_uuid_prefix(uri: &Uri, uuid: &Uuid) -> String {
+    let path_and_query = uri.path_and_query().map(|pq| pq.as_str()).unwrap_or("");
+    let prefix = format!("/{}", uuid);
+    path_and_query.strip_prefix(&prefix).unwrap_or(path_and_query).to_string()
 }

@@ -31,7 +31,7 @@ use jsonwebtoken::{
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tokio::sync::{OnceCell, RwLock};
-use tracing::{debug, error};
+use tracing::{debug, error, info};
 
 use crate::{context::Context, errors::AutoIntoResponse, repository::UserRepository};
 
@@ -41,6 +41,7 @@ static KEYS: OnceCell<Arc<RwLock<HashMap<String, DecodingKey>>>> = OnceCell::con
 /// Loads JSON Web Keys (JWKs) from the database and converts them into `DecodingKey` instances.
 /// Returns a `HashMap` mapping key IDs to their corresponding `DecodingKey`.
 async fn load_keys(ctx: Arc<Context>) -> Result<HashMap<String, DecodingKey>, ClaimsError> {
+    info!("Fetching all JSON Web Keys (JWKS) from the database");
     let keys = UserRepository::find_all_json_web_keys(&ctx.database).await.map_err(|e| {
         error!("Failed to load JSON web keys: {}", e);
         ClaimsError::KeyLoadFailure
