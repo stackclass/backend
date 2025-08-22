@@ -12,14 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::sync::Arc;
+use std::{io::Error, sync::Arc};
 
 use axum::{
-    body::{self, Body},
+    body::Body,
     extract::{Path, State},
     http::{Request, StatusCode, Uri, header},
     response::{IntoResponse, Response},
 };
+use bytes::Bytes;
+use futures_util::stream::TryStreamExt;
 use tracing::{error, info, trace, warn};
 use uuid::Uuid;
 
@@ -46,6 +48,7 @@ pub async fn proxy(
     })?;
 
     let Config { git_server_endpoint, auth_secret, .. } = &ctx.config;
+    let password = crypto::password(&email, auth_secret);
 
     // Construct the URI for the Git server request to Gitea backend.
     let trimmed = strip_uuid_prefix(req.uri(), &uuid);
@@ -56,23 +59,25 @@ pub async fn proxy(
     })?;
     info!(url = %url, "Forwarding to Git server");
 
-    // Convert axum Request to reqwest Request
+    // Convert axum Request to reqwest Request with streaming body
     let (mut parts, body) = req.into_parts();
-    let body_bytes = body::to_bytes(body, usize::MAX).await.map_err(|e| {
-        error!(error = %e, "Failed to read request body");
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
 
     // Remove the original host header
     parts.headers.remove(header::HOST);
-    let password = crypto::password(&email, auth_secret);
+
+    // Convert axum Body to a stream of bytes for reqwest
+    let stream = body.into_data_stream().map_ok(Bytes::from).map_err(|e| {
+        error!(error = %e, "Failed to convert body to stream");
+        Error::other("Body conversion error")
+    });
+    let body = reqwest::Body::wrap_stream(stream);
 
     let request = ctx
         .http
         .request(parts.method, url)
         .headers(parts.headers)
         .basic_auth(owner, Some(password))
-        .body(body_bytes.to_vec())
+        .body(body)
         .build()
         .map_err(|e| {
             error!(error = %e, "Failed to build reqwest request");
@@ -80,28 +85,24 @@ pub async fn proxy(
         })?;
     trace!(?request, "Built client request for Git server");
 
-    // Execute the request
+    // Execute the request and get streaming response
     let response = ctx.http.execute(request).await.map_err(|e| {
         error!(error = %e, "Git server request failed");
         StatusCode::BAD_GATEWAY
     })?;
     trace!(?response, "Received response from Git server");
 
-    // Convert reqwest Response to axum Response
+    // Convert reqwest Response to axum Response with streaming body
     let status = response.status();
     let headers = response.headers().clone();
-    let body = response.bytes().await.map_err(|e| {
-        error!(error = %e, "Failed to read response body");
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
-    trace!(body = ?String::from_utf8_lossy(&body), "Git server response");
+    let body = Body::from_stream(response.bytes_stream());
 
     let mut response_builder = Response::builder().status(status);
     for (key, value) in headers.iter() {
         response_builder = response_builder.header(key, value);
     }
 
-    response_builder.body(Body::from(body)).map_err(|e| {
+    response_builder.body(body).map_err(|e| {
         error!(error = %e, "Failed to build response");
         StatusCode::INTERNAL_SERVER_ERROR
     })
