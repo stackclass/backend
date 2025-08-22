@@ -21,7 +21,7 @@ use crate::{
     context::Context,
     database::Transaction,
     errors::{ApiError, Result},
-    model::{CourseModel, ExtensionModel, StageModel, UserCourseModel, UserModel, UserStageModel},
+    model::{CourseModel, ExtensionModel, StageModel, UserCourseModel, UserStageModel},
     repository::{CourseRepository, ExtensionRepository, StageRepository, UserRepository},
     request::{CreateUserCourseRequest, UpdateUserCourseRequest},
     response::{AttemptResponse, CourseDetailResponse, CourseResponse, UserCourseResponse},
@@ -258,10 +258,8 @@ impl CourseService {
         ctx: Arc<Context>,
         user_id: &str,
     ) -> Result<Vec<UserCourseResponse>> {
-        let user = UserRepository::get_by_id(&ctx.database, user_id).await?;
         let courses = CourseRepository::find_user_courses(&ctx.database, user_id).await?;
-
-        Ok(courses.into_iter().map(|model| to_user_course_response(&ctx, &user, model)).collect())
+        Ok(courses.into_iter().map(|model| to_response(&ctx, model)).collect())
     }
 
     /// Enroll a user in a course.
@@ -296,7 +294,7 @@ impl CourseService {
         // Generate Git repository from course template
         RepoService::new(ctx.clone()).generate(&user, &course.slug).await?;
 
-        Ok(to_user_course_response(&ctx, &user, user_course))
+        Ok(to_response(&ctx, user_course))
     }
 
     /// Fetch the course detail for the user.
@@ -305,10 +303,8 @@ impl CourseService {
         user_id: &str,
         slug: &str,
     ) -> Result<UserCourseResponse> {
-        let user = UserRepository::get_by_id(&ctx.database, user_id).await?;
         let user_course = CourseRepository::get_user_course(&ctx.database, user_id, slug).await?;
-
-        Ok(to_user_course_response(&ctx, &user, user_course))
+        Ok(to_response(&ctx, user_course))
     }
 
     /// Update the user course for the user.
@@ -374,17 +370,7 @@ fn calculate_total_stages(course: &Course) -> i32 {
 
 /// Converts a user course model to a response with repository URL.
 #[inline]
-fn to_user_course_response(
-    ctx: &Context,
-    user: &UserModel,
-    user_course: UserCourseModel,
-) -> UserCourseResponse {
-    let repository = format!(
-        "{}/{}/{}",
-        ctx.config.git_server_endpoint,
-        user.username(),
-        user_course.course_slug
-    );
-
+fn to_response(ctx: &Context, user_course: UserCourseModel) -> UserCourseResponse {
+    let repository = format!("{}/{}", ctx.config.git_proxy_endpoint, user_course.id);
     UserCourseResponse::from((user_course, repository))
 }

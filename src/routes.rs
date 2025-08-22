@@ -16,12 +16,12 @@ use std::sync::Arc;
 
 use axum::{
     Router,
-    routing::{delete, get, patch, post},
+    routing::{any, delete, get, patch, post},
 };
 
 use crate::{
     context::Context,
-    handler::{course, extension, stage, webhook},
+    handler::{course, extension, git, stage, webhook},
 };
 
 pub fn build() -> Router<Arc<Context>> {
@@ -55,4 +55,6 @@ pub fn build() -> Router<Arc<Context>> {
         )
         // Webhooks
         .route("/v1/webhooks/gitea", post(webhook::handle_gitea_webhook))
+        // Git Proxy
+        .route("/{uuid}/{*path}", any(git::proxy))
 }

@@ -12,16 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use axum::body::Body;
 use gitea_client::GiteaClient;
+use hyper_util::{
+    client::legacy::{Client, connect::HttpConnector},
+    rt::TokioExecutor,
+};
 
 use crate::{config::Config, database::Database, errors::Result};
 
 /// The core type through which handler functions can access common API state.
 pub struct Context {
+    /// Application configuration settings
     pub config: Config,
+
+    /// Database connection pool and operations
     pub database: Database,
+
+    /// Client for interacting with the Gitea API
     pub git: GiteaClient,
+
+    /// Kubernetes client for cluster operations
     pub k8s: kube::Client,
+
+    /// HTTP client for making external requests
+    pub http: Client<HttpConnector, Body>,
 }
 
 impl Context {
@@ -33,7 +48,8 @@ impl Context {
             config.git_server_password.clone(),
         );
         let k8s = kube::Client::try_default().await?;
+        let http = Client::builder(TokioExecutor::new()).build_http();
 
-        Ok(Context { config, database, git, k8s })
+        Ok(Context { config, database, git, k8s, http })
     }
 }

@@ -161,7 +161,7 @@ impl CourseRepository {
     }
 
     /// Find the course detail by its internal ID.
-    pub async fn get_user_course_by_id(db: &Database, id: Uuid) -> Result<UserCourseModel> {
+    pub async fn get_user_course_by_id(db: &Database, id: &Uuid) -> Result<UserCourseModel> {
         let row = sqlx::query_as::<_, UserCourseModel>(
             r#"
             SELECT

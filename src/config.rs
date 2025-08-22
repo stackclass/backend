@@ -50,6 +50,10 @@ pub struct Config {
     #[clap(long, env, value_delimiter = ',')]
     pub allowed_origin: Option<Vec<String>>,
 
+    /// Git proxy endpoint.
+    #[clap(long, env)]
+    pub git_proxy_endpoint: String,
+
     /// Git server endpoint.
     #[clap(long, env)]
     pub git_server_endpoint: String,
