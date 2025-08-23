@@ -41,7 +41,8 @@ pub struct Organization {
     /// Whether team access can be changed by repository admins.
     pub repo_admin_change_team_access: bool,
 
-    /// Username of the organization. [Deprecated]
+    /// Username of the organization.
+    #[deprecated(note = "Use `name` instead.")]
     pub username: String,
 
     /// Visibility setting of the organization.
@@ -69,8 +70,9 @@ pub struct CreateOrganizationRequest {
     /// Whether team access can be changed by repository admins.
     pub repo_admin_change_team_access: Option<bool>,
 
-    /// Username of the organization.
-    pub username: String,
+    /// Name of the organization.
+    #[serde(rename = "username")]
+    pub name: String,
 
     /// Visibility setting of the organization.
     pub visibility: Option<String>,
