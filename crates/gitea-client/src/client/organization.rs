@@ -17,10 +17,30 @@ use reqwest::StatusCode;
 use crate::{
     client::GiteaClient,
     error::ClientError,
-    types::{CreateRepositoryRequest, Repository},
+    types::{CreateOrganizationRequest, CreateRepositoryRequest, Organization, Repository},
 };
 
 impl GiteaClient {
+    /// Creates a new organization.
+    ///
+    /// # Possible Responses
+    /// - 201: Organization created successfully (returns `Organization`).
+    /// - 403: Forbidden (insufficient permissions).
+    /// - 422: Validation error.
+    ///
+    /// https://docs.gitea.com/api/1.24/#tag/organization/operation/orgCreate
+    pub async fn create_organization(
+        &self,
+        request: CreateOrganizationRequest,
+    ) -> Result<Organization, ClientError> {
+        let response = self.post("orgs", &request).await?;
+
+        match response.status() {
+            StatusCode::CREATED => Ok(response.json::<Organization>().await?),
+            _ => Err(ClientError::from_response(response).await),
+        }
+    }
+
     /// Creates a new repository in an organization.
     ///
     /// # Possible Responses

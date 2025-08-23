@@ -41,7 +41,7 @@ pub struct Organization {
     /// Whether team access can be changed by repository admins.
     pub repo_admin_change_team_access: bool,
 
-    /// Username of the organization.
+    /// Username of the organization. [Deprecated]
     pub username: String,
 
     /// Visibility setting of the organization.
@@ -49,4 +49,32 @@ pub struct Organization {
 
     /// Website URL of the organization.
     pub website: String,
+}
+
+/// Request body for creating an organization.
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub struct CreateOrganizationRequest {
+    /// Description of the organization.
+    pub description: Option<String>,
+
+    /// Email address of the organization.
+    pub email: Option<String>,
+
+    /// Full name of the organization.
+    pub full_name: Option<String>,
+
+    /// Physical location of the organization.
+    pub location: Option<String>,
+
+    /// Whether team access can be changed by repository admins.
+    pub repo_admin_change_team_access: Option<bool>,
+
+    /// Username of the organization.
+    pub username: String,
+
+    /// Visibility setting of the organization.
+    pub visibility: Option<String>,
+
+    /// Website URL of the organization.
+    pub website: Option<String>,
 }
