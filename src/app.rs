@@ -20,24 +20,32 @@ use tracing::{error, info};
 
 use crate::{context::Context, extractor, routes, service::RepoService, swagger};
 
+/// Initializes essential program components including database migrations,
+/// key refresh, organization setup, and webhook configuration.
+async fn initialize(ctx: Arc<Context>) -> Result<(), Box<dyn std::error::Error>> {
+    // Runs database migrations from migrations folder
+    ctx.database.migrate().await?;
+
+    // Refresh keys from database and update cache
+    extractor::refresh_keys(ctx.clone()).await?;
+
+    let org = &ctx.config.namespace;
+    let repo_service = RepoService::new(ctx.clone());
+
+    // Fetch required organization and setup webhook for it.
+    repo_service.fetch_organization(org).await?;
+    repo_service.setup_webhook(org).await?;
+
+    Ok(())
+}
+
+/// Initializes the application and starts the HTTP server.
 pub async fn run(ctx: Arc<Context>) {
     let port = ctx.config.port;
 
-    // Runs database migrations from migrations folder
-    if let Err(e) = ctx.database.migrate().await {
-        error!("Failed to run database migrations: {}", e);
-        std::process::exit(1);
-    }
-
-    // Refresh keys from database and update cache
-    if let Err(e) = extractor::refresh_keys(ctx.clone()).await {
-        error!("Failed to initialize keys: {}", e);
-        std::process::exit(1);
-    }
-
-    // Setup webhook for repository events
-    if let Err(e) = RepoService::new(ctx.clone()).setup_webhook().await {
-        error!("Failed to setup webhook: {}", e);
+    // Initialize essential program components
+    if let Err(e) = initialize(ctx.clone()).await {
+        error!("Failed to initialize application: {}", e);
         std::process::exit(1);
     }
 

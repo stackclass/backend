@@ -143,10 +143,9 @@ impl RepoService {
         Ok(())
     }
 
-    #[allow(dead_code)]
     /// Gets a organization by name,
     /// or creates the organization if it doesn't exist.
-    async fn fetch_organization(&self, name: &str) -> Result<Organization> {
+    pub async fn fetch_organization(&self, name: &str) -> Result<Organization> {
         let organization = match self.ctx.git.get_organization(name).await {
             Ok(organization) => organization,
             Err(ClientError::NotFound) => {
@@ -204,14 +203,13 @@ impl RepoService {
         Ok(repository)
     }
 
-    /// Creates a new admin hook if it doesn't already exist.
-    pub async fn setup_webhook(&self) -> Result<()> {
+    /// Setup the webhook for the organization
+    pub async fn setup_webhook(&self, org: &str) -> Result<()> {
         let url = format!("{}/v1/webhooks/gitea", self.ctx.config.webhook_endpoint);
         let req = CreateHookRequest {
             active: true,
             branch_filter: Some("main".to_string()),
             config: HashMap::from([
-                ("is_system_webhook".to_string(), "true".to_string()),
                 ("content_type".to_string(), "json".to_string()),
                 ("url".to_string(), url.clone()),
             ]),
@@ -221,12 +219,12 @@ impl RepoService {
         };
 
         // List all existing hooks
-        let hooks = self.ctx.git.list_system_hooks(HookType::System).await?;
+        let hooks = self.ctx.git.list_org_hooks(org).await?;
 
         // Check if a hook with the same configuration already exists
         if !hooks.iter().any(|hook| matching(hook, &req)) {
-            info!("Setting up the global webhook in SCM...");
-            self.ctx.git.create_admin_hook(req).await?;
+            info!("Setting up the webhook for the organization {org}.");
+            self.ctx.git.create_org_hook(org, req).await?;
         }
 
         Ok(())
