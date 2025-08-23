@@ -22,16 +22,10 @@ use axum::{
 };
 use bytes::Bytes;
 use futures_util::stream::TryStreamExt;
-use tracing::{error, info, trace, warn};
+use tracing::{error, info, trace};
 use uuid::Uuid;
 
-use crate::{
-    config::Config,
-    context::Context,
-    database::Database,
-    repository::{CourseRepository, UserRepository},
-    utils::crypto,
-};
+use crate::{config::Config, context::Context};
 
 /// Proxies a Git request to the appropriate repository in the Git server.
 /// This function handles authentication and routing for Git operations.
@@ -40,19 +34,11 @@ pub async fn proxy(
     Path((uuid, _)): Path<(Uuid, String)>,
     req: Request<Body>,
 ) -> impl IntoResponse {
-    // Look up repository information by UUID (user course ID)
-    // Return NOT_FOUND if repository is invalid or doesn't exist
-    let (owner, repo, email) = lookup(&ctx.database, &uuid).await.ok_or_else(|| {
-        warn!(%uuid, "Git repository not found for UUID");
-        StatusCode::NOT_FOUND
-    })?;
-
-    let Config { git_server_endpoint, auth_secret, .. } = &ctx.config;
-    let password = crypto::password(&email, auth_secret);
-
     // Construct the URI for the Git server request to Gitea backend.
     let trimmed = strip_uuid_prefix(req.uri(), &uuid);
-    let url = format!("{git_server_endpoint}/{owner}/{repo}.git{trimmed}");
+    let Config { git_server_endpoint, namespace, .. } = &ctx.config;
+    let url = format!("{git_server_endpoint}/{namespace}/{uuid}.git{trimmed}");
+
     let url = reqwest::Url::parse(&url).map_err(|e| {
         error!(error = %e, "Failed to parse URI for proxy destination");
         StatusCode::INTERNAL_SERVER_ERROR
@@ -76,7 +62,12 @@ pub async fn proxy(
         .http
         .request(parts.method, url)
         .headers(parts.headers)
-        .basic_auth(owner, Some(password))
+        // All Gitea operations are currently performed using the admin account.
+        // @TODO: Consider switching to PAD for enhanced security in the future.
+        .basic_auth(
+            &ctx.config.git_server_username,       // username
+            Some(&ctx.config.git_server_password), // password
+        )
         .body(body)
         .build()
         .map_err(|e| {
@@ -106,14 +97,6 @@ pub async fn proxy(
         error!(error = %e, "Failed to build response");
         StatusCode::INTERNAL_SERVER_ERROR
     })
-}
-
-/// Look up the repository information by UUID
-async fn lookup(db: &Database, uuid: &Uuid) -> Option<(String, String, String)> {
-    let course = CourseRepository::get_user_course_by_id(db, uuid).await.ok()?;
-    let user = UserRepository::get_by_id(db, &course.user_id).await.ok()?;
-
-    Some((user.username(), course.course_slug, user.email))
 }
 
 /// Strip the leading "/{uuid}" from a request URI and return the remaining path+query.
