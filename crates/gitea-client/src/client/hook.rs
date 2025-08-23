@@ -46,6 +46,41 @@ impl GiteaClient {
         self.list_hooks(&format!("admin/hooks?type={hook_type}")).await
     }
 
+    /// Creates a new hook for an organization.
+    ///
+    /// # Arguments
+    /// * `org` - The name of the organization
+    /// * `request` - The hook creation request payload
+    ///
+    /// # Possible Responses
+    /// - 201: Hook created successfully (returns `Hook`)
+    /// - 404: Organization not found
+    ///
+    /// https://docs.gitea.com/api/1.24/#tag/organization/operation/orgCreateHook
+    #[inline]
+    pub async fn create_org_hook(
+        &self,
+        org: &str,
+        req: CreateHookRequest,
+    ) -> Result<Hook, ClientError> {
+        self.create_hook(&format!("orgs/{org}/hooks"), req).await
+    }
+
+    /// Lists all webhooks for an organization.
+    ///
+    /// # Arguments
+    /// * `org` - The name of the organization
+    ///
+    /// # Possible Responses
+    /// - 200: List of organization hooks returned successfully (returns `Vec<Hook>`).
+    /// - 404: Organization not found
+    ///
+    /// https://docs.gitea.com/api/1.24/#tag/organization/operation/orgListHooks
+    #[inline]
+    pub async fn list_org_hooks(&self, org: &str) -> Result<Vec<Hook>, ClientError> {
+        self.list_hooks(&format!("orgs/{org}/hooks")).await
+    }
+
     /// Creates a new hook at the specified path.
     ///
     /// This is an internal helper function used by both admin and repository hook creation.
