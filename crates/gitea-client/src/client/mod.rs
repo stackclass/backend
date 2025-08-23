@@ -17,11 +17,7 @@ pub mod organization;
 pub mod repository;
 pub mod user;
 
-use base64::Engine;
-use reqwest::{
-    Client, Error, Response,
-    header::{AUTHORIZATION, HeaderMap},
-};
+use reqwest::{Client, Error, Response};
 use serde::Serialize;
 
 /// A client for interacting with the Gitea API.
@@ -43,30 +39,27 @@ impl GiteaClient {
         }
     }
 
-    /// Builds the headers with Basic Auth.
-    pub(crate) fn build_headers(&self) -> HeaderMap {
-        let mut headers = HeaderMap::new();
-        let engine = base64::engine::general_purpose::STANDARD;
-        let encoded = engine.encode(format!("{}:{}", self.username, self.password));
-        headers.insert(AUTHORIZATION, format!("Basic {encoded}").parse().unwrap());
-        headers
-    }
-
     /// Sends a GET request.
     pub(crate) async fn get(&self, path: &str) -> Result<Response, Error> {
         let url = format!("{}/{}", self.base_url, path);
-        self.client.get(&url).headers(self.build_headers()).send().await
+        self.client.get(&url).basic_auth(&self.username, Some(&self.password)).send().await
     }
 
     /// Sends a POST request with a JSON body.
     pub(crate) async fn post<T: Serialize>(&self, path: &str, body: &T) -> Result<Response, Error> {
         let url = format!("{}/{}", self.base_url, path);
-        self.client.post(&url).headers(self.build_headers()).json(body).send().await
+        self.client
+            .post(&url)
+            .basic_auth(&self.username, Some(&self.password))
+            .json(body)
+            .send()
+            .await
     }
 
     /// Sends a DELETE request.
+    #[allow(dead_code)]
     pub(crate) async fn delete(&self, path: &str) -> Result<Response, Error> {
         let url = format!("{}/{}", self.base_url, path);
-        self.client.delete(&url).headers(self.build_headers()).send().await
+        self.client.delete(&url).basic_auth(&self.username, Some(&self.password)).send().await
     }
 }
