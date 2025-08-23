@@ -14,6 +14,7 @@
 
 use std::{collections::HashMap, sync::Arc};
 
+use fs_extra::dir::CopyOptions;
 use gitea_client::{ClientError, types::*};
 use tracing::{debug, info};
 
@@ -41,30 +42,22 @@ impl RepoService {
     /// Initializes a template repository in the Source Code Management system
     /// for this course. The repository will contain the course's template
     /// source code.
-    pub async fn init(&self, template: &str, repository: &str) -> Result<()> {
+    pub async fn init(&self, template: &str, template_url: &str) -> Result<()> {
+        let org = &self.ctx.config.namespace;
+
         // Fetch or create the template repository in SCM
-        self.fetch_template(template).await?;
-        debug!("Successfully created template repository in SCM: {:?}", template);
+        self.fetch_template(org, template).await?;
 
         // Commits the template source code to the template repository
-        self.commit(repository, TEMPLATE_OWNER, template).await?;
+        self.commit(template_url, org, template).await?;
 
         Ok(())
     }
 
     /// Commits the template source code to a specified repository.
     async fn commit(&self, template_url: &str, owner: &str, repo: &str) -> Result<()> {
-        let Config {
-            cache_dir,
-            github_token,
-            git_server_endpoint,
-            git_committer_name,
-            git_committer_email,
-            auth_secret,
-            ..
-        } = &self.ctx.config;
-
         // Fetch and validate the template directory
+        let Config { cache_dir, github_token, .. } = &self.ctx.config;
         let storage = StorageService::new(cache_dir, github_token)?;
         let dir = storage.fetch(template_url).await?;
         let template_dir = cache_dir.join(dir).join("template");
@@ -77,7 +70,7 @@ impl RepoService {
         let workspace = temp_dir.path();
 
         // Copy template contents to the workspace directory
-        let copy_options = fs_extra::dir::CopyOptions::new().content_only(true).copy_inside(true);
+        let copy_options = CopyOptions::new().content_only(true).copy_inside(true);
         fs_extra::dir::copy(&template_dir, workspace, &copy_options)
             .map_err(|e| StorageError::CopyFiles(e.to_string()))?;
 
@@ -85,21 +78,25 @@ impl RepoService {
         git::init(workspace, "main").await?;
 
         // Configure Git user information
-        git::config(workspace, "user.name", git_committer_name).await?;
-        git::config(workspace, "user.email", git_committer_email).await?;
+        git::config(workspace, "user.name", &self.ctx.config.git_committer_name).await?;
+        git::config(workspace, "user.email", &self.ctx.config.git_committer_email).await?;
 
         // Perform Git operations to commit the source code
         git::stage(workspace).await?;
         git::commit(workspace, "Initial commit from template").await?;
 
         // ... and push to the remote repository
-        let base_url = format!("{git_server_endpoint}/{owner}/{repo}.git");
-        let password = crypto::password(git_committer_email, auth_secret);
-        let remote_url = url::authenticate(&base_url, owner, &password)?;
+        let endpoint = &self.ctx.config.git_server_endpoint;
+        let base_url = format!("{endpoint}/{owner}/{repo}.git");
+        let remote_url = url::authenticate(
+            &base_url,
+            &self.ctx.config.git_server_username,
+            &self.ctx.config.git_server_password,
+        )?;
         git::add_remote(workspace, "origin", &remote_url).await?;
         git::push(workspace, "origin", "main").await?;
 
-        debug!("Successfully pushed template contents to repository: {}", base_url);
+        info!("Successfully pushed template contents to repository: {}", base_url);
         Ok(())
     }
 
@@ -150,31 +147,22 @@ impl RepoService {
 
     /// Gets a template repository by name,
     /// or creates the repository if it doesn't exist.
-    async fn fetch_template(&self, repo: &str) -> Result<Repository> {
-        let Config { git_committer_email, .. } = &self.ctx.config;
-
-        self.fetch_user(
-            TEMPLATE_OWNER,
-            CreateUserRequest {
-                email: git_committer_email.clone(),
-                username: TEMPLATE_OWNER.to_string(),
-                ..Default::default()
-            },
-        )
-        .await?;
-
-        match self.ctx.git.get_repository(TEMPLATE_OWNER, repo).await {
-            Ok(repo) => Ok(repo),
+    async fn fetch_template(&self, org: &str, repo: &str) -> Result<Repository> {
+        let repository = match self.ctx.git.get_repository(org, repo).await {
+            Ok(repo) => repo,
             Err(ClientError::NotFound) => {
                 let req = CreateRepositoryRequest {
                     name: repo.to_string(),
                     template: Some(true),
                     ..Default::default()
                 };
-                Ok(self.ctx.git.create_repository_for_user(TEMPLATE_OWNER, req).await?)
+                self.ctx.git.create_org_repository(org, req).await?
             }
-            Err(e) => Err(e.into()),
-        }
+            Err(e) => return Err(e.into()),
+        };
+
+        info!("Successfully created template repository in SCM: {:?}", repo);
+        Ok(repository)
     }
 
     /// Gets a repository by username and template name,
