@@ -143,11 +143,28 @@ impl RepoService {
         Ok(())
     }
 
+    #[allow(dead_code)]
+    /// Gets a organization by name,
+    /// or creates the organization if it doesn't exist.
+    async fn fetch_organization(&self, name: &str) -> Result<Organization> {
+        let organization = match self.ctx.git.get_organization(name).await {
+            Ok(organization) => organization,
+            Err(ClientError::NotFound) => {
+                let req = CreateOrganizationRequest::new(name);
+                self.ctx.git.create_organization(req).await?
+            }
+            Err(e) => return Err(e.into()),
+        };
+
+        info!("Successfully created organization: {name}");
+        Ok(organization)
+    }
+
     /// Gets a template repository by name,
     /// or creates the repository if it doesn't exist.
     async fn fetch_template(&self, org: &str, repo: &str) -> Result<Repository> {
         let repository = match self.ctx.git.get_repository(org, repo).await {
-            Ok(repo) => repo,
+            Ok(repository) => repository,
             Err(ClientError::NotFound) => {
                 let req = CreateRepositoryRequest {
                     name: repo.to_string(),
@@ -168,7 +185,7 @@ impl RepoService {
         let org = &self.ctx.config.namespace;
 
         let repository = match self.ctx.git.get_repository(org, repo).await {
-            Ok(repo) => repo,
+            Ok(repository) => repository,
             Err(ClientError::NotFound) => {
                 let req = GenerateRepositoryRequest {
                     git_content: Some(true),
