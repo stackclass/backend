@@ -122,9 +122,9 @@ impl PipelineService {
         let params = HashMap::from([
             ("REPO_URL", format!("{git_endpoint}/{org}/{name}.git")),
             ("REPO_REF", "main".to_string()),
-            ("COURSE_IMAGE", format!("{registry}/library/{org}-{name}:latest")),
+            ("COURSE_IMAGE", format!("{registry}/{org}/{name}:latest")),
             ("TESTER_IMAGE", format!("ghcr.io/stackclass/{course}-tester")),
-            ("TEST_IMAGE", format!("{registry}/library/{org}-{name}-test:latest")),
+            ("TEST_IMAGE", format!("{registry}/{org}/{name}-test:latest")),
             ("COMMAND", format!("/app/{course}-tester")),
             ("TEST_CASES_JSON", cases),
             ("DEBUG_MODE", "false".to_string()),

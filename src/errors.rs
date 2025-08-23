@@ -80,6 +80,9 @@ pub enum ApiError {
 
     #[error("Invalid UUID: {0}")]
     InvalidUuid(#[from] uuid::Error),
+
+    #[error("Harbor client error: {0}")]
+    HarborClientError(#[from] harbor_client::ClientError),
 }
 
 impl From<sqlx::Error> for ApiError {
@@ -113,6 +116,7 @@ impl From<&ApiError> for StatusCode {
             ApiError::SerializationError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::UrlParseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::InvalidUuid(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::HarborClientError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }

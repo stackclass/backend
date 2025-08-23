@@ -18,7 +18,12 @@ use axum::http::header::{self, HeaderValue};
 use tower_http::cors::{Any, CorsLayer};
 use tracing::{error, info};
 
-use crate::{context::Context, extractor, routes, service::RepoService, swagger};
+use crate::{
+    context::Context,
+    extractor, routes,
+    service::{RegistryService, RepoService},
+    swagger,
+};
 
 /// Initializes essential program components including database migrations,
 /// key refresh, organization setup, and webhook configuration.
@@ -29,12 +34,15 @@ async fn initialize(ctx: Arc<Context>) -> Result<(), Box<dyn std::error::Error>>
     // Refresh keys from database and update cache
     extractor::refresh_keys(ctx.clone()).await?;
 
-    let org = &ctx.config.namespace;
-    let repo_service = RepoService::new(ctx.clone());
+    let namespace = &ctx.config.namespace;
 
-    // Fetch required organization and setup webhook for it.
-    repo_service.fetch_organization(org).await?;
-    repo_service.setup_webhook(org).await?;
+    // Fetch required organization and setup webhook for it
+    let repo_service = RepoService::new(ctx.clone());
+    repo_service.fetch_organization(namespace).await?;
+    repo_service.setup_webhook(namespace).await?;
+
+    // Ensure the namespace exists as a project in Harbor
+    RegistryService::ensure_project(&ctx, namespace).await?;
 
     Ok(())
 }

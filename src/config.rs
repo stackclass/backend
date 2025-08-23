@@ -85,4 +85,12 @@ pub struct Config {
     /// Docker registry endpoint.
     #[clap(long, env)]
     pub docker_registry_endpoint: String,
+
+    /// Username for authenticating with the harbor server.
+    #[clap(long, env)]
+    pub docker_registry_username: String,
+
+    /// Password for authenticating with the harbor server.
+    #[clap(long, env)]
+    pub docker_registry_password: String,
 }

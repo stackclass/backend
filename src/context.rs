@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use gitea_client::GiteaClient;
+use harbor_client::HarborClient;
 use reqwest::Client;
 
 use crate::{config::Config, database::Database, errors::Result};
@@ -28,6 +29,9 @@ pub struct Context {
     /// Client for interacting with the Gitea API
     pub git: GiteaClient,
 
+    /// Client for interacting with the Harbor API
+    pub harbor: HarborClient,
+
     /// Kubernetes client for cluster operations
     pub k8s: kube::Client,
 
@@ -38,14 +42,24 @@ pub struct Context {
 impl Context {
     pub async fn new(config: Config) -> Result<Context> {
         let database = Database::new(&config.database_url).await?;
+
+        // Initialize Gitea client for source control operations
         let git = GiteaClient::new(
             config.git_server_endpoint.clone(),
             config.git_server_username.clone(),
             config.git_server_password.clone(),
         );
+
+        // Initialize Harbor client for container registry operations
+        let harbor = HarborClient::new(
+            config.docker_registry_endpoint.clone(),
+            config.docker_registry_username.clone(),
+            config.docker_registry_password.clone(),
+        );
+
         let k8s = kube::Client::try_default().await?;
         let http = Client::new();
 
-        Ok(Context { config, database, git, k8s, http })
+        Ok(Context { config, database, git, harbor, k8s, http })
     }
 }
