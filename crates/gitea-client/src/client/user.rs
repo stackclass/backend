@@ -16,7 +16,7 @@ use reqwest::StatusCode;
 
 use crate::{
     client::GiteaClient,
-    error::ClientError,
+    error::{ClientError, Result},
     types::{CreateUserRequest, User},
 };
 
@@ -28,7 +28,7 @@ impl GiteaClient {
     /// - 404: User not found.
     ///
     /// https://docs.gitea.com/api/1.24/#tag/user/operation/userGet
-    pub async fn get_user(&self, username: &str) -> Result<User, ClientError> {
+    pub async fn get_user(&self, username: &str) -> Result<User> {
         let response = self.get(&format!("users/{username}")).await?;
 
         match response.status() {
@@ -46,7 +46,7 @@ impl GiteaClient {
     /// - 422: Input validation failed.
     ///
     /// https://docs.gitea.com/api/1.24/#tag/admin/operation/adminCreateUser
-    pub async fn create_user(&self, request: CreateUserRequest) -> Result<User, ClientError> {
+    pub async fn create_user(&self, request: CreateUserRequest) -> Result<User> {
         let response = self.post("admin/users", &request).await?;
 
         match response.status() {

@@ -16,7 +16,7 @@ use reqwest::StatusCode;
 
 use crate::{
     client::GiteaClient,
-    error::ClientError,
+    error::{ClientError, Result},
     types::{CreateOrganizationRequest, CreateRepositoryRequest, Organization, Repository},
 };
 
@@ -32,7 +32,7 @@ impl GiteaClient {
     pub async fn create_organization(
         &self,
         request: CreateOrganizationRequest,
-    ) -> Result<Organization, ClientError> {
+    ) -> Result<Organization> {
         let response = self.post("orgs", &request).await?;
 
         match response.status() {
@@ -48,7 +48,7 @@ impl GiteaClient {
     /// - 404: Organization not found.
     ///
     /// https://docs.gitea.com/api/1.24/#tag/organization/operation/orgGet
-    pub async fn get_organization(&self, name: &str) -> Result<Organization, ClientError> {
+    pub async fn get_organization(&self, name: &str) -> Result<Organization> {
         let endpoint = format!("orgs/{name}");
         let response = self.get(&endpoint).await?;
 
@@ -71,7 +71,7 @@ impl GiteaClient {
         &self,
         org: &str,
         request: CreateRepositoryRequest,
-    ) -> Result<Repository, ClientError> {
+    ) -> Result<Repository> {
         let endpoint = format!("orgs/{org}/repos");
         let response = self.post(&endpoint, &request).await?;
 

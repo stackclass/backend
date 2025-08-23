@@ -16,7 +16,7 @@ use reqwest::StatusCode;
 
 use crate::{
     client::GiteaClient,
-    error::ClientError,
+    error::{ClientError, Result},
     types::{CreateRepositoryRequest, GenerateRepositoryRequest, Repository},
 };
 
@@ -28,7 +28,7 @@ impl GiteaClient {
     /// - 404: Repository not found.
     ///
     /// https://docs.gitea.com/api/1.24/#tag/repository/operation/repoGet
-    pub async fn get_repository(&self, owner: &str, repo: &str) -> Result<Repository, ClientError> {
+    pub async fn get_repository(&self, owner: &str, repo: &str) -> Result<Repository> {
         let endpoint = format!("repos/{owner}/{repo}");
         let response = self.get(&endpoint).await?;
 
@@ -53,7 +53,7 @@ impl GiteaClient {
         &self,
         username: &str,
         request: CreateRepositoryRequest,
-    ) -> Result<Repository, ClientError> {
+    ) -> Result<Repository> {
         let endpoint = format!("admin/users/{username}/repos");
         let response = self.post(&endpoint, &request).await?;
 
@@ -78,7 +78,7 @@ impl GiteaClient {
         template_owner: &str,
         template_repo: &str,
         request: GenerateRepositoryRequest,
-    ) -> Result<Repository, ClientError> {
+    ) -> Result<Repository> {
         let endpoint = format!("repos/{template_owner}/{template_repo}/generate");
         let response = self.post(&endpoint, &request).await?;
 

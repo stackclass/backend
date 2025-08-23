@@ -16,6 +16,8 @@ use reqwest::{Response, StatusCode};
 use serde_json::Value;
 use thiserror::Error;
 
+pub type Result<T> = std::result::Result<T, ClientError>;
+
 #[derive(Debug, Error)]
 pub enum ClientError {
     #[error("Network error: {0}")]

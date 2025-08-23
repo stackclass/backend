@@ -16,7 +16,7 @@ use reqwest::StatusCode;
 
 use crate::{
     client::GiteaClient,
-    error::ClientError,
+    error::{ClientError, Result},
     types::{CreateHookRequest, Hook, HookType},
 };
 
@@ -28,7 +28,7 @@ impl GiteaClient {
     ///
     /// https://docs.gitea.com/api/1.24/#tag/admin/operation/adminCreateHook
     #[inline]
-    pub async fn create_admin_hook(&self, request: CreateHookRequest) -> Result<Hook, ClientError> {
+    pub async fn create_admin_hook(&self, request: CreateHookRequest) -> Result<Hook> {
         self.create_hook("admin/hooks", request).await
     }
 
@@ -42,7 +42,7 @@ impl GiteaClient {
     ///
     /// https://docs.gitea.com/api/1.24/#tag/admin/operation/adminListHooks
     #[inline]
-    pub async fn list_system_hooks(&self, hook_type: HookType) -> Result<Vec<Hook>, ClientError> {
+    pub async fn list_system_hooks(&self, hook_type: HookType) -> Result<Vec<Hook>> {
         self.list_hooks(&format!("admin/hooks?type={hook_type}")).await
     }
 
@@ -58,11 +58,7 @@ impl GiteaClient {
     ///
     /// https://docs.gitea.com/api/1.24/#tag/organization/operation/orgCreateHook
     #[inline]
-    pub async fn create_org_hook(
-        &self,
-        org: &str,
-        req: CreateHookRequest,
-    ) -> Result<Hook, ClientError> {
+    pub async fn create_org_hook(&self, org: &str, req: CreateHookRequest) -> Result<Hook> {
         self.create_hook(&format!("orgs/{org}/hooks"), req).await
     }
 
@@ -77,7 +73,7 @@ impl GiteaClient {
     ///
     /// https://docs.gitea.com/api/1.24/#tag/organization/operation/orgListHooks
     #[inline]
-    pub async fn list_org_hooks(&self, org: &str) -> Result<Vec<Hook>, ClientError> {
+    pub async fn list_org_hooks(&self, org: &str) -> Result<Vec<Hook>> {
         self.list_hooks(&format!("orgs/{org}/hooks")).await
     }
 
@@ -95,7 +91,7 @@ impl GiteaClient {
     ///
     /// # Notes
     /// This is not meant to be called directly - use the appropriate public method instead.
-    async fn create_hook(&self, path: &str, req: CreateHookRequest) -> Result<Hook, ClientError> {
+    async fn create_hook(&self, path: &str, req: CreateHookRequest) -> Result<Hook> {
         let response = self.post(path, &req).await?;
 
         match response.status() {
@@ -117,7 +113,7 @@ impl GiteaClient {
     ///
     /// # Notes
     /// This is not meant to be called directly - use the appropriate public method instead.
-    async fn list_hooks(&self, path: &str) -> Result<Vec<Hook>, ClientError> {
+    async fn list_hooks(&self, path: &str) -> Result<Vec<Hook>> {
         let response = self.get(path).await?;
 
         match response.status() {
