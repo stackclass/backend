@@ -80,3 +80,9 @@ pub struct CreateOrganizationRequest {
     /// Website URL of the organization.
     pub website: Option<String>,
 }
+
+impl CreateOrganizationRequest {
+    pub fn new(name: impl ToString) -> Self {
+        Self { name: name.to_string(), ..Default::default() }
+    }
+}

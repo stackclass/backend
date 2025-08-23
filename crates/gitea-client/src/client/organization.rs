@@ -41,6 +41,23 @@ impl GiteaClient {
         }
     }
 
+    /// Gets an organization by name.
+    ///
+    /// # Possible Responses
+    /// - 200: Organization found successfully (returns `Organization`).
+    /// - 404: Organization not found.
+    ///
+    /// https://docs.gitea.com/api/1.24/#tag/organization/operation/orgGet
+    pub async fn get_organization(&self, name: &str) -> Result<Organization, ClientError> {
+        let endpoint = format!("orgs/{name}");
+        let response = self.get(&endpoint).await?;
+
+        match response.status() {
+            StatusCode::OK => Ok(response.json::<Organization>().await?),
+            _ => Err(ClientError::from_response(response).await),
+        }
+    }
+
     /// Creates a new repository in an organization.
     ///
     /// # Possible Responses
