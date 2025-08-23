@@ -13,6 +13,7 @@
 // limitations under the License.
 
 pub mod hook;
+pub mod organization;
 pub mod repository;
 pub mod user;
 
