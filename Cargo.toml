@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "crates/gitea-client",
+    "crates/harbor-client",
 ]
 resolver = "2"
 
@@ -29,6 +30,7 @@ path = "src/bin/openapi-generator.rs"
 [dependencies]
 # internal crates
 gitea-client = { path = "crates/gitea-client" }
+harbor-client = { path = "crates/harbor-client" }
 
 anyhow = "1.0.98"
 axum = { version = "0.8.4" }

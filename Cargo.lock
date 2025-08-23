@@ -291,6 +291,7 @@ dependencies = [
  "futures-util",
  "ghrepo",
  "gitea-client",
+ "harbor-client",
  "http-body-util",
  "indexmap",
  "jsonwebtoken",
@@ -1024,6 +1025,17 @@ dependencies = [
  "futures-core",
  "js-sys",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "harbor-client"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.16",
 ]
 
 [[package]]
