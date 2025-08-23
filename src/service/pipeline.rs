@@ -24,7 +24,6 @@ use tokio::time::interval;
 use tracing::debug;
 
 use crate::{
-    config::Config,
     context::Context,
     errors::{ApiError, Result},
     repository::StageRepository,
@@ -42,23 +41,23 @@ impl PipelineService {
     }
 
     /// Triggers a Tekton PipelineRun for the given repository.
-    pub async fn trigger(&self, owner: &str, repo: &str, current_stage_slug: &str) -> Result<()> {
-        debug!("Triggering PipelineRun for repository: {owner}/{repo}");
+    pub async fn trigger(&self, repo: &str, course: &str, current_stage_slug: &str) -> Result<()> {
+        debug!("Triggering PipelineRun for repository: {course} - {repo}");
 
-        let resource = self.generate(owner, repo, current_stage_slug).await?;
+        let resource = self.generate(repo, course, current_stage_slug).await?;
         self.api().create(&PostParams::default(), &resource).await?;
 
         Ok(())
     }
 
     /// Watches a PipelineRun and invokes the callback only on success.
-    pub async fn watch<F, Fut, T>(&self, owner: &str, repo: &str, callback: F) -> Result<()>
+    pub async fn watch<F, Fut, T>(&self, name: &str, callback: F) -> Result<()>
     where
         F: FnOnce() -> Fut + Send + 'static,
         Fut: Future<Output = Result<T, ApiError>> + Send + 'static,
     {
-        let name = pipeline_name(owner, repo);
         let api = self.api();
+        let name = name.to_string();
 
         tokio::spawn(async move {
             let mut interval = interval(Duration::from_secs(10));
@@ -108,43 +107,34 @@ impl PipelineService {
         )
     }
 
-    /// Generates a PipelineRun resource for the given repository.
-    async fn generate(&self, owner: &str, repo: &str, stage: &str) -> Result<DynamicObject> {
-        let Config { git_server_endpoint, docker_registry_endpoint, .. } = &self.ctx.config;
-
+    /// Generates a PipelineRun resource for the given repository name.
+    async fn generate(&self, name: &str, course: &str, stage: &str) -> Result<DynamicObject> {
         // Build test cases JSON value from all stages up to the current stage
-        let stages = StageRepository::find_stages_until(&self.ctx.database, repo, stage).await?;
+        let stages = StageRepository::find_stages_until(&self.ctx.database, course, stage).await?;
         let slugs: Vec<&str> = stages.iter().map(|stage| stage.slug.as_str()).collect();
         let cases = build_test_cases_json(&slugs);
 
-        // Define the pipeline run name
-        let name = pipeline_name(owner, repo);
+        let git_endpoint = &self.ctx.config.git_server_endpoint;
+        let registry = &self.ctx.config.docker_registry_endpoint;
+        let org = &self.ctx.config.namespace;
 
         // Define params as a HashMap and then convert it to JSON value
         let params = HashMap::from([
-            ("REPO_URL", format!("{git_server_endpoint}/{owner}/{repo}.git")),
+            ("REPO_URL", format!("{git_endpoint}/{org}/{name}.git")),
             ("REPO_REF", "main".to_string()),
-            ("COURSE_IMAGE", format!("{docker_registry_endpoint}/library/{owner}-{repo}:latest")),
-            ("TESTER_IMAGE", format!("ghcr.io/stackclass/{repo}-tester")),
-            (
-                "TEST_IMAGE",
-                format!("{docker_registry_endpoint}/library/{owner}-{repo}-test:latest"),
-            ),
-            ("COMMAND", format!("/app/{repo}-tester")),
+            ("COURSE_IMAGE", format!("{registry}/library/{org}-{name}:latest")),
+            ("TESTER_IMAGE", format!("ghcr.io/stackclass/{course}-tester")),
+            ("TEST_IMAGE", format!("{registry}/library/{org}-{name}-test:latest")),
+            ("COMMAND", format!("/app/{course}-tester")),
             ("TEST_CASES_JSON", cases),
             ("DEBUG_MODE", "false".to_string()),
             ("TIMEOUT_SECONDS", "15".to_string()),
             ("SKIP_ANTI_CHEAT", "false".to_string()),
         ]);
 
-        // Render a PipelineRun resource using the provided name and parameters
+        // Render a PipelineRun resource using the provided repo and parameters
         resource(name, params).map_err(ApiError::SerializationError)
     }
-}
-
-#[inline]
-fn pipeline_name(owner: &str, repo: &str) -> String {
-    format!("{owner}-{repo}-test-pipeline")
 }
 
 /// Builds a JSON string representing test cases from a list of slugs.
@@ -162,7 +152,7 @@ fn build_test_cases_json(slugs: &[&str]) -> String {
 
 /// Creates a new DynamicObject representing a Tekton PipelineRun resource.
 fn resource(
-    name: String,
+    name: &str,
     params: HashMap<&'static str, String>,
 ) -> Result<DynamicObject, serde_json::Error> {
     let params: serde_json::Value =

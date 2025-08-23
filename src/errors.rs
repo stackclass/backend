@@ -77,6 +77,9 @@ pub enum ApiError {
 
     #[error("Url Parser Error: {0}")]
     UrlParseError(#[from] url::ParseError),
+
+    #[error("Invalid UUID: {0}")]
+    InvalidUuid(#[from] uuid::Error),
 }
 
 impl From<sqlx::Error> for ApiError {
@@ -109,6 +112,7 @@ impl From<&ApiError> for StatusCode {
             ApiError::KubernetesError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::SerializationError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::UrlParseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::InvalidUuid(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }

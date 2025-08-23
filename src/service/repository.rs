@@ -17,17 +17,17 @@ use std::{collections::HashMap, sync::Arc};
 use fs_extra::dir::CopyOptions;
 use gitea_client::{ClientError, types::*};
 use tracing::{debug, info};
+use uuid::Uuid;
 
 use crate::{
     config::Config,
     context::Context,
     errors::Result,
-    repository::{CourseRepository, UserRepository},
+    repository::CourseRepository,
     service::{CourseService, PipelineService, StageService, StorageError, StorageService},
     utils::{git, url},
 };
 
-#[allow(dead_code)]
 pub struct RepoService {
     ctx: Arc<Context>,
 }
@@ -105,27 +105,26 @@ impl RepoService {
     /// - Otherwise, it triggers the pipeline for the current stage and monitors completion.
     /// - On success, marks the stage as complete.
     pub async fn process(&self, event: &Event) -> Result<()> {
-        let Repository { owner, name, .. } = &event.repository;
+        let name = &event.repository.name;
         debug!("Handling push event for repository: {}", name);
 
-        let ctx = self.ctx.clone();
-        let user = UserRepository::get_by_email(&ctx.database, &owner.email).await?;
-        let mut course = CourseRepository::get_user_course(&ctx.database, &user.id, name).await?;
+        let id = Uuid::parse_str(name)?;
+        let mut course = CourseRepository::get_user_course_by_id(&self.ctx.database, &id).await?;
 
         // If there's no current stage, this is the first setup of the course,
         // so we just need to activate it without running any pipeline stages
         let Some(current_stage_slug) = course.current_stage_slug else {
-            CourseService::activate(ctx, &mut course).await?;
+            CourseService::activate(self.ctx.clone(), &mut course).await?;
             return Ok(());
         };
 
-        let pipeline = PipelineService::new(ctx.clone());
-
         // Trigger the pipeline run
-        pipeline.trigger(&owner.username, name, &current_stage_slug).await?;
+        let pipeline = PipelineService::new(self.ctx.clone());
+        pipeline.trigger(name, &course.course_slug, &current_stage_slug).await?;
 
         // Define a callback function that will be executed when the pipeline
         // succeeds. This callback marks the current stage as complete in DB.
+        let ctx = self.ctx.clone();
         #[rustfmt::skip]
         let callback = || async move {
             StageService::complete(
@@ -138,7 +137,7 @@ impl RepoService {
         };
 
         // Watch the pipeline and handle only success
-        pipeline.watch(&owner.username, name, callback).await?;
+        pipeline.watch(name, callback).await?;
 
         Ok(())
     }
@@ -205,7 +204,11 @@ impl RepoService {
 
     /// Setup the webhook for the organization
     pub async fn setup_webhook(&self, org: &str) -> Result<()> {
-        let url = format!("{}/v1/webhooks/gitea", self.ctx.config.webhook_endpoint);
+        let webhook_endpoint = &self.ctx.config.webhook_endpoint;
+        let url = format!("{webhook_endpoint}/v1/webhooks/gitea");
+
+        // Define the webhook request body to listen for push events on the main branch
+        // and send them to the specified webhook endpoint in JSON format.
         let req = CreateHookRequest {
             active: true,
             branch_filter: Some("main".to_string()),
