@@ -60,8 +60,8 @@ pub enum ApiError {
     #[error("Cannot complete a stage out of order")]
     StageOutOfOrder,
 
-    #[error("Conflict: {0}")]
-    Conflict(String),
+    #[error("Record already exists")]
+    Conflict,
 
     #[error("Gitea client error: {0}")]
     GiteaClientError(#[from] gitea_client::ClientError),
@@ -81,10 +81,10 @@ pub enum ApiError {
 
 impl From<sqlx::Error> for ApiError {
     fn from(e: sqlx::Error) -> Self {
-        if let sqlx::Error::RowNotFound = e {
-            ApiError::NotFound
-        } else {
-            ApiError::DatabaseError(e)
+        match e {
+            sqlx::Error::Database(err) if err.is_unique_violation() => ApiError::Conflict,
+            sqlx::Error::RowNotFound => ApiError::NotFound,
+            _ => ApiError::DatabaseError(e),
         }
     }
 }
@@ -103,7 +103,7 @@ impl From<&ApiError> for StatusCode {
             ApiError::StageAlreadyCompleted => StatusCode::BAD_REQUEST,
             ApiError::StageNotInProgress => StatusCode::BAD_REQUEST,
             ApiError::StageOutOfOrder => StatusCode::BAD_REQUEST,
-            ApiError::Conflict(_) => StatusCode::CONFLICT,
+            ApiError::Conflict => StatusCode::CONFLICT,
             ApiError::GiteaClientError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::GitError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::KubernetesError(_) => StatusCode::INTERNAL_SERVER_ERROR,

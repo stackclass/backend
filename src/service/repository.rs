@@ -20,13 +20,11 @@ use tracing::{debug, info};
 
 use crate::{
     config::Config,
-    constant::TEMPLATE_OWNER,
     context::Context,
     errors::Result,
-    model::UserModel,
     repository::{CourseRepository, UserRepository},
     service::{CourseService, PipelineService, StageService, StorageError, StorageService},
-    utils::{crypto, git, url},
+    utils::{git, url},
 };
 
 #[allow(dead_code)]
@@ -161,39 +159,32 @@ impl RepoService {
             Err(e) => return Err(e.into()),
         };
 
-        info!("Successfully created template repository in SCM: {:?}", repo);
+        info!("Successfully created template repository: {org}/{repo}");
         Ok(repository)
     }
 
-    /// Gets a repository by username and template name,
-    /// or generates a new repository from a template if it doesn't exist.
-    pub async fn generate(&self, user: &UserModel, template: &str) -> Result<Repository> {
-        let username = user.username();
-        self.fetch_user(
-            &username,
-            CreateUserRequest {
-                email: user.email.clone(),
-                username: username.clone(),
-                ..Default::default()
-            },
-        )
-        .await?;
+    /// Generates a new repository from a template if it doesn't exist.
+    pub async fn generate(&self, template: &str, repo: &str) -> Result<Repository> {
+        let org = &self.ctx.config.namespace;
 
-        match self.ctx.git.get_repository(&username, template).await {
-            Ok(repo) => Ok(repo),
+        let repository = match self.ctx.git.get_repository(org, repo).await {
+            Ok(repo) => repo,
             Err(ClientError::NotFound) => {
                 let req = GenerateRepositoryRequest {
                     git_content: Some(true),
                     git_hooks: Some(true),
-                    name: template.to_string(),
-                    owner: username.to_string(),
+                    name: repo.to_string(),
+                    owner: org.to_string(),
                     webhooks: Some(true),
                     ..Default::default()
                 };
-                Ok(self.ctx.git.generate_repository(TEMPLATE_OWNER, template, req).await?)
+                self.ctx.git.generate_repository(org, template, req).await?
             }
-            Err(e) => Err(e.into()),
-        }
+            Err(e) => return Err(e.into()),
+        };
+
+        info!("Successfully generated new repository: {org}/{repo}");
+        Ok(repository)
     }
 
     /// Creates a new admin hook if it doesn't already exist.
@@ -222,22 +213,5 @@ impl RepoService {
         }
 
         Ok(())
-    }
-
-    /// Gets a user by username, or creates the user if they don't exist.
-    async fn fetch_user(&self, username: &str, mut req: CreateUserRequest) -> Result<User> {
-        match self.ctx.git.get_user(username).await {
-            Ok(user) => Ok(user),
-            Err(ClientError::NotFound) => {
-                // Generate a password using email + auth_secret
-                let salt = &self.ctx.config.auth_secret;
-                let password = crypto::password(&req.email, salt);
-                req.password = Some(password);
-                req.must_change_password = Some(false);
-
-                Ok(self.ctx.git.create_user(req).await?)
-            }
-            Err(e) => Err(e.into()),
-        }
     }
 }

@@ -14,7 +14,6 @@
 
 pub mod app;
 pub mod config;
-pub mod constant;
 pub mod context;
 pub mod database;
 pub mod errors;

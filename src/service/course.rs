@@ -22,7 +22,7 @@ use crate::{
     database::Transaction,
     errors::{ApiError, Result},
     model::{CourseModel, ExtensionModel, StageModel, UserCourseModel, UserStageModel},
-    repository::{CourseRepository, ExtensionRepository, StageRepository, UserRepository},
+    repository::{CourseRepository, ExtensionRepository, StageRepository},
     request::{CreateUserCourseRequest, UpdateUserCourseRequest},
     response::{AttemptResponse, CourseDetailResponse, CourseResponse, UserCourseResponse},
     schema::{self, Course, Stage},
@@ -270,8 +270,7 @@ impl CourseService {
     ) -> Result<UserCourseResponse> {
         let mut tx = ctx.database.pool().begin().await?;
 
-        // Fetch the user and course
-        let user = UserRepository::get_by_id(&ctx.database, user_id).await?;
+        // Fetch the course
         let course = CourseRepository::get_by_slug(&ctx.database, &req.course_slug).await?;
 
         // Create a new user course enrollment
@@ -279,20 +278,13 @@ impl CourseService {
             .with_proficiency(&req.proficiency)
             .with_cadence(&req.cadence)
             .with_accountability(req.accountability);
-
-        let user_course =
-            CourseRepository::create_user_course(&mut tx, &user_course).await.map_err(|e| {
-                if let sqlx::Error::Database(db_err) = &e &&
-                    db_err.is_unique_violation()
-                {
-                    return ApiError::Conflict("User is already enrolled in this course".into());
-                }
-                e.into()
-            })?;
-        tx.commit().await?;
+        let user_course = CourseRepository::create_user_course(&mut tx, &user_course).await?;
 
         // Generate Git repository from course template
-        RepoService::new(ctx.clone()).generate(&user, &course.slug).await?;
+        RepoService::new(ctx.clone()).generate(&course.slug, &user_course.id.to_string()).await?;
+
+        // Commits this transaction.
+        tx.commit().await?;
 
         Ok(to_response(&ctx, user_course))
     }

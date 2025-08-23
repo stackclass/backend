@@ -135,15 +135,7 @@ impl StageService {
         // If there is a next stage, create a new instance for it
         if let Some(next_stage) = next_stage {
             let user_stage = UserStageModel::new(updated_user_course.id, next_stage.id);
-            match StageRepository::create_user_stage(tx, &user_stage).await {
-                Ok(model) => model,
-                Err(e) if e.as_database_error().is_some() => {
-                    return Err(ApiError::Conflict(
-                        "User already has a record for this stage".into(),
-                    ));
-                }
-                Err(e) => return Err(e.into()),
-            };
+            StageRepository::create_user_stage(tx, &user_stage).await?;
             updated_user_course.current_stage_id = Some(next_stage.id);
         }
 

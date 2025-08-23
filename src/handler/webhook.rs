@@ -18,7 +18,7 @@ use std::sync::Arc;
 
 use tracing::info;
 
-use crate::{constant::TEMPLATE_OWNER, context::Context, errors::Result, service::RepoService};
+use crate::{context::Context, errors::Result, service::RepoService};
 
 /// Handle Gitea Webhook Event.
 pub async fn handle_gitea_webhook(
@@ -29,8 +29,7 @@ pub async fn handle_gitea_webhook(
     info!("Received push event for repository: {}, ref: {}", repository.full_name, reference);
 
     // Skip if the event is from the template repository or a non-main branch.
-    let owner = &repository.owner.username;
-    if owner.eq(TEMPLATE_OWNER) || reference.ne("refs/heads/main") {
+    if repository.template || reference.ne("refs/heads/main") {
         return Ok(StatusCode::OK);
     }
 
