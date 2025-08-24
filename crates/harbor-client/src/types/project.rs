@@ -47,6 +47,24 @@ impl CreateProjectRequest {
     pub fn new(name: impl ToString) -> Self {
         Self { project_name: name.to_string(), ..Default::default() }
     }
+
+    /// Sets the public status of the project, updating both the top-level
+    /// `public` field and the `metadata.public` field for consistency.
+    pub fn with_public(mut self, value: bool) -> Self {
+        self.public = Some(value);
+
+        // Ensure metadata exists
+        if self.metadata.is_none() {
+            self.metadata = Some(ProjectMetadata::default());
+        }
+
+        // Update the metadata public field
+        if let Some(ref mut metadata) = self.metadata {
+            metadata.public = Some(value.to_string());
+        }
+
+        self
+    }
 }
 
 /// Project metadata configuration

@@ -27,10 +27,10 @@ impl RegistryService {
         match ctx.harbor.head_project(name).await {
             Ok(_) => Ok(()), // Project exists, nothing to do
             Err(ClientError::NotFound) => {
-                info!("Creating project '{}' in Harbor registry", name);
-                let request = CreateProjectRequest::new(name);
+                let request = CreateProjectRequest::new(name).with_public(true);
                 ctx.harbor.create_project(request).await?;
-                info!("Project '{}' created successfully", name);
+                info!("Project '{}' created successfully in Harbor registry", name);
+
                 Ok(())
             }
             Err(e) => Err(e.into()), // Propagate other errors
