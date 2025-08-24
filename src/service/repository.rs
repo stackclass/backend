@@ -105,10 +105,10 @@ impl RepoService {
     /// - Otherwise, it triggers the pipeline for the current stage and monitors completion.
     /// - On success, marks the stage as complete.
     pub async fn process(&self, event: &Event) -> Result<()> {
-        let name = &event.repository.name;
-        debug!("Handling push event for repository: {}", name);
+        let repo = &event.repository.name;
+        debug!("Handling push event for repository: {}", repo);
 
-        let id = Uuid::parse_str(name)?;
+        let id = Uuid::parse_str(repo)?;
         let mut course = CourseRepository::get_user_course_by_id(&self.ctx.database, &id).await?;
 
         // If there's no current stage, this is the first setup of the course,
@@ -120,7 +120,7 @@ impl RepoService {
 
         // Trigger the pipeline run
         let pipeline = PipelineService::new(self.ctx.clone());
-        pipeline.trigger(name, &course.course_slug, &current_stage_slug).await?;
+        let name = pipeline.trigger(repo, &course.course_slug, &current_stage_slug).await?;
 
         // Define a callback function that will be executed when the pipeline
         // succeeds. This callback marks the current stage as complete in DB.
@@ -137,7 +137,7 @@ impl RepoService {
         };
 
         // Watch the pipeline and handle only success
-        pipeline.watch(name, callback).await?;
+        pipeline.watch(&name, callback).await?;
 
         Ok(())
     }

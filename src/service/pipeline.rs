@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::Condition;
 use kube::{
-    Api,
+    Api, ResourceExt,
     api::{ApiResource, DynamicObject, GroupVersionKind, PostParams},
 };
-use serde_json::json;
+use serde_json::{Error as JsonError, Value, json};
 use tokio::time::interval;
 use tracing::debug;
+use uuid::Uuid;
 
 use crate::{
     context::Context,
@@ -42,13 +43,13 @@ impl PipelineService {
     }
 
     /// Triggers a Tekton PipelineRun for the given repository.
-    pub async fn trigger(&self, repo: &str, course: &str, current_stage_slug: &str) -> Result<()> {
+    pub async fn trigger(&self, repo: &str, course: &str, stage: &str) -> Result<String> {
         debug!("Triggering PipelineRun for repository: {course} - {repo}");
 
-        let resource = self.generate(repo, course, current_stage_slug).await?;
-        self.api().create(&PostParams::default(), &resource).await?;
+        let resource = self.generate(repo, course, stage).await?;
+        let res = self.api().create(&PostParams::default(), &resource).await?;
 
-        Ok(())
+        Ok(res.name_any())
     }
 
     /// Watches a PipelineRun and invokes the callback only on success.
@@ -108,8 +109,17 @@ impl PipelineService {
         )
     }
 
-    /// Generates a PipelineRun resource for the given repository name.
-    async fn generate(&self, name: &str, course: &str, stage: &str) -> Result<DynamicObject> {
+    /// Generates a PipelineRun resource for the given repository.
+    async fn generate(&self, repo: &str, course: &str, stage: &str) -> Result<DynamicObject> {
+        let name = Uuid::new_v4().to_string();
+
+        // Define labels for identification
+        let labels = vec![
+            ("stackclass.dev/repo", repo.to_string()),
+            ("stackclass.dev/course", course.to_string()),
+            ("stackclass.dev/stage", stage.to_string()),
+        ];
+
         // Build test cases JSON value from all stages up to the current stage
         let stages = StageRepository::find_stages_until(&self.ctx.database, course, stage).await?;
         let slugs: Vec<&str> = stages.iter().map(|stage| stage.slug.as_str()).collect();
@@ -119,22 +129,18 @@ impl PipelineService {
         let registry = url::hostname(&self.ctx.config.docker_registry_endpoint)?;
         let org = &self.ctx.config.namespace;
 
-        // Define params as a HashMap and then convert it to JSON value
-        let params = HashMap::from([
-            ("REPO_URL", format!("{git_endpoint}/{org}/{name}.git")),
-            ("REPO_REF", "main".to_string()),
-            ("COURSE_IMAGE", format!("{registry}/{org}/{name}:latest")),
+        // Define parameters for the PipelineRun
+        let params = vec![
+            ("REPO_URL", format!("{git_endpoint}/{org}/{repo}.git")),
+            ("COURSE_IMAGE", format!("{registry}/{org}/{repo}:latest")),
             ("TESTER_IMAGE", format!("ghcr.io/stackclass/{course}-tester")),
-            ("TEST_IMAGE", format!("{registry}/{org}/{name}-test:latest")),
+            ("TEST_IMAGE", format!("{registry}/{org}/{repo}-test:latest")),
             ("COMMAND", format!("/app/{course}-tester")),
             ("TEST_CASES_JSON", cases),
-            ("DEBUG_MODE", "false".to_string()),
-            ("TIMEOUT_SECONDS", "15".to_string()),
-            ("SKIP_ANTI_CHEAT", "false".to_string()),
-        ]);
+        ];
 
-        // Render a PipelineRun resource using the provided repo and parameters
-        resource(name, params).map_err(ApiError::SerializationError)
+        // Render a PipelineRun resource with the given name, labels, and params
+        resource(&name, labels, params).map_err(ApiError::SerializationError)
     }
 }
 
@@ -142,7 +148,7 @@ impl PipelineService {
 fn build_test_cases_json(slugs: &[&str]) -> String {
     let mut test_cases = Vec::new();
     for (index, slug) in slugs.iter().enumerate() {
-        test_cases.push(serde_json::json!({
+        test_cases.push(json!({
             "slug": slug,
             "log_prefix": format!("test-{}", index + 1),
             "title": format!("Stage #{}: {}", index + 1, slug),
@@ -152,18 +158,19 @@ fn build_test_cases_json(slugs: &[&str]) -> String {
 }
 
 /// Creates a new DynamicObject representing a Tekton PipelineRun resource.
-fn resource(
-    name: &str,
-    params: HashMap<&'static str, String>,
-) -> Result<DynamicObject, serde_json::Error> {
-    let params: serde_json::Value =
-        params.into_iter().map(|(name, value)| json!({"name": name, "value": value})).collect();
+fn resource<T>(name: &str, labels: T, params: T) -> Result<DynamicObject, JsonError>
+where
+    T: IntoIterator<Item = (&'static str, String)>,
+{
+    let labels: Value = labels.into_iter().collect();
+    let params: Value = params.into_iter().map(|(k, v)| json!({"name": k, "value": v})).collect();
 
     let resource = json!({
       "apiVersion": "tekton.dev/v1",
       "kind": "PipelineRun",
       "metadata": {
-        "name": name
+        "name": name,
+        "labels": labels
       },
       "spec": {
         "pipelineRef": {
