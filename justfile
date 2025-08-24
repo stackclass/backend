@@ -53,4 +53,4 @@ all:
 
 # Run the main program
 run:
-    cargo run --bin stackclass-server
+    unset https_proxy http_proxy all_proxy && cargo run --bin stackclass-server

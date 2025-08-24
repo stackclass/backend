@@ -149,12 +149,14 @@ impl RepoService {
             Ok(organization) => organization,
             Err(ClientError::NotFound) => {
                 let req = CreateOrganizationRequest::new(name);
-                self.ctx.git.create_organization(req).await?
+                let organization = self.ctx.git.create_organization(req).await?;
+
+                info!("Successfully created organization: {name}");
+                organization
             }
             Err(e) => return Err(e.into()),
         };
 
-        info!("Successfully created organization: {name}");
         Ok(organization)
     }
 
