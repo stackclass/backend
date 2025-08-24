@@ -27,6 +27,7 @@ use crate::{
     context::Context,
     errors::{ApiError, Result},
     repository::StageRepository,
+    utils::url,
 };
 
 /// A service for managing Tekton PipelineRun resources.
@@ -115,7 +116,7 @@ impl PipelineService {
         let cases = build_test_cases_json(&slugs);
 
         let git_endpoint = &self.ctx.config.git_server_endpoint;
-        let registry = &self.ctx.config.docker_registry_endpoint;
+        let registry = url::hostname(&self.ctx.config.docker_registry_endpoint)?;
         let org = &self.ctx.config.namespace;
 
         // Define params as a HashMap and then convert it to JSON value

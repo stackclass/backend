@@ -23,3 +23,9 @@ pub fn authenticate(url: &str, username: &str, password: &str) -> Result<String,
 
     Ok(parsed_url.to_string())
 }
+
+/// Extracts the host part from a URL, removing protocol and port.
+pub fn hostname(url: &str) -> Result<String, ParseError> {
+    let parsed_url = Url::parse(url)?;
+    parsed_url.host_str().map(|host| host.to_string()).ok_or(ParseError::EmptyHost)
+}
