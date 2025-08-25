@@ -15,16 +15,15 @@
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 use gitea_client::types::Event;
 use std::sync::Arc;
-use uuid::Uuid;
-
 use tracing::{debug, error, info};
+use uuid::Uuid;
 
 use crate::{
     context::Context,
     errors::{ApiError, Result},
     repository::CourseRepository,
     request::event::PipelineEvent,
-    service::{PipelineService, RepoService, StageService},
+    service::{PipelineCleanupGuard, RepoService, StageService},
     utils::crypto,
 };
 
@@ -55,9 +54,13 @@ pub async fn handle_tekton_webhook(
     debug!("Received pipeline event: {:?}", event);
     let PipelineEvent { name, status, repo, course, stage, secret, tasks } = &event;
 
+    // Create cleanup guard - will delete pipeline when this function exits
+    let _cleanup_guard = PipelineCleanupGuard::new(ctx.clone(), name);
+
     // Verify HMAC signature to prevent request forgery
     let auth_secret = &ctx.config.auth_secret;
     let payload = format!("{}{}{}", repo, course, stage);
+
     if crypto::hmac_sha256_verify(&payload, auth_secret, secret)? {
         error!("Received pipeline event with invalid signature");
         return Err(ApiError::Unauthorized("Invalid signature".into()));
@@ -65,14 +68,11 @@ pub async fn handle_tekton_webhook(
 
     // Check overall pipeline status first
     if status != "Succeeded" {
-        error!("Pipeline run failed, please check it.");
+        error!("Pipeline run failed, please check it");
         return Ok(StatusCode::OK);
     }
 
-    // Process the pipeline event based on test task status:
-    // - If succeeded: mark the stage as complete for the user
-    // - If failed: log error (TODO: collect error details from Tekton and save to database)
-    // - Other states: log and ignore non-terminal states
+    // Process the pipeline event based on test task status
     match tasks.test.status.as_str() {
         "Succeeded" => {
             // Look up the course to get the user_id
@@ -85,20 +85,13 @@ pub async fn handle_tekton_webhook(
         }
         "Failed" => {
             info!("Test task failed: reason={}, stage={}", tasks.test.reason, stage);
-            return Ok(StatusCode::OK);
         }
         _ => {
             error!(
                 "Test task in non-terminal state: status={}, reason={}",
                 tasks.test.status, tasks.test.reason
             );
-            return Ok(StatusCode::OK);
         }
-    }
-
-    // Delete the PipelineRun after successful processing
-    if let Err(e) = PipelineService::new(ctx.clone()).delete(name).await {
-        error!("Failed to delete PipelineRun {}: {}", name, e);
     }
 
     Ok(StatusCode::OK)

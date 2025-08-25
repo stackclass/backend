@@ -23,7 +23,7 @@ mod storage;
 // Re-exports
 pub use course::CourseService;
 pub use extension::ExtensionService;
-pub use pipeline::PipelineService;
+pub use pipeline::{PipelineCleanupGuard, PipelineService};
 pub use registry::RegistryService;
 pub use repository::RepoService;
 pub use stage::StageService;

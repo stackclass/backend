@@ -19,7 +19,7 @@ use kube::{
     api::{ApiResource, DeleteParams, DynamicObject, GroupVersionKind, PostParams},
 };
 use serde_json::{Error as JsonError, Value, json};
-use tracing::debug;
+use tracing::{debug, error};
 use uuid::Uuid;
 
 use crate::{
@@ -182,4 +182,31 @@ where
     });
 
     serde_json::from_value(resource)
+}
+
+// RAII guard to ensure PipelineRun deletion
+pub struct PipelineCleanupGuard<'a> {
+    name: &'a str,
+    ctx: Arc<Context>,
+}
+
+impl<'a> PipelineCleanupGuard<'a> {
+    /// Creates a new PipelineCleanupGuard
+    pub fn new(ctx: Arc<Context>, name: &'a str) -> Self {
+        Self { name, ctx }
+    }
+}
+
+impl<'a> Drop for PipelineCleanupGuard<'a> {
+    fn drop(&mut self) {
+        let name = self.name.to_string();
+        let ctx = self.ctx.clone();
+
+        // Use tokio::spawn to handle async code in Drop
+        tokio::spawn(async move {
+            if let Err(e) = PipelineService::new(ctx).delete(&name).await {
+                error!("Failed to delete PipelineRun {}: {}", name, e);
+            }
+        });
+    }
 }
