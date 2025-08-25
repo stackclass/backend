@@ -16,13 +16,16 @@ use hex;
 use hmac::{Hmac, Mac};
 use sha2::Sha256;
 
+use crate::errors::ApiError;
+
 type HmacSha256 = Hmac<Sha256>;
 
 /// Generates an HMAC-SHA256 signature for the given payload using the provided
 /// secret. Returns the signature as a hex-encoded string.
-pub fn hmac_sha256_sign(payload: &str, secret: &str) -> Result<String, String> {
-    let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
-        .map_err(|e| format!("Failed to create HMAC: {}", e))?;
+pub fn hmac_sha256_sign(payload: &str, secret: &str) -> Result<String, ApiError> {
+    let mut mac = HmacSha256::new_from_slice(secret.as_bytes()).map_err(|e| {
+        ApiError::InternalError(format!("Failed to generate HMAC signature: {}", e))
+    })?;
     mac.update(payload.as_bytes());
     let result = mac.finalize();
 
@@ -31,9 +34,7 @@ pub fn hmac_sha256_sign(payload: &str, secret: &str) -> Result<String, String> {
 
 /// Verifies an HMAC-SHA256 signature for the given payload using the provided
 /// secret. Uses constant-time comparison to prevent timing attacks.
-pub fn hmac_sha256_verify(payload: &str, secret: &str, sign: &str) -> Result<bool, String> {
+pub fn hmac_sha256_verify(payload: &str, secret: &str, sign: &str) -> Result<bool, ApiError> {
     let expected = hmac_sha256_sign(payload, secret)?;
-
-    // Constant-time comparison to prevent timing attacks
     Ok(subtle::ConstantTimeEq::ct_eq(sign.as_bytes(), expected.as_bytes()).into())
 }

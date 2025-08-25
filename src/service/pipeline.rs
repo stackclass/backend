@@ -16,7 +16,7 @@ use std::sync::Arc;
 
 use kube::{
     Api,
-    api::{ApiResource, DynamicObject, GroupVersionKind, PostParams},
+    api::{ApiResource, DeleteParams, DynamicObject, GroupVersionKind, PostParams},
 };
 use serde_json::{Error as JsonError, Value, json};
 use tracing::debug;
@@ -47,6 +47,13 @@ impl PipelineService {
         let resource = self.generate(repo, course, stage).await?;
         self.api().create(&PostParams::default(), &resource).await?;
 
+        Ok(())
+    }
+
+    /// Deletes a Tekton PipelineRun by name.
+    pub async fn delete(&self, name: &str) -> Result<()> {
+        debug!("Deleting PipelineRun: {name}");
+        self.api().delete(name, &DeleteParams::default()).await?;
         Ok(())
     }
 
@@ -88,9 +95,7 @@ impl PipelineService {
         // Generate HMAC signature for webhook authentication
         let auth_secret = &self.ctx.config.auth_secret;
         let payload = format!("{}{}{}", repo, course, stage);
-        let secret = crypto::hmac_sha256_sign(&payload, auth_secret).map_err(|e| {
-            ApiError::InternalError(format!("Failed to generate HMAC signature: {}", e))
-        })?;
+        let secret = crypto::hmac_sha256_sign(&payload, auth_secret)?;
 
         // Define parameters for the PipelineRun
         let params = vec![

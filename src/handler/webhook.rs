@@ -17,14 +17,14 @@ use gitea_client::types::Event;
 use std::sync::Arc;
 use uuid::Uuid;
 
-use tracing::{error, info};
+use tracing::{debug, error, info};
 
 use crate::{
     context::Context,
     errors::{ApiError, Result},
     repository::CourseRepository,
     request::event::PipelineEvent,
-    service::{RepoService, StageService},
+    service::{PipelineService, RepoService, StageService},
     utils::crypto,
 };
 
@@ -52,21 +52,20 @@ pub async fn handle_tekton_webhook(
     State(ctx): State<Arc<Context>>,
     Json(event): Json<PipelineEvent>,
 ) -> Result<impl IntoResponse> {
-    info!("Received pipeline event: {:?}", event);
+    debug!("Received pipeline event: {:?}", event);
+    let PipelineEvent { name, status, repo, course, stage, secret, tasks } = &event;
 
     // Verify HMAC signature to prevent request forgery
     let auth_secret = &ctx.config.auth_secret;
-    let payload = format!("{}{}{}", event.repo, event.course, event.stage);
-    let is_valid = crypto::hmac_sha256_verify(&payload, auth_secret, &event.secret)
-        .map_err(|e| ApiError::InternalError(format!("Signature verification failed: {}", e)))?;
-
-    if !is_valid {
+    let payload = format!("{}{}{}", repo, course, stage);
+    if crypto::hmac_sha256_verify(&payload, auth_secret, secret)? {
+        error!("Received pipeline event with invalid signature");
         return Err(ApiError::Unauthorized("Invalid signature".into()));
     }
 
     // Check overall pipeline status first
-    if event.status != "Succeeded" {
-        error!("Pipeline run failed, please check it. Aggregate status: {}", event.status);
+    if status != "Succeeded" {
+        error!("Pipeline run failed, please check it.");
         return Ok(StatusCode::OK);
     }
 
@@ -74,28 +73,32 @@ pub async fn handle_tekton_webhook(
     // - If succeeded: mark the stage as complete for the user
     // - If failed: log error (TODO: collect error details from Tekton and save to database)
     // - Other states: log and ignore non-terminal states
-    match event.tasks.test.status.as_str() {
+    match tasks.test.status.as_str() {
         "Succeeded" => {
             // Look up the course to get the user_id
-            let id = Uuid::parse_str(&event.repo)?;
-            let course = CourseRepository::get_user_course_by_id(&ctx.database, &id).await?;
+            let id = Uuid::parse_str(repo)?;
+            let user_course = CourseRepository::get_user_course_by_id(&ctx.database, &id).await?;
 
             // Mark the stage as complete
-            StageService::complete(ctx, &course.user_id, &event.course, &event.stage).await?;
-
-            info!("Stage {} completed successfully for course {}", event.stage, event.course);
+            StageService::complete(ctx.clone(), &user_course.user_id, course, stage).await?;
+            info!("Stage {} completed successfully for course {}", stage, course);
         }
         "Failed" => {
-            info!("Test task failed: reason={}, stage={}", event.tasks.test.reason, event.stage);
+            info!("Test task failed: reason={}, stage={}", tasks.test.reason, stage);
             return Ok(StatusCode::OK);
         }
         _ => {
             error!(
                 "Test task in non-terminal state: status={}, reason={}",
-                event.tasks.test.status, event.tasks.test.reason
+                tasks.test.status, tasks.test.reason
             );
             return Ok(StatusCode::OK);
         }
+    }
+
+    // Delete the PipelineRun after successful processing
+    if let Err(e) = PipelineService::new(ctx.clone()).delete(name).await {
+        error!("Failed to delete PipelineRun {}: {}", name, e);
     }
 
     Ok(StatusCode::OK)
