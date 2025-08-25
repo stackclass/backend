@@ -13,6 +13,7 @@
 // limitations under the License.
 
 mod course;
+pub mod event;
 mod stage;
 
 // Re-exports

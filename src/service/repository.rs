@@ -24,7 +24,7 @@ use crate::{
     context::Context,
     errors::Result,
     repository::CourseRepository,
-    service::{CourseService, PipelineService, StageService, StorageError, StorageService},
+    service::{CourseService, PipelineService, StorageError, StorageService},
     utils::{git, url},
 };
 
@@ -118,26 +118,10 @@ impl RepoService {
             return Ok(());
         };
 
-        // Trigger the pipeline run
+        // Trigger the pipeline run and return immediately
+        // Pipeline completion will be handled asynchronously via Tekton webhook
         let pipeline = PipelineService::new(self.ctx.clone());
-        let name = pipeline.trigger(repo, &course.course_slug, &current_stage_slug).await?;
-
-        // Define a callback function that will be executed when the pipeline
-        // succeeds. This callback marks the current stage as complete in DB.
-        let ctx = self.ctx.clone();
-        #[rustfmt::skip]
-        let callback = || async move {
-            StageService::complete(
-                ctx,
-                &course.user_id,
-                &course.course_slug,
-                &current_stage_slug,
-            )
-            .await
-        };
-
-        // Watch the pipeline and handle only success
-        pipeline.watch(&name, callback).await?;
+        pipeline.trigger(repo, &course.course_slug, &current_stage_slug).await?;
 
         Ok(())
     }

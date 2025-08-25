@@ -12,15 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 
-use k8s_openapi::apimachinery::pkg::apis::meta::v1::Condition;
 use kube::{
-    Api, ResourceExt,
+    Api,
     api::{ApiResource, DynamicObject, GroupVersionKind, PostParams},
 };
 use serde_json::{Error as JsonError, Value, json};
-use tokio::time::interval;
 use tracing::debug;
 use uuid::Uuid;
 
@@ -43,60 +41,13 @@ impl PipelineService {
     }
 
     /// Triggers a Tekton PipelineRun for the given repository.
-    pub async fn trigger(&self, repo: &str, course: &str, stage: &str) -> Result<String> {
+    pub async fn trigger(&self, repo: &str, course: &str, stage: &str) -> Result<()> {
         debug!("Triggering PipelineRun for repository: {course} - {repo}");
 
         let resource = self.generate(repo, course, stage).await?;
-        let res = self.api().create(&PostParams::default(), &resource).await?;
-
-        Ok(res.name_any())
-    }
-
-    /// Watches a PipelineRun and invokes the callback only on success.
-    pub async fn watch<F, Fut, T>(&self, name: &str, callback: F) -> Result<()>
-    where
-        F: FnOnce() -> Fut + Send + 'static,
-        Fut: Future<Output = Result<T, ApiError>> + Send + 'static,
-    {
-        let api = self.api();
-        let name = name.to_string();
-
-        tokio::spawn(async move {
-            let mut interval = interval(Duration::from_secs(10));
-            loop {
-                interval.tick().await;
-                match Self::status(&api, &name).await {
-                    Ok(true) => {
-                        // Pipeline succeeded; invoke the callback
-                        callback().await.ok();
-                        break;
-                    }
-                    Ok(false) => continue, // Pipeline still running
-                    Err(_) => break,       // Pipeline failed or error occurred
-                }
-            }
-        });
+        self.api().create(&PostParams::default(), &resource).await?;
 
         Ok(())
-    }
-
-    /// Checks the status of a PipelineRun.
-    async fn status(api: &Api<DynamicObject>, name: &str) -> Result<bool> {
-        debug!("Checking status for PipelineRun: {}", name);
-
-        let resource = api.get(name).await?;
-
-        if let Some(conditions) = resource.data.pointer("/status/conditions") {
-            let conditions: Vec<Condition> =
-                serde_json::from_value(json!(conditions)).map_err(ApiError::SerializationError)?;
-
-            #[rustfmt::skip] // just for better format :)
-            return Ok(conditions.iter().any(|condition| {
-                condition.type_ == "Succeeded" && condition.status == "True"
-            }));
-        }
-
-        Ok(false)
     }
 
     #[inline]

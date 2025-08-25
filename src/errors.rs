@@ -27,14 +27,20 @@ pub type Result<T, E = ApiError> = std::result::Result<T, E>;
 
 #[derive(Debug, Error)]
 pub enum ApiError {
-    #[error("Internal Error: {0}")]
-    InternalError(String),
+    #[error("Bad Request")]
+    BadRequest(String),
+
+    #[error("Unauthorized: {0}")]
+    Unauthorized(String),
 
     #[error("Not Found")]
     NotFound,
 
-    #[error("Bad Request")]
-    BadRequest(String),
+    #[error("Record already exists")]
+    Conflict,
+
+    #[error("Internal Error: {0}")]
+    InternalError(String),
 
     #[error("HTTP error: {0}")]
     HTTPError(#[from] http::Error),
@@ -59,9 +65,6 @@ pub enum ApiError {
 
     #[error("Cannot complete a stage out of order")]
     StageOutOfOrder,
-
-    #[error("Record already exists")]
-    Conflict,
 
     #[error("Gitea client error: {0}")]
     GiteaClientError(#[from] gitea_client::ClientError),
@@ -98,10 +101,13 @@ impl From<sqlx::Error> for ApiError {
 impl From<&ApiError> for StatusCode {
     fn from(val: &ApiError) -> Self {
         match val {
-            ApiError::InternalError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            ApiError::NotFound => StatusCode::NOT_FOUND,
             ApiError::BadRequest(_) => StatusCode::BAD_REQUEST,
+            ApiError::Unauthorized(_) => StatusCode::UNAUTHORIZED,
+            ApiError::NotFound => StatusCode::NOT_FOUND,
+            ApiError::Conflict => StatusCode::CONFLICT,
+            ApiError::InternalError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::HTTPError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+
             ApiError::StorageError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::SchemaParserError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
@@ -109,7 +115,6 @@ impl From<&ApiError> for StatusCode {
             ApiError::StageAlreadyCompleted => StatusCode::BAD_REQUEST,
             ApiError::StageNotInProgress => StatusCode::BAD_REQUEST,
             ApiError::StageOutOfOrder => StatusCode::BAD_REQUEST,
-            ApiError::Conflict => StatusCode::CONFLICT,
             ApiError::GiteaClientError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::GitError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::KubernetesError(_) => StatusCode::INTERNAL_SERVER_ERROR,
