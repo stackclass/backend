@@ -55,6 +55,7 @@ pub fn build() -> Router<Arc<Context>> {
         )
         // Webhooks
         .route("/v1/webhooks/gitea", post(webhook::handle_gitea_webhook))
+        .route("/v1/webhooks/tekton", post(webhook::handle_tekton_webhook))
         // Git Proxy
         .route("/{uuid}/{*path}", any(git::proxy))
 }

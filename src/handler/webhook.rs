@@ -52,7 +52,7 @@ pub async fn handle_tekton_webhook(
     State(ctx): State<Arc<Context>>,
     Json(event): Json<PipelineEvent>,
 ) -> Result<impl IntoResponse> {
-    info!("Received pipeline event for: {} - {}", event.course, event.repo);
+    info!("Received pipeline event: {:?}", event);
 
     // Verify HMAC signature to prevent request forgery
     let auth_secret = &ctx.config.auth_secret;

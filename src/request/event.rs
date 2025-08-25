@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -37,9 +36,6 @@ pub struct PipelineEvent {
 
     /// Status of the tasks in the pipeline run
     pub tasks: Tasks,
-
-    /// Timestamp of when the event occurred
-    pub timestamp: DateTime<Utc>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
