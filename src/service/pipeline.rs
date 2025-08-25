@@ -129,6 +129,11 @@ impl PipelineService {
         let registry = url::hostname(&self.ctx.config.docker_registry_endpoint)?;
         let org = &self.ctx.config.namespace;
 
+        let webhook_endpoint = &self.ctx.config.webhook_endpoint;
+        let webhook_url = format!("{webhook_endpoint}/v1/webhooks/tekton");
+
+        let secret = String::new();
+
         // Define parameters for the PipelineRun
         let params = vec![
             ("REPO_URL", format!("{git_endpoint}/{org}/{repo}.git")),
@@ -137,6 +142,11 @@ impl PipelineService {
             ("TEST_IMAGE", format!("{registry}/{org}/{repo}-test:latest")),
             ("COMMAND", format!("/app/{course}-tester")),
             ("TEST_CASES_JSON", cases),
+            ("WEBHOOK_URL", webhook_url),
+            ("REPO", repo.to_string()),
+            ("COURSE", course.to_string()),
+            ("STAGE", stage.to_string()),
+            ("SECRET", secret),
         ];
 
         // Render a PipelineRun resource with the given name, labels, and params
