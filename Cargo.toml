@@ -8,7 +8,7 @@ resolver = "2"
 [package]
 name = "backend"
 description = "Backend API and services for StackClass"
-version = "0.39.0"
+version = "0.40.0"
 edition = "2024"
 
 default-run = "stackclass-server"
@@ -66,4 +66,4 @@ tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 url = "2.5.4"
 utoipa = { version = "5.4.0", features = ["axum_extras", "uuid", "chrono", "macros"] }
 utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "reqwest"] }
-uuid = { version = "1.18.0", features = ["serde", "v4", "fast-rng", "macro-diagnostics"] }
+uuid = { version = "1.18.0", features = ["v7", "serde"] }

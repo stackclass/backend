@@ -85,9 +85,9 @@ impl StageModel {
 impl From<Stage> for StageModel {
     fn from(stage: Stage) -> Self {
         Self {
-            id: Uuid::new_v4(),
+            id: Uuid::now_v7(),
             // Will be replaced by actual course_id
-            course_id: Uuid::new_v4(),
+            course_id: Uuid::now_v7(),
             // Will be replaced by actual extension_id
             extension_id: None,
             extension_slug: None,
@@ -139,7 +139,7 @@ impl UserStageModel {
     /// Creates a new instance with default values
     pub fn new(user_course_id: Uuid, stage_id: Uuid) -> Self {
         Self {
-            id: Uuid::new_v4(),
+            id: Uuid::now_v7(),
             user_course_id,
             course_slug: String::new(),
             stage_id,

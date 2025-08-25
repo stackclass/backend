@@ -111,7 +111,7 @@ impl PipelineService {
 
     /// Generates a PipelineRun resource for the given repository.
     async fn generate(&self, repo: &str, course: &str, stage: &str) -> Result<DynamicObject> {
-        let name = Uuid::new_v4().to_string();
+        let name = Uuid::now_v7().to_string();
 
         // Define labels for identification
         let labels = vec![

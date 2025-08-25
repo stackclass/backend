@@ -72,9 +72,9 @@ impl ExtensionModel {
 impl From<Extension> for ExtensionModel {
     fn from(ext: Extension) -> Self {
         Self {
-            id: Uuid::new_v4(),
+            id: Uuid::now_v7(),
             // Will be replaced by actual course_id
-            course_id: Uuid::new_v4(),
+            course_id: Uuid::now_v7(),
             slug: ext.slug,
             name: ext.name,
             description: ext.description,

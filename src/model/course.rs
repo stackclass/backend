@@ -75,7 +75,7 @@ impl CourseModel {
 impl From<&Course> for CourseModel {
     fn from(course: &Course) -> Self {
         Self {
-            id: Uuid::new_v4(),
+            id: Uuid::now_v7(),
             slug: course.slug.clone(),
             name: course.name.clone(),
             short_name: course.short_name.clone(),
@@ -134,9 +134,9 @@ pub struct UserCourseModel {
 impl Default for UserCourseModel {
     fn default() -> Self {
         Self {
-            id: Uuid::new_v4(),
+            id: Uuid::now_v7(),
             user_id: String::new(),
-            course_id: Uuid::new_v4(),
+            course_id: Uuid::now_v7(),
             course_slug: String::new(),
             started_at: Utc::now(),
             current_stage_id: None,
