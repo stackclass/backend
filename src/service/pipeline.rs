@@ -28,7 +28,7 @@ use crate::{
     context::Context,
     errors::{ApiError, Result},
     repository::StageRepository,
-    utils::url,
+    utils::{crypto, url},
 };
 
 /// A service for managing Tekton PipelineRun resources.
@@ -125,14 +125,21 @@ impl PipelineService {
         let slugs: Vec<&str> = stages.iter().map(|stage| stage.slug.as_str()).collect();
         let cases = build_test_cases_json(&slugs);
 
+        // Configuration values for the PipelineRun
         let git_endpoint = &self.ctx.config.git_server_endpoint;
         let registry = url::hostname(&self.ctx.config.docker_registry_endpoint)?;
         let org = &self.ctx.config.namespace;
 
+        // Construct the webhook URL for Tekton to send notifications
         let webhook_endpoint = &self.ctx.config.webhook_endpoint;
         let webhook_url = format!("{webhook_endpoint}/v1/webhooks/tekton");
 
-        let secret = String::new();
+        // Generate HMAC signature for webhook authentication
+        let auth_secret = &self.ctx.config.auth_secret;
+        let payload = format!("{}{}{}", repo, course, stage);
+        let secret = crypto::hmac_sha256_sign(&payload, auth_secret).map_err(|e| {
+            ApiError::InternalError(format!("Failed to generate HMAC signature: {}", e))
+        })?;
 
         // Define parameters for the PipelineRun
         let params = vec![

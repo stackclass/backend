@@ -27,8 +27,8 @@ pub type Result<T, E = ApiError> = std::result::Result<T, E>;
 
 #[derive(Debug, Error)]
 pub enum ApiError {
-    #[error("Internal Server Error")]
-    InternalServerError,
+    #[error("Internal Error: {0}")]
+    InternalError(String),
 
     #[error("Not Found")]
     NotFound,
@@ -98,7 +98,7 @@ impl From<sqlx::Error> for ApiError {
 impl From<&ApiError> for StatusCode {
     fn from(val: &ApiError) -> Self {
         match val {
-            ApiError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::InternalError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::NotFound => StatusCode::NOT_FOUND,
             ApiError::BadRequest(_) => StatusCode::BAD_REQUEST,
             ApiError::HTTPError(_) => StatusCode::INTERNAL_SERVER_ERROR,

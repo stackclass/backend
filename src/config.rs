@@ -93,4 +93,8 @@ pub struct Config {
     /// Password for authenticating with the harbor server.
     #[clap(long, env)]
     pub docker_registry_password: String,
+
+    /// Password hashing or signature secret key.
+    #[clap(long, env)]
+    pub auth_secret: String,
 }
