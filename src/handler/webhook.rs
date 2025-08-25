@@ -61,7 +61,7 @@ pub async fn handle_tekton_webhook(
     let auth_secret = &ctx.config.auth_secret;
     let payload = format!("{}{}{}", repo, course, stage);
 
-    if crypto::hmac_sha256_verify(&payload, auth_secret, secret)? {
+    if !crypto::hmac_sha256_verify(&payload, auth_secret, secret)? {
         error!("Received pipeline event with invalid signature");
         return Err(ApiError::Unauthorized("Invalid signature".into()));
     }
