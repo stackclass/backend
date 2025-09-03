@@ -21,17 +21,37 @@ use crate::schema::{Course, ExtensionMap, ExtensionSet, Stage};
 /// Errors that can occur during course parsing
 #[derive(Debug, Error)]
 pub enum ParseError {
-    #[error("IO error: {0}")]
-    Io(#[from] std::io::Error),
+    #[error("IO error at {path}: {source}")]
+    Io {
+        path: String,
+        #[source]
+        source: std::io::Error,
+    },
 
-    #[error("YAML parse error: {0}")]
-    Yaml(#[from] serde_yml::Error),
+    #[error("YAML parse error at {path}: {source}")]
+    Yaml {
+        path: String,
+        #[source]
+        source: serde_yml::Error,
+    },
 
     #[error("Invalid course structure: {0}")]
     Structure(String),
 
     #[error("Validation failed: {0}")]
     Validation(String),
+}
+
+impl ParseError {
+    /// Create an IO error with path context
+    pub fn io(path: &Path, source: std::io::Error) -> Self {
+        ParseError::Io { path: path.display().to_string(), source }
+    }
+
+    /// Create a YAML parse error with path context
+    pub fn yaml(path: &Path, source: serde_yml::Error) -> Self {
+        ParseError::Yaml { path: path.display().to_string(), source }
+    }
 }
 
 /// Parse entire course including stages and extensions
@@ -49,8 +69,9 @@ pub fn parse(path: &Path) -> Result<Course, ParseError> {
 
 /// Parse course metadata from course.yml
 fn parse_course(path: &Path) -> Result<Course, ParseError> {
-    let content = fs::read_to_string(path.join("course.yml"))?;
-    Course::from_str(&content).map_err(Into::into)
+    let course_yml_path = path.join("course.yml");
+    let content = read_to_string(&course_yml_path)?;
+    Course::from_str(&content).map_err(|e| ParseError::yaml(&course_yml_path, e))
 }
 
 /// Parse all stages from stages directory
@@ -62,8 +83,8 @@ fn parse_stages(stages_dir: &Path) -> Result<IndexMap<String, Stage>, ParseError
     let mut stages = IndexMap::new();
 
     // Process each stage directory
-    for entry in fs::read_dir(stages_dir)? {
-        let entry = entry?;
+    for entry in fs::read_dir(stages_dir).map_err(|e| ParseError::io(stages_dir, e))? {
+        let entry = entry.map_err(|e| ParseError::io(stages_dir, e))?;
         let stage_dir = entry.path();
 
         if stage_dir.is_dir() {
@@ -81,14 +102,17 @@ fn parse_stages(stages_dir: &Path) -> Result<IndexMap<String, Stage>, ParseError
 
 /// Parse single stage including instruction and solution
 fn parse_stage(stage_dir: &Path) -> Result<Stage, ParseError> {
-    let meta_content = fs::read_to_string(stage_dir.join("stage.yml"))?;
-    let mut stage = Stage::from_str(&meta_content)?;
+    let stage_yml_path = stage_dir.join("stage.yml");
+    let meta_content = read_to_string(&stage_yml_path)?;
+    let mut stage =
+        Stage::from_str(&meta_content).map_err(|e| ParseError::yaml(&stage_yml_path, e))?;
 
-    stage.instruction = fs::read_to_string(stage_dir.join("instruction.md"))?;
+    let instruction_path = stage_dir.join("instruction.md");
+    stage.instruction = read_to_string(&instruction_path)?;
 
     let sln_path = stage_dir.join("solution.md");
     if sln_path.exists() {
-        stage.solution.replace(fs::read_to_string(sln_path)?);
+        stage.solution.replace(read_to_string(&sln_path)?);
     }
 
     Ok(stage)
@@ -101,8 +125,9 @@ fn parse_extensions(path: &Path) -> Result<Option<ExtensionMap>, ParseError> {
         return Ok(None);
     }
 
-    let content = fs::read_to_string(extensions_path)?;
-    let extensions = ExtensionSet::from_str(&content)?;
+    let content = read_to_string(&extensions_path)?;
+    let extensions =
+        ExtensionSet::from_str(&content).map_err(|e| ParseError::yaml(&extensions_path, e))?;
     let mut extensions: ExtensionMap = extensions.into();
 
     // Process extension stages if extensions directory exists
@@ -119,4 +144,9 @@ fn parse_extensions(path: &Path) -> Result<Option<ExtensionMap>, ParseError> {
     }
 
     Ok(Some(extensions))
+}
+
+/// Helper function to read file with path context
+fn read_to_string(path: &Path) -> Result<String, ParseError> {
+    fs::read_to_string(path).map_err(|e| ParseError::io(path, e))
 }
