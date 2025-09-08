@@ -14,6 +14,7 @@
 
 use std::{collections::HashMap, sync::Arc};
 
+use base64::{Engine, prelude::BASE64_STANDARD as Base64};
 use fs_extra::dir::CopyOptions;
 use gitea_client::{ClientError, types::*};
 use tracing::{debug, info};
@@ -25,7 +26,7 @@ use crate::{
     errors::Result,
     repository::CourseRepository,
     service::{CourseService, PipelineService, StorageError, StorageService},
-    utils::{git, url},
+    utils::{crypto, git, url},
 };
 
 pub struct RepoService {
@@ -193,10 +194,17 @@ impl RepoService {
         let webhook_endpoint = &self.ctx.config.webhook_endpoint;
         let url = format!("{webhook_endpoint}/v1/webhooks/gitea");
 
+        // Generate the HMAC-SHA256 signature for the webhook authorization header
+        // using the admin username and the auth_secret from the configuration.
+        // This ensures that incoming webhook requests are authenticated.
+        let password = crypto::hmac_sha256_sign("admin", &self.ctx.config.auth_secret)?;
+        let auth_header = format!("Basic {}", Base64.encode(format!("admin:{}", password)));
+
         // Define the webhook request body to listen for push events on the main branch
         // and send them to the specified webhook endpoint in JSON format.
         let req = CreateHookRequest {
             active: true,
+            authorization_header: Some(auth_header),
             branch_filter: Some("main".to_string()),
             config: HashMap::from([
                 ("content_type".to_string(), "json".to_string()),
@@ -204,7 +212,6 @@ impl RepoService {
             ]),
             events: vec!["push".to_string()],
             kind: "gitea".to_string(),
-            ..Default::default()
         };
 
         // List all existing hooks

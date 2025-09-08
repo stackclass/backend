@@ -21,6 +21,7 @@ use uuid::Uuid;
 use crate::{
     context::Context,
     errors::{ApiError, Result},
+    extractor::AdminBasic,
     repository::CourseRepository,
     request::event::PipelineEvent,
     service::{PipelineCleanupGuard, RepoService, StageService},
@@ -29,6 +30,7 @@ use crate::{
 
 /// Handle Gitea Webhook Event.
 pub async fn handle_gitea_webhook(
+    _: AdminBasic,
     State(ctx): State<Arc<Context>>,
     Json(event): Json<Event>,
 ) -> Result<impl IntoResponse> {

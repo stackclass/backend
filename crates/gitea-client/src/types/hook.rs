@@ -57,6 +57,7 @@ pub fn matching(hook: &Hook, req: &CreateHookRequest) -> bool {
     hook.kind == req.kind &&
         hook.branch_filter == req.branch_filter &&
         hook.events == req.events &&
+        hook.authorization_header == req.authorization_header &&
         hook.config.get("url") == req.config.get("url") &&
         hook.config.get("content_type") == req.config.get("content_type")
 }
