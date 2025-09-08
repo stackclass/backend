@@ -21,7 +21,11 @@ use serde_json::json;
 use thiserror::Error;
 use tracing::{debug, error};
 
-use crate::{schema, service::StorageError, utils::git::GitError};
+use crate::{
+    schema,
+    service::StorageError,
+    utils::{crypto::CryptoError, git::GitError},
+};
 
 pub type Result<T, E = ApiError> = std::result::Result<T, E>;
 
@@ -86,6 +90,9 @@ pub enum ApiError {
 
     #[error("Harbor client error: {0}")]
     HarborClientError(#[from] harbor_client::ClientError),
+
+    #[error("Crypto operation failed")]
+    CryptoError(#[from] CryptoError),
 }
 
 impl From<sqlx::Error> for ApiError {
@@ -107,7 +114,6 @@ impl From<&ApiError> for StatusCode {
             ApiError::Conflict => StatusCode::CONFLICT,
             ApiError::InternalError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::HTTPError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-
             ApiError::StorageError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::SchemaParserError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
@@ -122,6 +128,7 @@ impl From<&ApiError> for StatusCode {
             ApiError::UrlParseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::InvalidUuid(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::HarborClientError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::CryptoError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }

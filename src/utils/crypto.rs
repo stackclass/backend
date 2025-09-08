@@ -15,16 +15,28 @@
 use hex;
 use hmac::{Hmac, Mac};
 use sha2::Sha256;
-
-use crate::errors::ApiError;
+use thiserror::Error;
 
 type HmacSha256 = Hmac<Sha256>;
 
+/// Error type for cryptographic operations
+#[derive(Debug, Error)]
+pub enum CryptoError {
+    #[error("Failed to generate HMAC signature: {0}")]
+    HmacGenerationError(String),
+
+    #[error("Invalid HMAC secret key: {0}")]
+    InvalidSecretKey(String),
+
+    #[error("Hex encoding/decoding error: {0}")]
+    HexError(#[from] hex::FromHexError),
+}
+
 /// Generates an HMAC-SHA256 signature for the given payload using the provided
 /// secret. Returns the signature as a hex-encoded string.
-pub fn hmac_sha256_sign(payload: &str, secret: &str) -> Result<String, ApiError> {
+pub fn hmac_sha256_sign(payload: &str, secret: &str) -> Result<String, CryptoError> {
     let mut mac = HmacSha256::new_from_slice(secret.as_bytes()).map_err(|e| {
-        ApiError::InternalError(format!("Failed to generate HMAC signature: {}", e))
+        CryptoError::InvalidSecretKey(format!("Failed to create HMAC instance: {}", e))
     })?;
     mac.update(payload.as_bytes());
     let result = mac.finalize();
@@ -34,7 +46,7 @@ pub fn hmac_sha256_sign(payload: &str, secret: &str) -> Result<String, ApiError>
 
 /// Verifies an HMAC-SHA256 signature for the given payload using the provided
 /// secret. Uses constant-time comparison to prevent timing attacks.
-pub fn hmac_sha256_verify(payload: &str, secret: &str, sign: &str) -> Result<bool, ApiError> {
+pub fn hmac_sha256_verify(payload: &str, secret: &str, sign: &str) -> Result<bool, CryptoError> {
     let expected = hmac_sha256_sign(payload, secret)?;
     Ok(subtle::ConstantTimeEq::ct_eq(sign.as_bytes(), expected.as_bytes()).into())
 }
