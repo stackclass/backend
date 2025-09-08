@@ -41,6 +41,12 @@ impl CourseService {
         Ok(courses.into_iter().map(Into::into).collect())
     }
 
+    /// Find all released courses (beta and live status)
+    pub async fn find_released(ctx: Arc<Context>) -> Result<Vec<CourseResponse>> {
+        let courses = CourseRepository::find_released(&ctx.database).await?;
+        Ok(courses.into_iter().map(Into::into).collect())
+    }
+
     /// Create new course from git repository URL
     pub async fn create(ctx: Arc<Context>, repository: &str) -> Result<CourseResponse> {
         let Config { cache_dir, github_token, .. } = &ctx.config;

@@ -82,6 +82,17 @@ impl CourseRepository {
         Ok(rows)
     }
 
+    /// Find all released courses (beta and live status)
+    pub(crate) async fn find_released(db: &Database) -> Result<Vec<CourseModel>> {
+        let rows = sqlx::query_as::<_, CourseModel>(
+            r#"SELECT * FROM courses WHERE release_status != 'alpha'"#,
+        )
+        .fetch_all(db.pool())
+        .await?;
+
+        Ok(rows)
+    }
+
     /// Update a course in the database.
     pub async fn update(tx: &mut Transaction<'_>, course: &CourseModel) -> Result<CourseModel> {
         let row = sqlx::query_as::<_, CourseModel>(

@@ -38,9 +38,9 @@ use crate::{
 
 // The Course Service Handlers.
 
-/// Find all courses.
+/// Find all released courses (beta and live status)
 #[utoipa::path(
-    operation_id = "find-all-courses",
+    operation_id = "find-released-courses",
     get, path = "/v1/courses",
     responses(
         (status = 200, description = "Courses retrieved successfully", body = Vec<CourseResponse>),
@@ -48,7 +48,7 @@ use crate::{
     tag = "Course"
 )]
 pub async fn find(State(ctx): State<Arc<Context>>) -> Result<impl IntoResponse> {
-    Ok((StatusCode::OK, Json(CourseService::find(ctx).await?)))
+    Ok((StatusCode::OK, Json(CourseService::find_released(ctx).await?)))
 }
 
 /// Create a course.
