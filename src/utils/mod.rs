@@ -14,4 +14,5 @@
 
 pub mod crypto;
 pub mod git;
+pub mod keys;
 pub mod url;

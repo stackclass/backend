@@ -24,59 +24,16 @@ use axum_extra::{
     TypedHeader,
     headers::{Authorization, authorization::Bearer},
 };
-use jsonwebtoken::{
-    Algorithm, DecodingKey, Validation, decode,
-    jwk::{AlgorithmParameters, Jwk},
-};
+use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
-use tokio::sync::{OnceCell, RwLock};
-use tracing::{debug, error, info};
+use tracing::{debug, error};
 
-use crate::{context::Context, errors::AutoIntoResponse, repository::UserRepository};
-
-/// Global cached JWK decoding keys (async initialization via OnceCell)
-static KEYS: OnceCell<Arc<RwLock<HashMap<String, DecodingKey>>>> = OnceCell::const_new();
-
-/// Loads JSON Web Keys (JWKs) from the database and converts them into `DecodingKey` instances.
-/// Returns a `HashMap` mapping key IDs to their corresponding `DecodingKey`.
-async fn load_keys(ctx: Arc<Context>) -> Result<HashMap<String, DecodingKey>, ClaimsError> {
-    info!("Fetching all JSON Web Keys (JWKS) from the database");
-    let keys = UserRepository::find_all_json_web_keys(&ctx.database).await.map_err(|e| {
-        error!("Failed to load JSON web keys: {}", e);
-        ClaimsError::KeyLoadFailure
-    })?;
-
-    let mut map = HashMap::new();
-    for key in keys {
-        let jwk: Jwk = serde_json::from_str(&key.public_key) //
-            .map_err(|_| ClaimsError::InvalidKeyFormat)?;
-
-        if let AlgorithmParameters::RSA(rsa) = jwk.algorithm {
-            let decoded = DecodingKey::from_rsa_components(&rsa.n, &rsa.e)
-                .map_err(|_| ClaimsError::InvalidKeyFormat)?;
-            map.insert(key.id, decoded);
-        }
-    }
-
-    Ok(map)
-}
-
-/// Get global keys cache (initialize if empty)
-async fn get_keys() -> &'static Arc<RwLock<HashMap<String, DecodingKey>>> {
-    KEYS.get_or_init(|| async {
-        Arc::new(RwLock::new(HashMap::new())) // Initial empty cache
-    })
-    .await
-}
-
-/// Refresh keys from database and update cache
-pub async fn refresh_keys(ctx: Arc<Context>) -> Result<(), ClaimsError> {
-    let keys = load_keys(ctx).await?;
-    *get_keys().await.write().await = keys;
-
-    Ok(())
-}
+use crate::{
+    context::Context,
+    errors::AutoIntoResponse,
+    utils::keys::{self, KeysError},
+};
 
 /// Represents the claims extracted from a JWT token.
 #[derive(Debug, Serialize, Deserialize)]
@@ -117,13 +74,13 @@ impl FromRequestParts<Arc<Context>> for Claims {
         let kid = header.kid.ok_or(ClaimsError::MissingKeyId)?;
 
         // First attempt with cached keys
-        let keys = get_keys().await;
+        let keys = keys::get_keys().await;
         if let Some(decoding_key) = keys.read().await.get(&kid) {
             return validate_token(&token, decoding_key);
         }
 
         // If kid not found, refresh keys and try again
-        refresh_keys(ctx.clone()).await.map_err(|_| ClaimsError::KeyRefreshFailed)?;
+        keys::refresh_keys(ctx.clone()).await?;
 
         if let Some(decoding_key) = keys.read().await.get(&kid) {
             return validate_token(&token, decoding_key);
@@ -165,14 +122,8 @@ pub enum ClaimsError {
     #[error("Invalid token")]
     InvalidToken,
 
-    #[error("Invalid key format")]
-    InvalidKeyFormat,
-
-    #[error("Failed to load keys")]
-    KeyLoadFailure,
-
-    #[error("Failed to refresh keys")]
-    KeyRefreshFailed,
+    #[error("Key operation failed: {0}")]
+    KeysError(#[from] KeysError),
 }
 
 impl From<&ClaimsError> for StatusCode {
@@ -183,9 +134,10 @@ impl From<&ClaimsError> for StatusCode {
             ClaimsError::MissingKeyId => StatusCode::UNAUTHORIZED,
             ClaimsError::KeyNotFound(_) => StatusCode::UNAUTHORIZED,
             ClaimsError::InvalidToken => StatusCode::UNAUTHORIZED,
-            ClaimsError::InvalidKeyFormat => StatusCode::UNAUTHORIZED,
-            ClaimsError::KeyLoadFailure => StatusCode::INTERNAL_SERVER_ERROR,
-            ClaimsError::KeyRefreshFailed => StatusCode::INTERNAL_SERVER_ERROR,
+            ClaimsError::KeysError(keys_error) => match keys_error {
+                KeysError::KeyNotFound(_) => StatusCode::UNAUTHORIZED,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            },
         }
     }
 }

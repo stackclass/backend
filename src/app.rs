@@ -20,9 +20,10 @@ use tracing::{error, info};
 
 use crate::{
     context::Context,
-    extractor, routes,
+    routes,
     service::{RegistryService, RepoService},
     swagger,
+    utils::keys,
 };
 
 /// Initializes essential program components including database migrations,
@@ -32,7 +33,7 @@ async fn initialize(ctx: Arc<Context>) -> Result<(), Box<dyn std::error::Error>>
     ctx.database.migrate().await?;
 
     // Refresh keys from database and update cache
-    extractor::refresh_keys(ctx.clone()).await?;
+    keys::refresh_keys(ctx.clone()).await?;
 
     let namespace = &ctx.config.namespace;
 
