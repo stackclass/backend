@@ -90,6 +90,11 @@ impl Modify for SecurityAddon {
                 SecurityScheme::Http(
                     HttpBuilder::new().scheme(HttpAuthScheme::Bearer).bearer_format("JWT").build(),
                 ),
+            );
+
+            components.add_security_scheme(
+                "AdminBasicAuth",
+                SecurityScheme::Http(HttpBuilder::new().scheme(HttpAuthScheme::Basic).build()),
             )
         }
     }

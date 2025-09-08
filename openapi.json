@@ -63,7 +63,12 @@
           "500": {
             "description": "Failed to create course"
           }
-        }
+        },
+        "security": [
+          {
+            "AdminBasicAuth": []
+          }
+        ]
       }
     },
     "/v1/courses/{slug}": {
@@ -130,7 +135,12 @@
           "500": {
             "description": "Failed to delete course"
           }
-        }
+        },
+        "security": [
+          {
+            "AdminBasicAuth": []
+          }
+        ]
       },
       "patch": {
         "tags": [
@@ -159,7 +169,12 @@
           "500": {
             "description": "Failed to update course"
           }
-        }
+        },
+        "security": [
+          {
+            "AdminBasicAuth": []
+          }
+        ]
       }
     },
     "/v1/courses/{slug}/attempts": {
@@ -1290,6 +1305,10 @@
       }
     },
     "securitySchemes": {
+      "AdminBasicAuth": {
+        "type": "http",
+        "scheme": "basic"
+      },
       "JWTBearerAuth": {
         "type": "http",
         "scheme": "bearer",

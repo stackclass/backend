@@ -30,7 +30,7 @@ use tracing::{error, info};
 use crate::{
     context::Context,
     errors::Result,
-    extractor::Claims,
+    extractor::{AdminBasic, Claims},
     request::{CreateCourseRequest, CreateUserCourseRequest, UpdateUserCourseRequest},
     response::{AttemptResponse, CourseDetailResponse, CourseResponse, UserCourseResponse},
     service::CourseService,
@@ -64,9 +64,11 @@ pub async fn find(State(ctx): State<Arc<Context>>) -> Result<impl IntoResponse> 
         (status = 201, description = "Course created successfully", body = CourseResponse),
         (status = 500, description = "Failed to create course")
     ),
+    security(("AdminBasicAuth" = [])),
     tag = "Course"
 )]
 pub async fn create(
+    _: AdminBasic,
     State(ctx): State<Arc<Context>>,
     Json(req): Json<CreateCourseRequest>,
 ) -> Result<impl IntoResponse> {
@@ -106,9 +108,11 @@ pub async fn get(
         (status = 404, description = "Course not found"),
         (status = 500, description = "Failed to delete course")
     ),
+    security(("AdminBasicAuth" = [])),
     tag = "Course"
 )]
 pub async fn delete(
+    _: AdminBasic,
     State(ctx): State<Arc<Context>>,
     Path(slug): Path<String>,
 ) -> Result<impl IntoResponse> {
@@ -128,9 +132,11 @@ pub async fn delete(
         (status = 404, description = "Course not found"),
         (status = 500, description = "Failed to update course")
     ),
+    security(("AdminBasicAuth" = [])),
     tag = "Course"
 )]
 pub async fn update(
+    _: AdminBasic,
     State(ctx): State<Arc<Context>>,
     Path(slug): Path<String>,
 ) -> Result<impl IntoResponse> {
