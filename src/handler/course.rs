@@ -267,7 +267,7 @@ pub async fn stream_user_course_status(
 
     // Spawn a background task to fetch and send status updates.
     tokio::spawn(async move {
-        let mut interval = tokio::time::interval(std::time::Duration::from_secs(5));
+        let mut interval = tokio::time::interval(std::time::Duration::from_secs(60));
         loop {
             interval.tick().await;
             let status = CourseService::get_user_course(ctx.clone(), &claims.id, &slug).await;
