@@ -16,6 +16,7 @@ use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 
+#[allow(dead_code)]
 /// Schema for the stackclass.yml file.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Manifest {
