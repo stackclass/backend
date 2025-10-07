@@ -33,7 +33,7 @@ gitea-client = { path = "crates/gitea-client" }
 harbor-client = { path = "crates/harbor-client" }
 
 anyhow = "1.0.100"
-axum = { version = "0.8.4" }
+axum = { version = "0.8.6" }
 axum-extra = {version = "0.10.1", features = ["typed-header"] }
 base64 = "0.22.1"
 bytes = "1.10.1"
