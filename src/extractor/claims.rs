@@ -36,7 +36,7 @@ use crate::{
 };
 
 /// Represents the claims extracted from a JWT token.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
     /// Unique identifier of the user.
     pub id: String,

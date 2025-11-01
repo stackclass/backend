@@ -46,7 +46,6 @@ update-submodules:
 
 # Run all commend in the local environment
 all:
-    just clean
     just check
     just build
     just openapi
