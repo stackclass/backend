@@ -27,7 +27,7 @@ use axum_extra::{
 use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
-use tracing::{debug, error};
+use tracing::debug;
 
 use crate::{
     context::Context,
