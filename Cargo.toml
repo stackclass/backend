@@ -37,7 +37,7 @@ axum = { version = "0.8.8" }
 axum-extra = {version = "0.12.5", features = ["typed-header"] }
 base64 = "0.22.1"
 bytes = "1.11.0"
-chrono = { version = "0.4.41", features = ["serde"] }
+chrono = { version = "0.4.43", features = ["serde"] }
 clap = { version = "4.5.54", features = ["derive", "env"] }
 dotenv = "0.15.0"
 flate2 = "1.1.8"
