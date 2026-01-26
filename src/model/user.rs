@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, Utc};
 use sqlx::FromRow;
 
 /// Database model representing a user entity
@@ -34,10 +34,10 @@ pub struct UserModel {
     pub image: Option<String>,
 
     /// Creation timestamp
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
 
     /// Last update timestamp
-    pub updated_at: NaiveDateTime,
+    pub updated_at: DateTime<Utc>,
 }
 
 impl UserModel {
@@ -49,8 +49,8 @@ impl UserModel {
             email,
             email_verified: false,
             image: None,
-            created_at: Utc::now().naive_utc(),
-            updated_at: Utc::now().naive_utc(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         }
     }
 
