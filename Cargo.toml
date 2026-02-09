@@ -32,7 +32,7 @@ path = "src/bin/openapi-generator.rs"
 gitea-client = { path = "crates/gitea-client" }
 harbor-client = { path = "crates/harbor-client" }
 
-anyhow = "1.0.100"
+anyhow = "1.0.101"
 axum = { version = "0.8.8" }
 axum-extra = {version = "0.12.5", features = ["typed-header"] }
 base64 = "0.22.1"
