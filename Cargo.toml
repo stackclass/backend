@@ -61,7 +61,7 @@ sha2 = "0.10.9"
 sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "postgres", "macros", "migrate", "chrono", "uuid"] }
 subtle = "2.6.1"
 tar = "0.4.44"
-tempfile = "3.24.0"
+tempfile = "3.25.0"
 thiserror = "2.0.18"
 tokio = { version = "1.49.0", features = ["full"] }
 tokio-stream = "0.1.18"
