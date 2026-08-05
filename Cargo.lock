@@ -278,7 +278,7 @@ dependencies = [
 
 [[package]]
 name = "backend"
-version = "1.3.17"
+version = "1.3.18"
 dependencies = [
  "anyhow",
  "axum",
@@ -1878,7 +1878,7 @@ version = "11.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "881733cbc631fc9e472e24447ce32a64bedf2da498d6d8570b08edc87de71f65"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "ed25519-dalek",
  "getrandom 0.2.17",
  "hmac 0.12.1",
